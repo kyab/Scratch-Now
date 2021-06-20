@@ -5,7 +5,64 @@
 	<key>logFormatVersion</key>
 	<integer>10</integer>
 	<key>logs</key>
-	<dict/>
+	<dict>
+		<key>1B06CAAA-35F3-4DEA-B456-060CB69A23AF</key>
+		<dict>
+			<key>className</key>
+			<string>IDEActivityLogMajorGroupSection</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.target.product-type.bundle</string>
+			<key>fileName</key>
+			<string>1B06CAAA-35F3-4DEA-B456-060CB69A23AF.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>signature</key>
+			<string>Scratch_Now_Driver-fmhompktorfqcfapcddjddolzdon</string>
+			<key>timeStartedRecording</key>
+			<real>645891165.04520702</real>
+			<key>timeStoppedRecording</key>
+			<real>645891167.48113096</real>
+			<key>title</key>
+			<string>Build target Scratch Now Driver</string>
+			<key>uniqueIdentifier</key>
+			<string>1B06CAAA-35F3-4DEA-B456-060CB69A23AF</string>
+		</dict>
+		<key>C4A2C0EE-C088-4EA9-AFA4-CEE9C09B21C9</key>
+		<dict>
+			<key>className</key>
+			<string>IDEActivityLogMajorGroupSection</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.target.product-type.application</string>
+			<key>fileName</key>
+			<string>C4A2C0EE-C088-4EA9-AFA4-CEE9C09B21C9.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>signature</key>
+			<string>Scratch_Now-fmhompktorfqcfapcddjddolzdon</string>
+			<key>timeStartedRecording</key>
+			<real>645890929.218943</real>
+			<key>timeStoppedRecording</key>
+			<real>645890944.25721896</real>
+			<key>title</key>
+			<string>Build target Scratch Now</string>
+			<key>uniqueIdentifier</key>
+			<string>C4A2C0EE-C088-4EA9-AFA4-CEE9C09B21C9</string>
+		</dict>
+	</dict>
 	<key>preserveOldLogs</key>
 	<true/>
 </dict>

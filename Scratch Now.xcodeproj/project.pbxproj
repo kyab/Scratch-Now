@@ -7,13 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		EB681287267F079000C475FF /* MiniFader.m in Sources */ = {isa = PBXBuildFile; fileRef = EB681285267F079000C475FF /* MiniFader.m */; };
 		EBB7EF3C267DE6B40094DDB2 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF3B267DE6B40094DDB2 /* AppDelegate.m */; };
 		EBB7EF3E267DE6B70094DDB2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EBB7EF3D267DE6B70094DDB2 /* Assets.xcassets */; };
 		EBB7EF41267DE6B70094DDB2 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = EBB7EF3F267DE6B70094DDB2 /* MainMenu.xib */; };
 		EBB7EF44267DE6B70094DDB2 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF43267DE6B70094DDB2 /* main.m */; };
+		EBB7EF58267DE8030094DDB2 /* ScratchNowDriver.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF57267DE8030094DDB2 /* ScratchNowDriver.m */; };
+		EBB7EF5B267DE82D0094DDB2 /* RingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF5A267DE82D0094DDB2 /* RingBuffer.m */; };
+		EBB7EF60267E0AB10094DDB2 /* AudioEngine.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF5D267E0AB00094DDB2 /* AudioEngine.m */; };
+		EBB7EF61267E0AB10094DDB2 /* RingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF5E267E0AB10094DDB2 /* RingBuffer.m */; };
+		EBB7EF64267E0C7C0094DDB2 /* TurnTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF63267E0C7B0094DDB2 /* TurnTableView.m */; };
+		EBB7EF67267E0D5D0094DDB2 /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF66267E0D5D0094DDB2 /* AppController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		EB681285267F079000C475FF /* MiniFader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MiniFader.m; sourceTree = "<group>"; };
+		EB681286267F079000C475FF /* MiniFader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MiniFader.h; sourceTree = "<group>"; };
 		EBB7EF37267DE6B40094DDB2 /* Scratch Now.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Scratch Now.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		EBB7EF3A267DE6B40094DDB2 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		EBB7EF3B267DE6B40094DDB2 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -22,10 +31,31 @@
 		EBB7EF42267DE6B70094DDB2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		EBB7EF43267DE6B70094DDB2 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		EBB7EF45267DE6B70094DDB2 /* Scratch_Now.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Scratch_Now.entitlements; sourceTree = "<group>"; };
+		EBB7EF50267DE7670094DDB2 /* Scratch Now Driver.driver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Scratch Now Driver.driver"; sourceTree = BUILT_PRODUCTS_DIR; };
+		EBB7EF52267DE7670094DDB2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		EBB7EF56267DE8020094DDB2 /* ScrachNowDriver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScrachNowDriver.h; sourceTree = "<group>"; };
+		EBB7EF57267DE8030094DDB2 /* ScratchNowDriver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ScratchNowDriver.m; sourceTree = "<group>"; };
+		EBB7EF59267DE82C0094DDB2 /* RingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
+		EBB7EF5A267DE82D0094DDB2 /* RingBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RingBuffer.m; sourceTree = "<group>"; };
+		EBB7EF5C267E0AAF0094DDB2 /* AudioEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AudioEngine.h; sourceTree = "<group>"; };
+		EBB7EF5D267E0AB00094DDB2 /* AudioEngine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AudioEngine.m; sourceTree = "<group>"; };
+		EBB7EF5E267E0AB10094DDB2 /* RingBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RingBuffer.m; sourceTree = "<group>"; };
+		EBB7EF5F267E0AB10094DDB2 /* RingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
+		EBB7EF62267E0C7B0094DDB2 /* TurnTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TurnTableView.h; sourceTree = "<group>"; };
+		EBB7EF63267E0C7B0094DDB2 /* TurnTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TurnTableView.m; sourceTree = "<group>"; };
+		EBB7EF65267E0D5D0094DDB2 /* AppController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppController.h; sourceTree = "<group>"; };
+		EBB7EF66267E0D5D0094DDB2 /* AppController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		EBB7EF34267DE6B40094DDB2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EBB7EF4D267DE7670094DDB2 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -39,6 +69,7 @@
 			isa = PBXGroup;
 			children = (
 				EBB7EF39267DE6B40094DDB2 /* Scratch Now */,
+				EBB7EF51267DE7670094DDB2 /* Scratch Now Driver */,
 				EBB7EF38267DE6B40094DDB2 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -47,6 +78,7 @@
 			isa = PBXGroup;
 			children = (
 				EBB7EF37267DE6B40094DDB2 /* Scratch Now.app */,
+				EBB7EF50267DE7670094DDB2 /* Scratch Now Driver.driver */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -54,6 +86,16 @@
 		EBB7EF39267DE6B40094DDB2 /* Scratch Now */ = {
 			isa = PBXGroup;
 			children = (
+				EBB7EF65267E0D5D0094DDB2 /* AppController.h */,
+				EBB7EF66267E0D5D0094DDB2 /* AppController.m */,
+				EBB7EF5C267E0AAF0094DDB2 /* AudioEngine.h */,
+				EBB7EF5D267E0AB00094DDB2 /* AudioEngine.m */,
+				EBB7EF5F267E0AB10094DDB2 /* RingBuffer.h */,
+				EBB7EF5E267E0AB10094DDB2 /* RingBuffer.m */,
+				EB681286267F079000C475FF /* MiniFader.h */,
+				EB681285267F079000C475FF /* MiniFader.m */,
+				EBB7EF62267E0C7B0094DDB2 /* TurnTableView.h */,
+				EBB7EF63267E0C7B0094DDB2 /* TurnTableView.m */,
 				EBB7EF3A267DE6B40094DDB2 /* AppDelegate.h */,
 				EBB7EF3B267DE6B40094DDB2 /* AppDelegate.m */,
 				EBB7EF3D267DE6B70094DDB2 /* Assets.xcassets */,
@@ -63,6 +105,18 @@
 				EBB7EF45267DE6B70094DDB2 /* Scratch_Now.entitlements */,
 			);
 			path = "Scratch Now";
+			sourceTree = "<group>";
+		};
+		EBB7EF51267DE7670094DDB2 /* Scratch Now Driver */ = {
+			isa = PBXGroup;
+			children = (
+				EBB7EF52267DE7670094DDB2 /* Info.plist */,
+				EBB7EF56267DE8020094DDB2 /* ScrachNowDriver.h */,
+				EBB7EF57267DE8030094DDB2 /* ScratchNowDriver.m */,
+				EBB7EF59267DE82C0094DDB2 /* RingBuffer.h */,
+				EBB7EF5A267DE82D0094DDB2 /* RingBuffer.m */,
+			);
+			path = "Scratch Now Driver";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -85,6 +139,23 @@
 			productReference = EBB7EF37267DE6B40094DDB2 /* Scratch Now.app */;
 			productType = "com.apple.product-type.application";
 		};
+		EBB7EF4F267DE7670094DDB2 /* Scratch Now Driver */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EBB7EF53267DE7670094DDB2 /* Build configuration list for PBXNativeTarget "Scratch Now Driver" */;
+			buildPhases = (
+				EBB7EF4C267DE7670094DDB2 /* Sources */,
+				EBB7EF4D267DE7670094DDB2 /* Frameworks */,
+				EBB7EF4E267DE7670094DDB2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Scratch Now Driver";
+			productName = "Scratch Now Driver";
+			productReference = EBB7EF50267DE7670094DDB2 /* Scratch Now Driver.driver */;
+			productType = "com.apple.product-type.bundle";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -94,6 +165,9 @@
 				LastUpgradeCheck = 1250;
 				TargetAttributes = {
 					EBB7EF36267DE6B40094DDB2 = {
+						CreatedOnToolsVersion = 12.5;
+					};
+					EBB7EF4F267DE7670094DDB2 = {
 						CreatedOnToolsVersion = 12.5;
 					};
 				};
@@ -112,6 +186,7 @@
 			projectRoot = "";
 			targets = (
 				EBB7EF36267DE6B40094DDB2 /* Scratch Now */,
+				EBB7EF4F267DE7670094DDB2 /* Scratch Now Driver */,
 			);
 		};
 /* End PBXProject section */
@@ -126,6 +201,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		EBB7EF4E267DE7670094DDB2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -133,8 +215,22 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EBB7EF60267E0AB10094DDB2 /* AudioEngine.m in Sources */,
+				EB681287267F079000C475FF /* MiniFader.m in Sources */,
+				EBB7EF67267E0D5D0094DDB2 /* AppController.m in Sources */,
+				EBB7EF61267E0AB10094DDB2 /* RingBuffer.m in Sources */,
 				EBB7EF44267DE6B70094DDB2 /* main.m in Sources */,
 				EBB7EF3C267DE6B40094DDB2 /* AppDelegate.m in Sources */,
+				EBB7EF64267E0C7C0094DDB2 /* TurnTableView.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EBB7EF4C267DE7670094DDB2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EBB7EF58267DE8030094DDB2 /* ScratchNowDriver.m in Sources */,
+				EBB7EF5B267DE82D0094DDB2 /* RingBuffer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -269,7 +365,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Scratch Now/Scratch_Now.entitlements";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = A386R5WFZ6;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -278,8 +376,11 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.kyab.Scratch-Now";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Debug;
 		};
@@ -289,7 +390,9 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Scratch Now/Scratch_Now.entitlements";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = A386R5WFZ6;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -298,8 +401,49 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				OTHER_CODE_SIGN_FLAGS = "--timestamp";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.kyab.Scratch-Now";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+			};
+			name = Release;
+		};
+		EBB7EF54267DE7670094DDB2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = A386R5WFZ6;
+				INFOPLIST_FILE = "Scratch Now Driver/Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				OTHER_CODE_SIGN_FLAGS = "--timestamp";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.kyab.Scratch-Now-Driver";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				WRAPPER_EXTENSION = driver;
+			};
+			name = Debug;
+		};
+		EBB7EF55267DE7670094DDB2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = A386R5WFZ6;
+				INFOPLIST_FILE = "Scratch Now Driver/Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				OTHER_CODE_SIGN_FLAGS = "--timestamp";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.kyab.Scratch-Now-Driver";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				WRAPPER_EXTENSION = driver;
 			};
 			name = Release;
 		};
@@ -320,6 +464,15 @@
 			buildConfigurations = (
 				EBB7EF49267DE6B70094DDB2 /* Debug */,
 				EBB7EF4A267DE6B70094DDB2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EBB7EF53267DE7670094DDB2 /* Build configuration list for PBXNativeTarget "Scratch Now Driver" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EBB7EF54267DE7670094DDB2 /* Debug */,
+				EBB7EF55267DE7670094DDB2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

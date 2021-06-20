@@ -1,51 +1,61 @@
 {
   "images" : [
     {
+      "filename" : "iconfinder_2378480_dj_mixer_music_player_icon_16px.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "16x16"
     },
     {
+      "filename" : "iconfinder_2378480_dj_mixer_music_player_icon_32px.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "16x16"
     },
     {
+      "filename" : "iconfinder_2378480_dj_mixer_music_player_icon_32px-1.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "32x32"
     },
     {
+      "filename" : "iconfinder_2378480_dj_mixer_music_player_icon_64px.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "32x32"
     },
     {
+      "filename" : "iconfinder_2378480_dj_mixer_music_player_icon_128px.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "128x128"
     },
     {
+      "filename" : "iconfinder_2378480_dj_mixer_music_player_icon_256px.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "128x128"
     },
     {
+      "filename" : "iconfinder_2378480_dj_mixer_music_player_icon_256px-1.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "256x256"
     },
     {
+      "filename" : "iconfinder_2378480_dj_mixer_music_player_icon_512px.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "256x256"
     },
     {
+      "filename" : "iconfinder_2378480_dj_mixer_music_player_icon_512px-1.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "512x512"
     },
     {
+      "filename" : "iconfinder_2378480_dj_mixer_music_player_icon-2.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "512x512"

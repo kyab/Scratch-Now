@@ -6,8 +6,13 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "AppController.h"
 
-@interface AppDelegate : NSObject <NSApplicationDelegate>
+
+@interface AppDelegate : NSObject <NSApplicationDelegate>{
+    
+    __weak IBOutlet AppController *_controller;
+}
 
 
 @end
