@@ -18,6 +18,7 @@
 		EBB7EF61267E0AB10094DDB2 /* RingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF5E267E0AB10094DDB2 /* RingBuffer.m */; };
 		EBB7EF64267E0C7C0094DDB2 /* TurnTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF63267E0C7B0094DDB2 /* TurnTableView.m */; };
 		EBB7EF67267E0D5D0094DDB2 /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF66267E0D5D0094DDB2 /* AppController.m */; };
+		EBC5C546268524BE00CDA6DF /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = EBC5C545268524BE00CDA6DF /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +46,7 @@
 		EBB7EF63267E0C7B0094DDB2 /* TurnTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TurnTableView.m; sourceTree = "<group>"; };
 		EBB7EF65267E0D5D0094DDB2 /* AppController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppController.h; sourceTree = "<group>"; };
 		EBB7EF66267E0D5D0094DDB2 /* AppController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppController.m; sourceTree = "<group>"; };
+		EBC5C545268524BE00CDA6DF /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +70,7 @@
 		EBB7EF2E267DE6B40094DDB2 = {
 			isa = PBXGroup;
 			children = (
+				EBC5C545268524BE00CDA6DF /* README.md */,
 				EBB7EF39267DE6B40094DDB2 /* Scratch Now */,
 				EBB7EF51267DE7670094DDB2 /* Scratch Now Driver */,
 				EBB7EF38267DE6B40094DDB2 /* Products */,
@@ -196,6 +199,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EBC5C546268524BE00CDA6DF /* README.md in Resources */,
 				EBB7EF3E267DE6B70094DDB2 /* Assets.xcassets in Resources */,
 				EBB7EF41267DE6B70094DDB2 /* MainMenu.xib in Resources */,
 			);

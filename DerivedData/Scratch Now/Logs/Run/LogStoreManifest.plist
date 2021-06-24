@@ -6,6 +6,74 @@
 	<integer>10</integer>
 	<key>logs</key>
 	<dict>
+		<key>060ABA3E-E438-41B0-9D4E-5135E2BCA16C</key>
+		<dict>
+			<key>className</key>
+			<string>DBGConsoleLog</string>
+			<key>documentTypeString</key>
+			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
+			<key>fileName</key>
+			<string>060ABA3E-E438-41B0-9D4E-5135E2BCA16C.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Scratch Now project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Scratch Now</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Run Scratch Now</string>
+			<key>timeStartedRecording</key>
+			<real>646260026.75510204</real>
+			<key>timeStoppedRecording</key>
+			<real>646260052.27241504</real>
+			<key>title</key>
+			<string>Run Scratch Now</string>
+			<key>uniqueIdentifier</key>
+			<string>060ABA3E-E438-41B0-9D4E-5135E2BCA16C</string>
+		</dict>
+		<key>08F2F7E0-716E-4E22-BD9A-6D3B85F6D974</key>
+		<dict>
+			<key>className</key>
+			<string>DBGConsoleLog</string>
+			<key>documentTypeString</key>
+			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
+			<key>fileName</key>
+			<string>08F2F7E0-716E-4E22-BD9A-6D3B85F6D974.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Scratch Now project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Scratch Now</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Run Scratch Now</string>
+			<key>timeStartedRecording</key>
+			<real>646260774.62529695</real>
+			<key>timeStoppedRecording</key>
+			<real>646260790.18745899</real>
+			<key>title</key>
+			<string>Run Scratch Now</string>
+			<key>uniqueIdentifier</key>
+			<string>08F2F7E0-716E-4E22-BD9A-6D3B85F6D974</string>
+		</dict>
 		<key>B33D3D83-ABCD-4EF6-B042-3D2F72081AC9</key>
 		<dict>
 			<key>className</key>
@@ -39,6 +107,108 @@
 			<string>Run Scratch Now</string>
 			<key>uniqueIdentifier</key>
 			<string>B33D3D83-ABCD-4EF6-B042-3D2F72081AC9</string>
+		</dict>
+		<key>BF51CBD2-DCD9-4947-BEEE-ACDB7D3A8560</key>
+		<dict>
+			<key>className</key>
+			<string>DBGConsoleLog</string>
+			<key>documentTypeString</key>
+			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
+			<key>fileName</key>
+			<string>BF51CBD2-DCD9-4947-BEEE-ACDB7D3A8560.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Scratch Now project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Scratch Now</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Run Scratch Now</string>
+			<key>timeStartedRecording</key>
+			<real>646261094.43502998</real>
+			<key>timeStoppedRecording</key>
+			<real>646261127.535465</real>
+			<key>title</key>
+			<string>Run Scratch Now</string>
+			<key>uniqueIdentifier</key>
+			<string>BF51CBD2-DCD9-4947-BEEE-ACDB7D3A8560</string>
+		</dict>
+		<key>D7C2C1E3-B3CD-4179-A94F-C5FFEBB43440</key>
+		<dict>
+			<key>className</key>
+			<string>DBGConsoleLog</string>
+			<key>documentTypeString</key>
+			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
+			<key>fileName</key>
+			<string>D7C2C1E3-B3CD-4179-A94F-C5FFEBB43440.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Scratch Now project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Scratch Now</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Run Scratch Now</string>
+			<key>timeStartedRecording</key>
+			<real>646260647.93963206</real>
+			<key>timeStoppedRecording</key>
+			<real>646260672.20647895</real>
+			<key>title</key>
+			<string>Run Scratch Now</string>
+			<key>uniqueIdentifier</key>
+			<string>D7C2C1E3-B3CD-4179-A94F-C5FFEBB43440</string>
+		</dict>
+		<key>E0737DD5-FE2F-40AC-8338-977CDEA32176</key>
+		<dict>
+			<key>className</key>
+			<string>DBGConsoleLog</string>
+			<key>documentTypeString</key>
+			<string>com.apple.dt.IDE.DebuggerLogContentType</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.DebugLog</string>
+			<key>fileName</key>
+			<string>E0737DD5-FE2F-40AC-8338-977CDEA32176.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>Scratch Now project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>Scratch Now</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Run Scratch Now</string>
+			<key>timeStartedRecording</key>
+			<real>646260159.48013902</real>
+			<key>timeStoppedRecording</key>
+			<real>646260176.97402406</real>
+			<key>title</key>
+			<string>Run Scratch Now</string>
+			<key>uniqueIdentifier</key>
+			<string>E0737DD5-FE2F-40AC-8338-977CDEA32176</string>
 		</dict>
 	</dict>
 </dict>

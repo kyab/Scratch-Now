@@ -237,7 +237,9 @@ static double linearInterporation(int x0, double y0, int x1, double y1, double x
 
 -(void)turnTableSpeedRateChanged{
     _speedRate = [_turnTableView speedRate];
-    if (_speedRate == 1.0){
+    if (_speedRate == 0.0 && ![_turnTableView isScratching] && !_tableStopped){
+        _speedRate = 1.0;
+        [_turnTableView setSpeedRate:_speedRate];
         [_miniFaderIn startFadeIn];
         [_ring follow];
     }

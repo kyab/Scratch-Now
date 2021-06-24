@@ -44,5 +44,6 @@
 -(void)start;
 -(void)stop;
 -(double)speedRate;
-
+-(void)setSpeedRate:(float)speedRate;
+-(Boolean)isScratching;
 @end

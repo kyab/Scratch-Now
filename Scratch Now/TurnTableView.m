@@ -195,7 +195,8 @@ double rad2deg(double rad){
 
 -(void)mouseUp:(NSEvent *)theEvent{
     _pressing = NO;
-    _speedRate = 1.0f;
+    
+    _speedRate = 0.0;
     [_delegate turnTableSpeedRateChanged];
     
     [[NSCursor arrowCursor] set];
@@ -254,6 +255,10 @@ double rad2deg(double rad){
     return _speedRate;
 }
 
+-(void)setSpeedRate:(float)speedRate{
+    _speedRate = speedRate;
+}
+
 -(void)setDelegate:(id<TurnTableDelegate>)delegate{
     _delegate = delegate;
 }
@@ -261,7 +266,9 @@ double rad2deg(double rad){
 -(void)setRingBuffer:(RingBuffer *)ring{
     _ring = ring;
 }
-
+-(Boolean)isScratching{
+    return _pressing;
+}
 
 
 @end
