@@ -30,8 +30,9 @@
     [_ae setRenderDelegate:(id<AudioEngineDelegate>)self];
     
     [_ae changeSystemOutputDeviceToBGM];
-    [_ae startInput];
+//    [_ae startInput];
     [_ae startOutput];
+    [_ae startInput];
     
     
 }
@@ -96,7 +97,7 @@
         float *pRight = (float *)ioData->mBuffers[1].mData;
         bzero(pLeft,sizeof(float)*sampleNum );
         bzero(pRight,sizeof(float)*sampleNum );
-        NSLog(@"shortage in out thread");
+//        NSLog(@"shortage in out thread");
         return noErr;
     }
     
