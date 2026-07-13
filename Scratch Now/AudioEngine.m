@@ -73,24 +73,26 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         return noErr;
     }
     
-    //Peak logging for capture verification (about once per second)
-    {
-        static UInt32 frameCounter = 0;
-        static float peak = 0.0f;
-        const float *p = (const float *)buf0->mData;
-        UInt32 n = buf0->mDataByteSize / sizeof(float);
-        for (UInt32 i = 0; i < n; i++){
-            float v = fabsf(p[i]);
-            if (v > peak) peak = v;
-        }
-        frameCounter += frames;
-        if (frameCounter >= (UInt32)_engineSampleRate){
-            NSLog(@"Tap capture: peak=%f frames/callback=%u buffers=%u ch(buf0)=%u",
-                  peak, frames, inInputData->mNumberBuffers, buf0->mNumberChannels);
-            frameCounter = 0;
-            peak = 0.0f;
-        }
-    }
+    // Peak logging for tap capture verification (~once per second).
+    // Uncomment to diagnose capture level, buffer layout, and callback size.
+    // Example: Tap capture: peak=0.323507 frames/callback=512 buffers=1 ch(buf0)=2
+//    {
+//        static UInt32 frameCounter = 0;
+//        static float peak = 0.0f;
+//        const float *p = (const float *)buf0->mData;
+//        UInt32 n = buf0->mDataByteSize / sizeof(float);
+//        for (UInt32 i = 0; i < n; i++){
+//            float v = fabsf(p[i]);
+//            if (v > peak) peak = v;
+//        }
+//        frameCounter += frames;
+//        if (frameCounter >= (UInt32)_engineSampleRate){
+//            NSLog(@"Tap capture: peak=%f frames/callback=%u buffers=%u ch(buf0)=%u",
+//                  peak, frames, inInputData->mNumberBuffers, buf0->mNumberChannels);
+//            frameCounter = 0;
+//            peak = 0.0f;
+//        }
+//    }
     
     //Bridge push-style IOProc to the existing pull-style delegate flow:
     //the delegate calls back readFromInput, which copies from _currentTapBufferList.
