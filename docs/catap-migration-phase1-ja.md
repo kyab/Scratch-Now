@@ -91,15 +91,35 @@ OSStatus ret = AudioHardwareCreateProcessTap(desc, &tapID);
 
 2. **プライベート Aggregate Device の作成**
 
-タップの UID（`desc.UUID.UUIDString`）をサブタップリストに持つ Aggregate Device を作成する。
+Aggregate Device は**実在する出力デバイスをメインサブデバイス**（`kAudioAggregateDeviceMainSubDeviceKey` + `kAudioAggregateDeviceSubDeviceListKey`）として構成し、タップはサブタップリスト（`kAudioAggregateDeviceTapListKey`）に載せる。
+
+> **注意**: タップだけを持つ Aggregate Device（サブデバイスリスト空）にすると、各 API は `noErr` を返し IOProc も発火するのに、バッファが**すべてゼロ（無音）になる**ことが知られている。必ずデフォルト出力デバイスの UID をメインサブデバイスに指定すること。
+
+メインサブデバイスの UID は、既に保持しているデフォルト出力デバイス（`_preOutputDeviceID`）から `kAudioDevicePropertyDeviceUID` で取得する。
 
 ```objc
+// Resolve the UID of the default output device (the aggregate must be
+// anchored to a real device; a tap-only aggregate silently produces zeros)
+CFStringRef outputUID = NULL;
+UInt32 size = sizeof(outputUID);
+AudioObjectPropertyAddress addr = {
+    kAudioDevicePropertyDeviceUID,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMain,
+};
+ret = AudioObjectGetPropertyData(_preOutputDeviceID, &addr, 0, NULL, &size, &outputUID);
+
 NSDictionary *aggDesc = @{
-    @(kAudioAggregateDeviceNameKey)         : @"Scratch Now Tap Aggregate",
-    @(kAudioAggregateDeviceUIDKey)          : @"com.kyab.Scratch-Now.tap-aggregate",
-    @(kAudioAggregateDeviceIsPrivateKey)    : @YES,
-    @(kAudioAggregateDeviceTapAutoStartKey) : @YES,
-    @(kAudioAggregateDeviceTapListKey)      : @[
+    @(kAudioAggregateDeviceNameKey)          : @"Scratch Now Tap Aggregate",
+    @(kAudioAggregateDeviceUIDKey)           : @"com.kyab.Scratch-Now.tap-aggregate",
+    @(kAudioAggregateDeviceMainSubDeviceKey) : (__bridge NSString *)outputUID,
+    @(kAudioAggregateDeviceIsPrivateKey)     : @YES,
+    @(kAudioAggregateDeviceIsStackedKey)     : @NO,
+    @(kAudioAggregateDeviceTapAutoStartKey)  : @YES,
+    @(kAudioAggregateDeviceSubDeviceListKey) : @[
+        @{ @(kAudioSubDeviceUIDKey) : (__bridge NSString *)outputUID },
+    ],
+    @(kAudioAggregateDeviceTapListKey)       : @[
         @{ @(kAudioSubTapUIDKey) : desc.UUID.UUIDString,
            @(kAudioSubTapDriftCompensationKey) : @YES },
     ],
@@ -107,6 +127,8 @@ NSDictionary *aggDesc = @{
 AudioObjectID aggregateID = kAudioObjectUnknown;
 ret = AudioHardwareCreateAggregateDevice((__bridge CFDictionaryRef)aggDesc, &aggregateID);
 ```
+
+- デフォルト出力デバイスがユーザー操作で切り替わった場合、メインサブデバイスが古いデバイスを指したままになる。`kAudioHardwarePropertyDefaultOutputDevice` の変更を監視して Aggregate Device を作り直す対応は、フェーズ1では既知の制限として記載に留める（現行実装も出力先は起動時のデバイス固定であり退行はない）
 
 3. **IOProc の登録**
 
