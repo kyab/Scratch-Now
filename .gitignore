@@ -1,0 +1,46 @@
+# Xcode build artifacts
+build/
+DerivedData/
+*.derived-data-log-*
+
+# Distribution / packaging outputs
+Dirstribution/
+*.pkg
+
+# Xcode user-specific data
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+
+# Build products
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.hmap
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/
+Package.pins
+Package.resolved
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
