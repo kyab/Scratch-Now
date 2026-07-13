@@ -41,7 +41,6 @@ OSStatus MyRender(void *inRefCon,
 }
 
 - (OSStatus) renderOutput:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData{
-    
     return [_delegate outCallback:ioActionFlags inTimeStamp:inTimeStamp inBusNumber:inBusNumber inNumberFrames:inNumberFrames ioData:ioData];
 }
 
@@ -163,7 +162,7 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         return NO;
     }
     
-    //Create the tap first: its format decides the sample rate of the whole pipeline.
+    // Create a tap bound to the current output device.
     if (![self createProcessTap]){
         return NO;
     }
@@ -215,8 +214,23 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         return NO;
     }
     
+    CFStringRef outputUID = NULL;
+    size = sizeof(outputUID);
+    propAddress.mSelector = kAudioDevicePropertyDeviceUID;
+    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
+    propAddress.mElement = kAudioObjectPropertyElementMain;
+    ret = AudioObjectGetPropertyData(_outputDeviceID, &propAddress, 0, NULL, &size, &outputUID);
+    if (FAILED(ret) || outputUID == NULL){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to get output device UID for tap = %d(%@)", ret, [err description]);
+        return NO;
+    }
+
     CATapDescription *desc = [[CATapDescription alloc]
-                              initStereoGlobalTapButExcludeProcesses:@[ @(ownProcessObj) ]];
+                              initExcludingProcesses:@[ @(ownProcessObj) ]
+                              andDeviceUID:(__bridge NSString *)outputUID
+                              withStream:0];
+    CFRelease(outputUID);
     desc.muteBehavior = CATapMutedWhenTapped;
     desc.privateTap = YES;
     desc.name = @"Scratch Now Tap";
@@ -375,7 +389,7 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     
     AudioStreamBasicDescription asbd = {0};
     UInt32 size = sizeof(asbd);
-    asbd.mSampleRate = _engineSampleRate;   //follow the tap rate (no SRC anywhere)
+    asbd.mSampleRate = _engineSampleRate;   // Follow the device-specific tap format.
     asbd.mFormatID = kAudioFormatLinearPCM;
     asbd.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked | kAudioFormatFlagIsNonInterleaved;
     asbd.mBytesPerPacket = 4;

@@ -18,7 +18,7 @@
     _miniFaderIn = [[MiniFaderIn alloc] init];
     
     
-    //Initialize the engine first: the tap format decides the pipeline sample rate,
+    //Initialize the engine first: the device-specific tap decides the pipeline sample rate,
     //which the ring buffer allocation depends on.
     _ae = [[AudioEngine alloc] init];
     if([_ae initialize]){
