@@ -88,9 +88,13 @@ double rad2deg(double rad){
 
 
     
+    if (!_ring || [_ring sampleRate] <= 0){
+        return;
+    }
+    
     NSBezierPath *lineRecord = [NSBezierPath bezierPath];
     [lineRecord moveToPoint:NSMakePoint(centerX,centerY)];
-    double thetaRecordRad = [_ring recordFrame]/44100.0 * (-33.3/60 * 2 * M_PI);
+    double thetaRecordRad = [_ring recordFrame]/[_ring sampleRate] * (-33.3/60 * 2 * M_PI);
     [lineRecord lineToPoint:NSMakePoint(centerX + r*cos(thetaRecordRad)/3, centerY + r*sin(thetaRecordRad)/3)];
     [[NSColor lightGrayColor] set];
     [lineRecord setLineWidth:1.0];
@@ -101,7 +105,7 @@ double rad2deg(double rad){
     
     NSBezierPath *linePlay = [NSBezierPath bezierPath];
     [linePlay moveToPoint:NSMakePoint(centerX,centerY)];
-    double thetaPlayRad = [_ring playFrame]/44100.0 * (-33.3/60 * 2 * M_PI);
+    double thetaPlayRad = [_ring playFrame]/[_ring sampleRate] * (-33.3/60 * 2 * M_PI);
     [linePlay lineToPoint:NSMakePoint(centerX + r*cos(thetaPlayRad), centerY + r*sin(thetaPlayRad))];
     if (_pressing){
         [[NSColor orangeColor] set ];

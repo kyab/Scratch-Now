@@ -24,10 +24,10 @@
 	<string>public.app-category.music</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSAudioCaptureUsageDescription</key>
+	<string>Scratch Now captures system audio to apply real-time scratch effects. 再生中のシステム音声にリアルタイムでスクラッチ加工を行うためにオーディオをキャプチャします。</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string></string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

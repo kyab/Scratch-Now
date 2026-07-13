@@ -8,16 +8,19 @@
 
 #import "AudioEngine.h"
 #import <AudioToolbox/AudioToolbox.h>
+#import <CoreAudio/CATapDescription.h>
+#import <CoreAudio/AudioHardwareTapping.h>
 
-#define OUTPUT_DEVICE @"Built-in Output"
-//#define OUTPUT_DEVICE @"Soundflower (2ch)"
-#define LOOPBACK_DEVICE @"Scratch Now"
+#define AGGREGATE_DEVICE_UID @"com.kyab.Scratch-Now.tap-aggregate"
 
 
 @implementation AudioEngine
 - (id)init
 {
     self = [super init];
+    _tapID = kAudioObjectUnknown;
+    _aggregateID = kAudioObjectUnknown;
+    _ioProcID = NULL;
     return self;
 }
 
@@ -42,62 +45,128 @@ OSStatus MyRender(void *inRefCon,
     return [_delegate outCallback:ioActionFlags inTimeStamp:inTimeStamp inBusNumber:inBusNumber inNumberFrames:inNumberFrames ioData:ioData];
 }
 
-//notify to read
-OSStatus MyRenderIn(void *inRefCon,
-                    AudioUnitRenderActionFlags *ioActionFlags,
-                    const AudioTimeStamp      *inTimeStamp,
-                    UInt32 inBusNumber,
-                    UInt32 inNumberFrames,
-                    AudioBufferList *ioData){
+//IOProc attached to the private aggregate device. inInputData carries the tap capture.
+static OSStatus TapIOProc(AudioObjectID inDevice,
+                          const AudioTimeStamp *inNow,
+                          const AudioBufferList *inInputData,
+                          const AudioTimeStamp *inInputTime,
+                          AudioBufferList *outOutputData,
+                          const AudioTimeStamp *inOutputTime,
+                          void *inClientData){
+    AudioEngine *engine = (__bridge AudioEngine *)inClientData;
+    return [engine handleTapInput:inInputData inTimeStamp:inInputTime];
+}
+
+- (OSStatus) handleTapInput:(const AudioBufferList *)inInputData inTimeStamp:(const AudioTimeStamp *)inTimeStamp{
+    
+    if (!inInputData || inInputData->mNumberBuffers == 0){
+        return noErr;
+    }
+    
+    const AudioBuffer *buf0 = &inInputData->mBuffers[0];
+    UInt32 bytesPerFrame = buf0->mNumberChannels * sizeof(float);
+    if (bytesPerFrame == 0){
+        return noErr;
+    }
+    UInt32 frames = buf0->mDataByteSize / bytesPerFrame;
+    if (frames == 0){
+        return noErr;
+    }
+    
+    //Peak logging for capture verification (about once per second)
     {
-//                static UInt32 count = 0;
-//                if ((count % 100) == 0){
-//                    NSLog(@"LoopbackSide inputcallback inNumberFrames = %u", inNumberFrames);
-//                }
-//                count++;
+        static UInt32 frameCounter = 0;
+        static float peak = 0.0f;
+        const float *p = (const float *)buf0->mData;
+        UInt32 n = buf0->mDataByteSize / sizeof(float);
+        for (UInt32 i = 0; i < n; i++){
+            float v = fabsf(p[i]);
+            if (v > peak) peak = v;
+        }
+        frameCounter += frames;
+        if (frameCounter >= (UInt32)_engineSampleRate){
+            NSLog(@"Tap capture: peak=%f frames/callback=%u buffers=%u ch(buf0)=%u",
+                  peak, frames, inInputData->mNumberBuffers, buf0->mNumberChannels);
+            frameCounter = 0;
+            peak = 0.0f;
+        }
     }
     
-    AudioEngine *engine = (__bridge AudioEngine *)inRefCon;
-    return [engine renderInput:ioActionFlags inTimeStamp:inTimeStamp inBusNumber:inBusNumber inNumberFrames:inNumberFrames ioData:ioData];
+    //Bridge push-style IOProc to the existing pull-style delegate flow:
+    //the delegate calls back readFromInput, which copies from _currentTapBufferList.
+    _currentTapBufferList = inInputData;
+    _currentTapFrames = frames;
     
-}
-
-
-- (OSStatus) renderInput:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData{
+    AudioUnitRenderActionFlags flags = 0;
+    OSStatus ret = [_delegate inCallback:&flags inTimeStamp:inTimeStamp inBusNumber:1 inNumberFrames:frames ioData:NULL];
     
-
-    return [_delegate inCallback:ioActionFlags inTimeStamp:inTimeStamp inBusNumber:inBusNumber inNumberFrames:inNumberFrames ioData:ioData];
-    
-}
-
-
-//actual read from input. should be called from delegate's inCallback
-//called from delegate callback
-- (OSStatus) readFromInput:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData{
-
-    OSStatus ret = AudioUnitRender(_inputUnit,
-                               ioActionFlags,
-                               inTimeStamp,
-                               inBusNumber,
-                               inNumberFrames,
-                               ioData
-                               );
-    if ( 0!=ret ){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed AudioUnitRender err=%d(%@)", ret, [err description]);
-        return ret;
-        
-        //https://forum.juce.com/t/missing-kaudiounitproperty-maximumframesperslice/9109
-        
-    }
+    _currentTapBufferList = NULL;
+    _currentTapFrames = 0;
     
     return ret;
 }
 
 
+//actual read from input. should be called from delegate's inCallback
+//copies the tap capture buffer into ioData (2 mono buffers, L/R)
+- (OSStatus) readFromInput:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData{
+
+    if (!ioData || ioData->mNumberBuffers < 2){
+        return kAudio_ParamError;
+    }
+    
+    float *dstL = (float *)ioData->mBuffers[0].mData;
+    float *dstR = (float *)ioData->mBuffers[1].mData;
+    
+    if (!_currentTapBufferList){
+        NSLog(@"readFromInput called outside of tap IOProc");
+        bzero(dstL, sizeof(float)*inNumberFrames);
+        bzero(dstR, sizeof(float)*inNumberFrames);
+        return noErr;
+    }
+    
+    UInt32 frames = MIN(inNumberFrames, _currentTapFrames);
+    const AudioBufferList *src = _currentTapBufferList;
+    
+    if (src->mNumberBuffers >= 2){
+        //non-interleaved: buffer per channel
+        memcpy(dstL, src->mBuffers[0].mData, sizeof(float)*frames);
+        memcpy(dstR, src->mBuffers[1].mData, sizeof(float)*frames);
+    }else if (src->mBuffers[0].mNumberChannels == 2){
+        //interleaved stereo: deinterleave
+        const float *p = (const float *)src->mBuffers[0].mData;
+        for (UInt32 i = 0; i < frames; i++){
+            dstL[i] = p[2*i];
+            dstR[i] = p[2*i + 1];
+        }
+    }else{
+        //mono: duplicate to both channels
+        const float *p = (const float *)src->mBuffers[0].mData;
+        memcpy(dstL, p, sizeof(float)*frames);
+        memcpy(dstR, p, sizeof(float)*frames);
+    }
+    
+    if (frames < inNumberFrames){
+        bzero(dstL + frames, sizeof(float)*(inNumberFrames - frames));
+        bzero(dstR + frames, sizeof(float)*(inNumberFrames - frames));
+    }
+    
+    return noErr;
+}
+
+
 
 -(BOOL)initialize{
-    if (![self obtainPreOutputDevice]){
+    if (![self obtainDefaultOutputDevice]){
+        return NO;
+    }
+    
+    //Create the tap first: its format decides the sample rate of the whole pipeline.
+    if (![self createProcessTap]){
+        return NO;
+    }
+    
+    if (![self readTapFormat]){
         return NO;
     }
     
@@ -105,22 +174,156 @@ OSStatus MyRenderIn(void *inRefCon,
         return NO;
     }
     
-    if (![self changeOutputDevice]){
+    if (![self setupLowLatencyOutput]){
         return NO;
     }
     
-    if (![self initializeInput]){
+    if (![self createAggregateDevice]){
         return NO;
     }
     
-    if (![self setupVolumeSync]){
-        //some device could not get device volume
-        return YES;
+    if (![self createIOProc]){
+        return NO;
     }
-    
     
     return YES;
     
+}
+
+-(double)sampleRate{
+    return _engineSampleRate;
+}
+
+-(BOOL)createProcessTap{
+    
+    //Translate own PID to an AudioObjectID so we can exclude ourselves
+    //(prevents the processed output from looping back into the tap)
+    pid_t pid = getpid();
+    AudioObjectID ownProcessObj = kAudioObjectUnknown;
+    AudioObjectPropertyAddress propAddress;
+    propAddress.mSelector = kAudioHardwarePropertyTranslatePIDToProcessObject;
+    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
+    propAddress.mElement = kAudioObjectPropertyElementMain;
+    UInt32 size = sizeof(ownProcessObj);
+    OSStatus ret = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propAddress,
+                                              sizeof(pid), &pid, &size, &ownProcessObj);
+    if (FAILED(ret) || ownProcessObj == kAudioObjectUnknown){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to translate PID to process object = %d(%@)", ret, [err description]);
+        return NO;
+    }
+    
+    CATapDescription *desc = [[CATapDescription alloc]
+                              initStereoGlobalTapButExcludeProcesses:@[ @(ownProcessObj) ]];
+    desc.muteBehavior = CATapMutedWhenTapped;
+    desc.privateTap = YES;
+    desc.name = @"Scratch Now Tap";
+    
+    ret = AudioHardwareCreateProcessTap(desc, &_tapID);
+    if (FAILED(ret) || _tapID == kAudioObjectUnknown){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed AudioHardwareCreateProcessTap = %d(%@)", ret, [err description]);
+        return NO;
+    }
+    
+    NSLog(@"Process tap created. tapID=%u", _tapID);
+    return YES;
+}
+
+-(BOOL)readTapFormat{
+    
+    AudioObjectPropertyAddress propAddress;
+    propAddress.mSelector = kAudioTapPropertyFormat;
+    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
+    propAddress.mElement = kAudioObjectPropertyElementMain;
+    
+    UInt32 size = sizeof(_tapASBD);
+    OSStatus ret = AudioObjectGetPropertyData(_tapID, &propAddress, 0, NULL, &size, &_tapASBD);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to get tap format = %d(%@)", ret, [err description]);
+        return NO;
+    }
+    
+    _engineSampleRate = _tapASBD.mSampleRate;
+    
+    NSLog(@"Tap format: rate=%f ch=%u flags=0x%x bytesPerFrame=%u",
+          _tapASBD.mSampleRate, _tapASBD.mChannelsPerFrame,
+          _tapASBD.mFormatFlags, _tapASBD.mBytesPerFrame);
+    
+    return YES;
+}
+
+-(BOOL)createAggregateDevice{
+    
+    //The aggregate must be anchored to a real output device as its main
+    //sub-device; a tap-only aggregate silently produces zero samples.
+    CFStringRef outputUID = NULL;
+    UInt32 size = sizeof(outputUID);
+    AudioObjectPropertyAddress propAddress;
+    propAddress.mSelector = kAudioDevicePropertyDeviceUID;
+    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
+    propAddress.mElement = kAudioObjectPropertyElementMain;
+    OSStatus ret = AudioObjectGetPropertyData(_outputDeviceID, &propAddress, 0, NULL, &size, &outputUID);
+    if (FAILED(ret) || outputUID == NULL){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to get output device UID = %d(%@)", ret, [err description]);
+        return NO;
+    }
+    
+    //Tap UID (safer to read it back from the tap object than to rely on the description)
+    CFStringRef tapUID = NULL;
+    size = sizeof(tapUID);
+    propAddress.mSelector = kAudioTapPropertyUID;
+    ret = AudioObjectGetPropertyData(_tapID, &propAddress, 0, NULL, &size, &tapUID);
+    if (FAILED(ret) || tapUID == NULL){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to get tap UID = %d(%@)", ret, [err description]);
+        CFRelease(outputUID);
+        return NO;
+    }
+    
+    NSDictionary *aggDesc = @{
+        @kAudioAggregateDeviceNameKey          : @"Scratch Now Tap Aggregate",
+        @kAudioAggregateDeviceUIDKey           : AGGREGATE_DEVICE_UID,
+        @kAudioAggregateDeviceMainSubDeviceKey : (__bridge NSString *)outputUID,
+        @kAudioAggregateDeviceIsPrivateKey     : @YES,
+        @kAudioAggregateDeviceIsStackedKey     : @NO,
+        @kAudioAggregateDeviceTapAutoStartKey  : @YES,
+        @kAudioAggregateDeviceSubDeviceListKey : @[
+            @{ @kAudioSubDeviceUIDKey : (__bridge NSString *)outputUID },
+        ],
+        @kAudioAggregateDeviceTapListKey       : @[
+            @{ @kAudioSubTapUIDKey : (__bridge NSString *)tapUID,
+               @kAudioSubTapDriftCompensationKey : @YES },
+        ],
+    };
+    
+    ret = AudioHardwareCreateAggregateDevice((__bridge CFDictionaryRef)aggDesc, &_aggregateID);
+    CFRelease(outputUID);
+    CFRelease(tapUID);
+    
+    if (FAILED(ret) || _aggregateID == kAudioObjectUnknown){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed AudioHardwareCreateAggregateDevice = %d(%@)", ret, [err description]);
+        return NO;
+    }
+    
+    NSLog(@"Aggregate device created. aggregateID=%u", _aggregateID);
+    return YES;
+}
+
+-(BOOL)createIOProc{
+    
+    OSStatus ret = AudioDeviceCreateIOProcID(_aggregateID, TapIOProc,
+                                             (__bridge void *)self, &_ioProcID);
+    if (FAILED(ret) || _ioProcID == NULL){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed AudioDeviceCreateIOProcID = %d(%@)", ret, [err description]);
+        return NO;
+    }
+    
+    return YES;
 }
 
 
@@ -170,7 +373,7 @@ OSStatus MyRenderIn(void *inRefCon,
     
     AudioStreamBasicDescription asbd = {0};
     UInt32 size = sizeof(asbd);
-    asbd.mSampleRate = 44100.0;
+    asbd.mSampleRate = _engineSampleRate;   //follow the tap rate (no SRC anywhere)
     asbd.mFormatID = kAudioFormatLinearPCM;
     asbd.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked | kAudioFormatFlagIsNonInterleaved;
     asbd.mBytesPerPacket = 4;
@@ -197,124 +400,8 @@ OSStatus MyRenderIn(void *inRefCon,
 }
 
 
--(BOOL)initializeInput{
-    OSStatus ret = noErr;
-    
-    AudioComponent component;
-    AudioComponentDescription cd;
-    cd.componentType = kAudioUnitType_Output;
-    cd.componentSubType = kAudioUnitSubType_HALOutput;
-    cd.componentManufacturer = kAudioUnitManufacturer_Apple;
-    cd.componentFlags = 0;
-    cd.componentFlagsMask = 0;
-    component = AudioComponentFindNext(NULL, &cd);
-    AudioComponentInstanceNew(component, &_inputUnit);
-    ret = AudioUnitInitialize(_inputUnit);
-    if (FAILED(ret)){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to get input AU. err=%d(%@)", ret, [err description]);
-        return NO;
-    }
-    
-    if(![self setInputDevice]) return NO;
-    if(![self setInputFormat]) return NO;
-    if(![self setInputCallback]) return NO;
-    
-    return YES;
-}
-
--(BOOL)setupVolumeSync{
-    
-    /*
-     Some devices support volume control only via master channel. (BGM)
-     Some devices support volume control only via each channel.  (Built-In Output)
-     Some devices support both of master or channels.
-     */
-    AudioDeviceID bgm = [self getDeviceForName:LOOPBACK_DEVICE];
-
-    Float32 scalar = 0;
-    UInt32 size = sizeof(Float32);
-    
-    AudioObjectPropertyAddress propAddress;
-    propAddress.mSelector = kAudioDevicePropertyVolumeScalar;
-    propAddress.mScope = kAudioObjectPropertyScopeOutput;
-    propAddress.mElement = 0; //use 1 and 2 for build in output
-    
-    if (0!=(AudioObjectGetPropertyData(bgm, &propAddress, 0, NULL, &size, &scalar))){
-        NSLog(@"failed to get volume");
-        return NO;
-        
-    }
-    
-    NSLog(@"Volume(Scalar) for BGM = %f", scalar);
-    
-    OSStatus ret = AudioObjectAddPropertyListener(bgm,&propAddress, PropListenerProc, (__bridge void *)self);
-    
-    if (0!=ret){
-        NSLog(@"Failed to set notification");
-        return NO;
-    }
-    
-    return YES;
-    
-}
-
-
-OSStatus PropListenerProc( AudioObjectID                       inObjectID,
-                          UInt32                              inNumberAddresses,
-                          const AudioObjectPropertyAddress*   inAddresses,
-                          void* __nullable                    inClientData){
-    AudioEngine *s = (__bridge AudioEngine *)inClientData;
-    return [s propListenerProc:inObjectID inNumberAddresses:inNumberAddresses inAddresses:inAddresses];
-}
-
--(OSStatus)propListenerProc:(AudioObjectID)inObjectId inNumberAddresses:(UInt32)inNumberAddresses inAddresses:(const AudioObjectPropertyAddress *)inAddresses{
-
-    NSLog(@"volume changed");
-    [self syncVolume];
-    return noErr;
-    
-}
-
--(BOOL)syncVolume{
-    AudioDeviceID bgm = [self getDeviceForName:LOOPBACK_DEVICE];
-
-    Float32 scalar = 0;
-    UInt32 size = sizeof(Float32);
-
-    AudioObjectPropertyAddress propAddress;
-    propAddress.mSelector = kAudioDevicePropertyVolumeScalar;
-    propAddress.mScope = kAudioObjectPropertyScopeOutput;
-    propAddress.mElement = 0; //use 1 and 2 for build in output
-
-    if (0!=(AudioObjectGetPropertyData(bgm, &propAddress, 0, NULL, &size, &scalar))){
-        NSLog(@"failed to get volume");
-        return NO;
-    }
-
-    
-    AudioDeviceID builtInOutput = [self getDeviceForName:OUTPUT_DEVICE];
-    propAddress.mElement = 1;
-    if (0!=(AudioObjectSetPropertyData(builtInOutput, &propAddress, 0, NULL, size, &scalar))){
-        NSLog(@"failed to sync volume");
-        return NO;
-    }
-    
-    propAddress.mElement = 2;
-    if (0!=(AudioObjectSetPropertyData(builtInOutput, &propAddress, 0, NULL, size, &scalar))){
-        NSLog(@"failed to sync volume");
-        return NO;
-    }
-    
-    NSLog(@"Sync vol OK");
-    return YES;
-
-}
-
-
-
--(BOOL)changeOutputDevice{
-    AudioDeviceID builtInOutput = _preOutputDeviceID;//[self getDeviceForName:OUTPUT_DEVICE];
+-(BOOL)setupLowLatencyOutput{
+    AudioDeviceID builtInOutput = _outputDeviceID;
 
     OSStatus ret = AudioUnitSetProperty(_outUnit,
                                kAudioOutputUnitProperty_CurrentDevice,
@@ -341,184 +428,8 @@ OSStatus PropListenerProc( AudioObjectID                       inObjectID,
         return NO;
     }
     
-    
-    
-
     return YES;
 }
-
-- (Boolean)setInputDevice{
-    OSStatus ret = noErr;
-    
-    //we should enable input and disable output at first.. shit! see TN2091.
-    {
-        UInt32 enableIO = 1;
-        ret = AudioUnitSetProperty(_inputUnit,
-                                   kAudioOutputUnitProperty_EnableIO,
-                                   kAudioUnitScope_Input,
-                                   1,   //input element
-                                   &enableIO,
-                                   sizeof(enableIO));
-        if(FAILED(ret)){
-            NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-            NSLog(@"Failed to kAudioOutputUnitProperty_EnableIO=%d(%@)", ret, [err description]);
-            return NO;
-        }
-        
-        enableIO = 0;
-        ret = AudioUnitSetProperty(_inputUnit,
-                                   kAudioOutputUnitProperty_EnableIO,
-                                   kAudioUnitScope_Output,
-                                   0,
-                                   &enableIO,
-                                   sizeof(enableIO));
-        if(FAILED(ret)){
-            NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-            NSLog(@"Failed to kAudioOutputUnitProperty_EnableIO=%d(%@)", ret, [err description]);
-            return NO;
-        }
-    }
-    
-    AudioDeviceID inDevID = [self getDeviceForName:LOOPBACK_DEVICE];
-
-    ret = AudioUnitSetProperty(_inputUnit,
-                               kAudioOutputUnitProperty_CurrentDevice,
-                               kAudioUnitScope_Global,
-                               0,
-                               &inDevID,
-                               sizeof(AudioDeviceID));
-    if(FAILED(ret)){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to set Device for Input = %d(%@)", ret, [err description]);
-        return NO;
-    }
-    
-    AudioObjectPropertyAddress propAddress;
-    propAddress.mSelector = kAudioDevicePropertyBufferFrameSize;
-    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
-    propAddress.mElement = kAudioObjectPropertyElementMaster;
-    UInt32 frameSize = 32;
-    ret = AudioObjectSetPropertyData(inDevID,
-                                     &propAddress,0, NULL, sizeof(UInt32), &frameSize);
-    if(FAILED(ret)){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to set frame size for Input = %d(%@)", ret, [err description]);
-            return NO;
-    }
-    
-    
-    
-    return YES;
-}
-
-
--(Boolean)setInputFormat {
-    
-    AudioStreamBasicDescription asbd = {0};
-    UInt32 size = sizeof(asbd);
-    asbd.mSampleRate = 44100.0;
-    asbd.mFormatID = kAudioFormatLinearPCM;
-    asbd.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked | kAudioFormatFlagIsNonInterleaved;
-    asbd.mBytesPerPacket = 4;
-    asbd.mFramesPerPacket = 1;
-    asbd.mBytesPerFrame = 4;
-    asbd.mChannelsPerFrame = 2;
-    asbd.mBitsPerChannel = 32;
-    
-    OSStatus ret = AudioUnitSetProperty(_inputUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &asbd, size);
-    if(FAILED(ret)){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to Set Format for Input side = %d(%@)", ret, [err description]);
-        return NO;
-    }
-    
-    return YES;
-}
-
-
--(Boolean)setInputCallback{
-    AURenderCallbackStruct callback;
-    callback.inputProc = MyRenderIn;
-    callback.inputProcRefCon = (__bridge void * _Nullable)(self);
-    
-    OSStatus ret = AudioUnitSetProperty(
-                                        _inputUnit,
-                                        kAudioOutputUnitProperty_SetInputCallback,
-                                        kAudioUnitScope_Global,
-                                        0,
-                                        &callback,
-                                        sizeof(callback));
-    if(FAILED(ret)){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to Set Input side callback = %d(%@)", ret, [err description]);
-        return NO;
-    }
-    
-    return YES;
-    
-}
-
-- (AudioDeviceID)getDeviceForName:(NSString *)devName{
-    OSStatus ret = noErr;
-    UInt32 propertySize = 0;
-    UInt32 num = 0;
-    AudioDeviceID result = -1;
-    
-    AudioObjectPropertyAddress propAddress;
-    propAddress.mSelector = kAudioHardwarePropertyDevices;
-    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
-    propAddress.mElement = kAudioObjectPropertyElementMaster;
-    
-    ret = AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &propAddress, 0, NULL, &propertySize);
-    
-    if(FAILED(ret)){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to get datasize for devices = %d(%@)", ret, [err description]);
-        return -1;
-    }
-    num = propertySize / sizeof(AudioObjectID);
-    
-    AudioObjectID *objects = (AudioObjectID *)malloc(propertySize);
-    ret = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propAddress, 0, NULL, &propertySize, objects);
-    if(FAILED(ret)){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to get devices = %d(%@)", ret, [err description]);
-        free(objects);
-        return -1;
-    }
-    
-    for (int i = 0 ; i < num ; i++){
-        CFStringRef name = NULL;
-        propAddress.mSelector = kAudioObjectPropertyName;
-        UInt32 size = sizeof(CFStringRef);
-        ret = AudioObjectGetPropertyData(objects[i], &propAddress, 0, NULL,
-                                         &size, &name);
-        if(FAILED(ret)){
-            NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-            NSLog(@"Failed to Get Name = %d(%@)", ret, [err description]);
-            free(objects);
-            return -1;
-        }
-        
-        NSLog(@"dev : %@", name);
-        
-        if (name != NULL){
-            if (CFStringCompare(name, (CFStringRef)devName,kCFCompareCaseInsensitive) == kCFCompareEqualTo){
-                result = objects[i];
-                break;
-            }
-            CFRelease(name);
-        }
-        
-    }
-    if (-1 == result){
-        NSLog(@"No Scratch Now Driver found on system");
-    }
-    
-    free(objects);
-    return result;
-}
-
 
 
 -(BOOL)startOutput{
@@ -551,21 +462,40 @@ OSStatus PropListenerProc( AudioObjectID                       inObjectID,
 }
 
 -(BOOL)startInput{
-    OSStatus ret = AudioOutputUnitStart(_inputUnit);
+    //Note: this is the call that triggers the TCC dialog (System Audio Recording)
+    OSStatus ret = AudioDeviceStart(_aggregateID, _ioProcID);
     if (FAILED(ret)){
         NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to get start input. err=%d(%@)", ret, [err description]);
+        NSLog(@"Failed to start tap aggregate device. err=%d(%@)", ret, [err description]);
         return NO;
     }
     _bIsRecording = YES;
+    NSLog(@"Tap aggregate device started");
     return YES;
 }
 
 -(BOOL)stopInput{
     _bIsRecording = NO;
-    AudioOutputUnitStop(_inputUnit);
+    if (_aggregateID != kAudioObjectUnknown && _ioProcID != NULL){
+        AudioDeviceStop(_aggregateID, _ioProcID);
+    }
     
     return YES;
+}
+
+-(void)teardownInput{
+    if (_aggregateID != kAudioObjectUnknown && _ioProcID != NULL){
+        AudioDeviceDestroyIOProcID(_aggregateID, _ioProcID);
+        _ioProcID = NULL;
+    }
+    if (_aggregateID != kAudioObjectUnknown){
+        AudioHardwareDestroyAggregateDevice(_aggregateID);
+        _aggregateID = kAudioObjectUnknown;
+    }
+    if (_tapID != kAudioObjectUnknown){
+        AudioHardwareDestroyProcessTap(_tapID);
+        _tapID = kAudioObjectUnknown;
+    }
 }
 
 
@@ -577,15 +507,15 @@ OSStatus PropListenerProc( AudioObjectID                       inObjectID,
     return _bIsRecording;
 }
 
--(BOOL)obtainPreOutputDevice{
+-(BOOL)obtainDefaultOutputDevice{
     AudioObjectPropertyAddress propAddress;
     propAddress.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
     propAddress.mScope = kAudioObjectPropertyScopeGlobal;
     propAddress.mElement = kAudioObjectPropertyElementMaster;
     
-    UInt32 size = sizeof(_preOutputDeviceID);
+    UInt32 size = sizeof(_outputDeviceID);
     OSStatus ret = AudioObjectGetPropertyData(kAudioObjectSystemObject,&propAddress,
-                                              0, NULL, &size, &_preOutputDeviceID);
+                                              0, NULL, &size, &_outputDeviceID);
     
     if (0 < ret){
         NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
@@ -596,222 +526,4 @@ OSStatus PropListenerProc( AudioObjectID                       inObjectID,
 }
 
 
-//system output
--(BOOL)changeSystemOutputDeviceToBGM{
-    
-    AudioObjectPropertyAddress propAddress;
-    propAddress.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
-    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
-    propAddress.mElement = kAudioObjectPropertyElementMaster;
-    
-    AudioDeviceID bgmOut = [self getDeviceForName:LOOPBACK_DEVICE];
-    
-    OSStatus ret = AudioObjectSetPropertyData(kAudioObjectSystemObject,
-                                              &propAddress,
-                                              0,
-                                              NULL,
-                                              sizeof(AudioObjectID),
-                                              &bgmOut);
-    if(0 < ret){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to set Default output for BGM = %d(%@)", ret, [err description]);
-        return NO;
-    }
-    
-    return YES;
-
-}
--(BOOL)restoreSystemOutputDevice{
-    
-    if (!_preOutputDeviceID) return YES;
-    
-    AudioObjectPropertyAddress propAddress;
-    propAddress.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
-    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
-    propAddress.mElement = kAudioObjectPropertyElementMaster;
-
-    OSStatus ret = AudioObjectSetPropertyData(kAudioObjectSystemObject,
-                                     &propAddress,
-                                     0,
-                                     NULL,
-                                     sizeof(AudioObjectID),
-                                     &_preOutputDeviceID);
-    if(0 < ret){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to restore Default output for BGM = %d(%@)", ret, [err description]);
-        return NO;
-    }
-    
-    return YES;
-}
-
--(NSArray *)listDevices:(BOOL)output{
-    
-    NSMutableArray *ar = [[NSMutableArray alloc] init];
-    OSStatus ret = noErr;
-    UInt32 propertySize = 0;
-    UInt32 num = 0;
-    
-    AudioObjectPropertyAddress propAddress;
-    propAddress.mSelector = kAudioHardwarePropertyDevices;
-    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
-    propAddress.mElement = kAudioObjectPropertyElementMaster;
-    
-    ret = AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &propAddress, 0, NULL, &propertySize);
-    
-    if(FAILED(ret)){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to set Device for Input = %d(%@)", ret, [err description]);
-        return nil;
-    }
-    num = propertySize / sizeof(AudioObjectID);
-    
-    AudioObjectID *objects = (AudioObjectID *)malloc(propertySize);
-    ret = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propAddress, 0, NULL, &propertySize, objects);
-    if(FAILED(ret)){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to set Device for Input = %d(%@)", ret, [err description]);
-        free(objects);
-        return nil;
-    }
-    
-    for (int i = 0 ; i < num ; i++){
-        CFStringRef name = NULL;
-        propAddress.mSelector = kAudioObjectPropertyName;
-        UInt32 size = sizeof(CFStringRef);
-        ret = AudioObjectGetPropertyData(objects[i], &propAddress, 0, NULL,
-                                         &size, &name);
-        if(FAILED(ret)){
-            NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-            NSLog(@"Failed to Get Name = %d(%@)", ret, [err description]);
-            free(objects);
-            return nil;
-        }
-        
-        //Check input/output supported
-        //kAudioDevicePropertyStreams AudioStreamID
-        propAddress.mSelector = kAudioDevicePropertyStreams;
-        if (output){
-            propAddress.mScope = kAudioObjectPropertyScopeOutput;
-        }else{
-            propAddress.mScope = kAudioObjectPropertyScopeInput;
-        }
-        propAddress.mElement = kAudioObjectPropertyElementMaster;
-        ret = AudioObjectGetPropertyDataSize(objects[i], &propAddress, 0, NULL, &propertySize);
-        int num2 = propertySize / sizeof(AudioStreamID);
-        if (num2 > 0 ){
-            [ar addObject:(__bridge NSString *)name];
-        }
-
-        CFRelease(name);
-        
-    }
-    free(objects);
-    return [NSArray arrayWithArray:ar];
-   
-}
-
--(BOOL)changeInputDeviceTo:(NSString *)devName{
-    
-    AudioDeviceID devID = [self getDeviceForName:devName];
-    if (devID == -1) {
-        NSLog(@"Could not get device : %@", devName);
-        return NO;
-    }
-    
-    OSStatus ret = AudioUnitSetProperty(_inputUnit,
-                               kAudioOutputUnitProperty_CurrentDevice,
-                               kAudioUnitScope_Global,
-                               0,
-                               &devID,
-                               sizeof(AudioDeviceID));
-    if(FAILED(ret)){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to set Device for Input = %d(%@)", ret, [err description]);
-        return NO;
-    }
-    
-    AudioObjectPropertyAddress propAddress;
-    propAddress.mSelector = kAudioDevicePropertyBufferFrameSize;
-    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
-    propAddress.mElement = kAudioObjectPropertyElementMaster;
-    UInt32 frameSize = 32;
-    ret = AudioObjectSetPropertyData(devID,
-                                     &propAddress,0, NULL, sizeof(UInt32), &frameSize);
-    if(FAILED(ret)){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to set Device for Input = %d(%@)", ret, [err description]);
-        return NO;
-    }
-    
-    
-    return YES;
-    
-}
-//
-//-(BOOL)testAirPlay{
-//    
-//    //cant support AirPlay from 10.11!!!
-//    //Apple dont allow me to enumurate AirPlay Devices,
-//    //So it cant be settable as HAL Unit's kAudioOutputUnitProperty_CurrentDevice, nor System's Default Output Device.
-//    // Suspecting iTunes uses some magic. Could not find any application that does magic to allow Output devices to AirPlay devices.
-//    // Bug : https://forums.developer.apple.com/thread/17664
-//    
-//    
-//    NSLog(@"testAirPlay");
-//    
-//    AudioObjectPropertyAddress propAddress;
-//    propAddress.mSelector = kAudioHardwarePropertyTranslateUIDToDevice;
-//    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
-//    propAddress.mElement = kAudioObjectPropertyElementMaster;
-//    
-//    CFStringRef airplayDeviceUID = CFSTR("AirPlay");
-//    UInt32 dataSize = 0;
-//    OSStatus ret;
-//    ret = AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &propAddress, sizeof(CFStringRef),
-//                                         &airplayDeviceUID, &dataSize);
-//    
-//    if (FAILED(ret)){
-//        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-//        NSLog(@"Failed to get Device for AirPlay = %d(%@)", ret, [err description]);
-//        return NO;
-//    }
-//    
-//    
-//    AudioDeviceID airplayDeviceId;
-//    ret = AudioObjectGetPropertyData(kAudioObjectSystemObject,
-//                                     &propAddress,
-//                                     sizeof(CFStringRef),
-//                                     &airplayDeviceUID,
-//                                     &dataSize,
-//                                     &airplayDeviceId);
-//    
-//    if (FAILED(ret)){
-//        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-//        NSLog(@"Failed to get Device for AirPlay 2 = %d(%@)", ret, [err description]);
-//        return NO;
-//    }
-//    
-//    NSLog(@"deviceId for AirPlay = 0x%x", airplayDeviceId);
-//    
-//    
-//    CFStringRef name = NULL;
-//    propAddress.mSelector = kAudioObjectPropertyName;
-//    UInt32 size = sizeof(CFStringRef);
-//    ret = AudioObjectGetPropertyData(airplayDeviceId, &propAddress, 0, NULL, &size, &name);
-//    if (FAILED(ret)){
-//        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-//        NSLog(@"Failed to Get Name = %d(%@)", ret, [err description]);
-//        return NO;
-//    }
-//    
-//    
-//    
-//    return YES;
-//    
-//    
-//}
-
-
 @end
-

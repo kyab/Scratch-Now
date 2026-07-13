@@ -7,7 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
-#define RING_SIZE_SAMPLE 44100*30
+#define RING_SIZE_SECONDS 30
 
 @interface RingBuffer : NSObject
 {
@@ -16,12 +16,17 @@
     
     UInt32 _bufSize;    //actual size
     
+    double _sampleRate;
+    
     UInt32 _recordFrame;
     UInt32 _playFrame;
     UInt32 _dryFrame;
     
     UInt32 _minOffsetFrame;
 }
+
+-(id)initWithSampleRate:(double)sampleRate;
+-(double)sampleRate;
 
 
 -(float *)writePtrLeft;

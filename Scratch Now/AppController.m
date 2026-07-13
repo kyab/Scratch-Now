@@ -10,11 +10,6 @@
 @implementation AppController
 
 -(void)awakeFromNib{
-    _ring = [[RingBuffer alloc] init];
-    [_turnTableView setRingBuffer:_ring];
-    
-    [_turnTableView setDelegate:(id<TurnTableDelegate>)self];
-    [_turnTableView start];
     _speedRate = 1.0;
     
     _dryVolume = 0.0;
@@ -23,14 +18,20 @@
     _miniFaderIn = [[MiniFaderIn alloc] init];
     
     
+    //Initialize the engine first: the tap format decides the pipeline sample rate,
+    //which the ring buffer allocation depends on.
     _ae = [[AudioEngine alloc] init];
     if([_ae initialize]){
         NSLog(@"AudioEngine all OK");
     }
     [_ae setRenderDelegate:(id<AudioEngineDelegate>)self];
     
-    [_ae changeSystemOutputDeviceToBGM];
-//    [_ae startInput];
+    _ring = [[RingBuffer alloc] initWithSampleRate:[_ae sampleRate]];
+    [_turnTableView setRingBuffer:_ring];
+    
+    [_turnTableView setDelegate:(id<TurnTableDelegate>)self];
+    [_turnTableView start];
+    
     [_ae startOutput];
     [_ae startInput];
     
@@ -250,6 +251,6 @@ static double linearInterporation(int x0, double y0, int x1, double y1, double x
 -(void)terminate{
     [_ae stopOutput];
     [_ae stopInput];
-    [_ae restoreSystemOutputDevice];
+    [_ae teardownInput];
 }
 @end
