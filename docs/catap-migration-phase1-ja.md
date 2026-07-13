@@ -144,14 +144,47 @@ ret = AudioDeviceCreateIOProcID(aggregateID, TapIOProc,
   - **案 A（推奨）**: `readFromInput` の実装を「IOProc が受け取ったバッファを `ioData` へコピーする」形に差し替える。`AppController.m` 側は無変更で済む
   - 案 B: delegate プロトコルを変更してプッシュ型に作り直す（`AppController.m` にも修正が波及）
 
-4. **フォーマット整合（要検証ポイント）**
+4. **フォーマット整合（方針: パイプライン全体をタップのレートに合わせる）**
 
-- 既存パイプラインは 44.1kHz / Float32 / 非インターリーブ 2ch 固定
-- タップのフォーマットはタップ先（システム出力デバイス）に追従するため、48kHz などになる場合がある
-- タップのストリームフォーマット（`kAudioTapPropertyFormat`）を実行時に取得し、以下の方針で整合させる:
-  1. まず Aggregate Device / タップが 44.1kHz で動くか検証する
-  2. 異なる場合は、リングバッファ書き込み前に変換するか、パイプライン全体のサンプルレートをタップのレートに合わせる（出力側 ASBD の 44100 固定も同時に変更）
-- インターリーブ形式で渡ってくる場合は、リングバッファ書き込み時に L/R へデインターリーブする
+44.1kHz へのこだわりは持たず、**タップの実フォーマットを初期化時に1回だけ読み取り、それをパイプライン全体の唯一のフォーマットとして採用する**。サンプルレート変換（SRC）はどこにも入れない。
+
+この方針が決定論的に成立する根拠:
+
+- タップのフォーマットはタップ先（システム出力デバイス）のフォーマットに追従する
+- Aggregate Device のメインサブデバイスと、アプリの出力先（`_preOutputDeviceID`）は同じデフォルト出力デバイスである
+- したがって**入力（タップ）と出力は構成上同じレートで動く**ことが保証され、レート不一致の分岐や実行時の変換が原理的に発生しない
+
+初期化シーケンス（タップのフォーマット取得を先行させる）:
+
+```objc
+// 1. Keep the default output device (existing obtainPreOutputDevice)
+// 2. Create the process tap (see step 1)
+// 3. Read the tap's stream format ONCE — this becomes the pipeline format
+AudioStreamBasicDescription tapASBD = {0};
+UInt32 size = sizeof(tapASBD);
+AudioObjectPropertyAddress addr = {
+    kAudioTapPropertyFormat,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMain,
+};
+ret = AudioObjectGetPropertyData(tapID, &addr, 0, NULL, &size, &tapASBD);
+_engineSampleRate = tapASBD.mSampleRate;   // e.g. 48000.0 — single source of truth
+// 4. Initialize output with mSampleRate = _engineSampleRate
+// 5. Allocate RingBuffer with capacity = _engineSampleRate * 30 (seconds)
+// 6. Create the aggregate device and IOProc (see steps 2-3)
+```
+
+これに伴い、44100 固定を前提としていた以下の箇所を `_engineSampleRate` 基準に変更する:
+
+| 箇所 | 現状 | 変更 |
+|------|------|------|
+| `AudioEngine.m: initializeOutput` の ASBD | `mSampleRate = 44100.0` | `mSampleRate = _engineSampleRate` |
+| `RingBuffer.h` の `RING_SIZE_SAMPLE`（44100×30 のコンパイル時定数） | 固定長 | `-initWithSampleRate:` を追加し、実行時に「レート × 30秒」で確保 |
+| `TurnTableView.m` の回転角計算（`recordFrame / 44100.0`） | 44100 固定 | エンジンのレートを渡して計算（33.3rpm の見た目を維持） |
+
+- チャンネルレイアウトも初期化時の `tapASBD` で1回だけ確定させる。インターリーブで渡ってくる場合は IOProc 内で L/R へデインターリーブしてからリングバッファへ書き込む（これはチャンネル並び替えのみで、レート変換ではない）
+- `MiniFader` の `FADE_SAMPLE_NUM` はサンプル数基準のため、48kHz ではフェード時間が約 8% 短くなるが聴感上問題ないレベル。気になる場合のみ「レート × 秒数」に置き換える
+- 実行中にデフォルト出力デバイスやそのレートが変わった場合の Aggregate Device / パイプライン再構築は、前述のデバイス切替と同様フェーズ1では既知の制限とする
 
 5. **start / stop / 破棄**
 
@@ -189,7 +222,7 @@ ret = AudioDeviceCreateIOProcID(aggregateID, TapIOProc,
 ## 5. フェーズ1でやらないこと（スコープ外）
 
 - `Scratch Now Driver` ターゲット・ソースの削除（アプリが依存しなくなった後、別途整理）
-- 出力経路（AUGraph → HAL Output）、`RingBuffer.m`、スクラッチ DSP、UI の変更
+- 出力経路（AUGraph → HAL Output）の構造変更、スクラッチ DSP、UI の変更（ASBD のレートを `_engineSampleRate` にする等、レート追従のための最小限の修正は除く）
 - TCC 許可拒否時の誘導 UI（フェーズ3）
 - 署名・entitlements・Hardened Runtime の整備（フェーズ2）
 
@@ -203,6 +236,7 @@ ret = AudioDeviceCreateIOProcID(aggregateID, TapIOProc,
 4. デフォルト出力デバイスが変更されないこと（システム設定のサウンド出力がそのままであること）
 5. 自プロセスの出力（加工後の音）がループしてタップに戻らないこと
 6. 音量キー（メディアキー）での音量調整が自然に効くこと
+7. デフォルト出力デバイスが 48kHz で動作する環境（Audio MIDI 設定で変更可能）でも、ピッチ・再生速度が正しいこと（SRC を入れていないため、レート追従が正しければピッチずれは起き得ない）
 
 ---
 
@@ -210,13 +244,15 @@ ret = AudioDeviceCreateIOProcID(aggregateID, TapIOProc,
 
 | ファイル | 変更内容 |
 |----------|----------|
-| `Scratch Now/AudioEngine.m` | 入力経路を CATap + Aggregate Device + IOProc に差し替え。不要コード削除 |
-| `Scratch Now/AudioEngine.h` | 入力関連メンバー・メソッド宣言の更新 |
-| `Scratch Now/AppController.m` | デフォルト出力の奪取・復元呼び出しの削除 |
+| `Scratch Now/AudioEngine.m` | 入力経路を CATap + Aggregate Device + IOProc に差し替え。出力 ASBD をタップのレートに追従。不要コード削除 |
+| `Scratch Now/AudioEngine.h` | 入力関連メンバー・メソッド宣言の更新、`_engineSampleRate` の追加 |
+| `Scratch Now/AppController.m` | デフォルト出力の奪取・復元呼び出しの削除、RingBuffer 初期化へのレート受け渡し |
+| `Scratch Now/RingBuffer.m` / `RingBuffer.h` | `RING_SIZE_SAMPLE` 固定長を廃止し、レート × 30秒で実行時に確保 |
+| `Scratch Now/TurnTableView.m` | 回転角計算の 44100 固定をエンジンのレート参照に変更 |
 | `Scratch Now/Info.plist` | `NSAudioCaptureUsageDescription` 追加、`NSMicrophoneUsageDescription` 削除 |
 | `Scratch Now.xcodeproj/project.pbxproj` | `MACOSX_DEPLOYMENT_TARGET` を 14.4 へ |
 
-変更しないもの: `RingBuffer.m` / `TurnTableView.m` / `MiniFader.m` / `MainMenu.xib` / `Scratch Now Driver` 一式
+変更しないもの: `MiniFader.m` / `MainMenu.xib` / `Scratch Now Driver` 一式、スクラッチ DSP 本体（`AppController.m` の補間処理）
 
 ---
 
