@@ -157,7 +157,7 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 
 
 -(BOOL)initialize{
-    if (![self obtainPreOutputDevice]){
+    if (![self obtainDefaultOutputDevice]){
         return NO;
     }
     
@@ -174,7 +174,7 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         return NO;
     }
     
-    if (![self changeOutputDevice]){
+    if (![self setupLowLatencyOutput]){
         return NO;
     }
     
@@ -264,7 +264,7 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     propAddress.mSelector = kAudioDevicePropertyDeviceUID;
     propAddress.mScope = kAudioObjectPropertyScopeGlobal;
     propAddress.mElement = kAudioObjectPropertyElementMain;
-    OSStatus ret = AudioObjectGetPropertyData(_preOutputDeviceID, &propAddress, 0, NULL, &size, &outputUID);
+    OSStatus ret = AudioObjectGetPropertyData(_outputDeviceID, &propAddress, 0, NULL, &size, &outputUID);
     if (FAILED(ret) || outputUID == NULL){
         NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
         NSLog(@"Failed to get output device UID = %d(%@)", ret, [err description]);
@@ -400,8 +400,8 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 }
 
 
--(BOOL)changeOutputDevice{
-    AudioDeviceID builtInOutput = _preOutputDeviceID;
+-(BOOL)setupLowLatencyOutput{
+    AudioDeviceID builtInOutput = _outputDeviceID;
 
     OSStatus ret = AudioUnitSetProperty(_outUnit,
                                kAudioOutputUnitProperty_CurrentDevice,
@@ -507,15 +507,15 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     return _bIsRecording;
 }
 
--(BOOL)obtainPreOutputDevice{
+-(BOOL)obtainDefaultOutputDevice{
     AudioObjectPropertyAddress propAddress;
     propAddress.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
     propAddress.mScope = kAudioObjectPropertyScopeGlobal;
     propAddress.mElement = kAudioObjectPropertyElementMaster;
     
-    UInt32 size = sizeof(_preOutputDeviceID);
+    UInt32 size = sizeof(_outputDeviceID);
     OSStatus ret = AudioObjectGetPropertyData(kAudioObjectSystemObject,&propAddress,
-                                              0, NULL, &size, &_preOutputDeviceID);
+                                              0, NULL, &size, &_outputDeviceID);
     
     if (0 < ret){
         NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];

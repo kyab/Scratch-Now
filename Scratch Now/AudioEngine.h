@@ -39,7 +39,7 @@
     
     id<AudioEngineDelegate> _delegate;
     
-    AudioDeviceID _preOutputDeviceID;
+    AudioDeviceID _outputDeviceID;
 
     
 }
