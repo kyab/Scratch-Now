@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <AudioToolbox/AudioToolbox.h>
+#import <CoreAudio/CoreAudio.h>
 
 @protocol AudioEngineDelegate <NSObject>
 @optional
@@ -22,7 +23,16 @@
     AudioUnit _outUnit;
     AudioUnit _converterUnit;
     
-    AudioUnit _inputUnit;
+    // CATap capture path (replaces the former HAL input unit)
+    AudioObjectID _tapID;
+    AudioObjectID _aggregateID;
+    AudioDeviceIOProcID _ioProcID;
+    AudioStreamBasicDescription _tapASBD;
+    double _engineSampleRate;
+    
+    // Valid only while the tap IOProc is invoking the delegate
+    const AudioBufferList *_currentTapBufferList;
+    UInt32 _currentTapFrames;
     
     BOOL _bIsPlaying;
     BOOL _bIsRecording;
@@ -40,18 +50,12 @@
 -(BOOL)stopOutput;
 -(BOOL)startInput;
 -(BOOL)stopInput;
+-(void)teardownInput;
 -(BOOL)isPlaying;
 -(BOOL)isRecording;
 
-//system output
--(BOOL)changeSystemOutputDeviceToBGM;
--(BOOL)restoreSystemOutputDevice;
-
-
-//-(BOOL)testAirPlay;
-
--(NSArray *)listDevices:(BOOL)output;
--(BOOL)changeInputDeviceTo:(NSString *)devName;
+// Sample rate the whole pipeline runs at (taken from the tap format)
+-(double)sampleRate;
 
 //called from delegate callback
 - (OSStatus) readFromInput:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData;

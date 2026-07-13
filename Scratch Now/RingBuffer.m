@@ -10,10 +10,11 @@
 #import "mach/mach.h"
 
 @implementation RingBuffer
-- (id)init{
-    NSLog(@"RingBuffer initialize");
+- (id)initWithSampleRate:(double)sampleRate{
+    NSLog(@"RingBuffer initialize (sampleRate=%f)", sampleRate);
     self = [super init];
     
+    _sampleRate = sampleRate;
     [self initBuffers];
     
     _minOffsetFrame = 32;
@@ -21,13 +22,18 @@
     
 }
 
+-(double)sampleRate{
+    return _sampleRate;
+}
+
 
 -(BOOL)initBuffers{
-    _leftBuf = [self allocMirrorBuf2:RING_SIZE_SAMPLE*4];
+    size_t byteSize = (size_t)(_sampleRate * RING_SIZE_SECONDS) * sizeof(float);
+    _leftBuf = [self allocMirrorBuf2:byteSize];
     if (!_leftBuf){
         return NO;
     }
-    _rightBuf = [self allocMirrorBuf2:RING_SIZE_SAMPLE*4];
+    _rightBuf = [self allocMirrorBuf2:byteSize];
     if (!_rightBuf){
         return NO;
     }
