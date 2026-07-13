@@ -144,22 +144,20 @@ ret = AudioDeviceCreateIOProcID(aggregateID, TapIOProc,
   - **案 A（推奨）**: `readFromInput` の実装を「IOProc が受け取ったバッファを `ioData` へコピーする」形に差し替える。`AppController.m` 側は無変更で済む
   - 案 B: delegate プロトコルを変更してプッシュ型に作り直す（`AppController.m` にも修正が波及）
 
-4. **フォーマット整合（方針: パイプライン全体をタップのレートに合わせる）**
+4. **フォーマット整合（方針: デバイス固有タップのレートに合わせる）**
 
-44.1kHz へのこだわりは持たず、**タップの実フォーマットを初期化時に1回だけ読み取り、それをパイプライン全体の唯一のフォーマットとして採用する**。サンプルレート変換（SRC）はどこにも入れない。
+起動時のデフォルト出力デバイスの UID とストリーム 0 を指定してCATapを作成し、**そのタップの実フォーマットをパイプライン全体の唯一のフォーマットとして採用する**。サンプルレート変換（SRC）は入れない。
 
-この方針が決定論的に成立する根拠:
+2026-07 の実機検証で、`initStereoGlobalTapButExcludeProcesses:` によるデバイス非指定のグローバルタップは、MacBook スピーカーを44.1 kHzに設定しても48 kHzを報告し続ける一方、IOProc には44,100 frames/sの周期でデータを渡すことが確認された。この報告値を採用すると、入力44,100 frames/sに対して出力が48,000 frames/sとなり、約8.84%の音程上昇とリングバッファ不足ノイズが発生する。
 
-- タップのフォーマットはタップ先（システム出力デバイス）のフォーマットに追従する
-- Aggregate Device のメインサブデバイスと、アプリの出力先（`_preOutputDeviceID`）は同じデフォルト出力デバイスである
-- したがって**入力（タップ）と出力は構成上同じレートで動く**ことが保証され、レート不一致の分岐や実行時の変換が原理的に発生しない
+`initExcludingProcesses:andDeviceUID:withStream:` でデフォルト出力デバイスを明示すると、AppleのAPI契約どおりタップ形式が指定ストリーム形式と一致する。44.1 kHz・48 kHzの両設定で、タップASBD、Aggregate Device、入力・出力の実測周期がすべて一致することを確認済み。
 
-初期化シーケンス（タップのフォーマット取得を先行させる）:
+初期化シーケンス:
 
 ```objc
-// 1. Keep the default output device (existing obtainPreOutputDevice)
-// 2. Create the process tap (see step 1)
-// 3. Read the tap's stream format ONCE — this becomes the pipeline format
+// 1. Read the default output device and its UID.
+// 2. Create a device-specific process tap for output stream 0.
+// 3. Read the tap's stream format; this becomes the pipeline format.
 AudioStreamBasicDescription tapASBD = {0};
 UInt32 size = sizeof(tapASBD);
 AudioObjectPropertyAddress addr = {
@@ -168,7 +166,7 @@ AudioObjectPropertyAddress addr = {
     kAudioObjectPropertyElementMain,
 };
 ret = AudioObjectGetPropertyData(tapID, &addr, 0, NULL, &size, &tapASBD);
-_engineSampleRate = tapASBD.mSampleRate;   // e.g. 48000.0 — single source of truth
+_engineSampleRate = tapASBD.mSampleRate;
 // 4. Initialize output with mSampleRate = _engineSampleRate
 // 5. Allocate RingBuffer with capacity = _engineSampleRate * 30 (seconds)
 // 6. Create the aggregate device and IOProc (see steps 2-3)
@@ -244,7 +242,7 @@ _engineSampleRate = tapASBD.mSampleRate;   // e.g. 48000.0 — single source of 
 
 | ファイル | 変更内容 |
 |----------|----------|
-| `Scratch Now/AudioEngine.m` | 入力経路を CATap + Aggregate Device + IOProc に差し替え。出力 ASBD をタップのレートに追従。不要コード削除 |
+| `Scratch Now/AudioEngine.m` | 入力経路をデバイス固有 CATap + Aggregate Device + IOProc に差し替え。出力 ASBD をタップのレートに追従。不要コード削除 |
 | `Scratch Now/AudioEngine.h` | 入力関連メンバー・メソッド宣言の更新、`_engineSampleRate` の追加 |
 | `Scratch Now/AppController.m` | デフォルト出力の奪取・復元呼び出しの削除、RingBuffer 初期化へのレート受け渡し |
 | `Scratch Now/RingBuffer.m` / `RingBuffer.h` | `RING_SIZE_SAMPLE` 固定長を廃止し、レート × 30秒で実行時に確保 |

@@ -54,7 +54,7 @@
 -(BOOL)isPlaying;
 -(BOOL)isRecording;
 
-// Sample rate the whole pipeline runs at (taken from the tap format)
+// Sample rate the whole pipeline runs at (taken from the device-specific tap format)
 -(double)sampleRate;
 
 //called from delegate callback
