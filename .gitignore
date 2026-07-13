@@ -9,6 +9,9 @@ Dirstribution/
 
 # Xcode user-specific data
 xcuserdata/
+
+# Legacy virtual audio driver scheme (CATap migration; target kept for now)
+Scratch Now.xcodeproj/xcshareddata/xcschemes/Scratch Now Driver.xcscheme
 *.xccheckout
 *.moved-aside
 *.xcuserstate
