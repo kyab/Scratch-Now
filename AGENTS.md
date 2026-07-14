@@ -21,17 +21,17 @@
 - 取り込んだ音声は RingBuffer（vm_remap ミラーリング、30 秒分）に書き込まれ、
   出力側は HALOutput AU（フレームサイズ 32 の低レイテンシ設定）で再生する。
 
-### 未実装・未検証の重要事項
+### デフォルト出力デバイス変更への追従
 
-- **タップ中のデフォルト出力デバイス変更への追従は未実装**（2026-07 時点）。
-  デフォルト出力デバイスは起動時に 1 回だけ取得され（`obtainDefaultOutputDevice`）、
-  `kAudioHardwarePropertyDefaultOutputDevice` のリスナー登録は存在しない。
-  そのため、動作中にユーザーが出力デバイスを切り替えても、デバイス固有タップ、
-  再生出力（HALOutput AU）、Aggregate Device のアンカーは旧デバイスに固定されたままになる。
-  新しい出力デバイスへ追従するには、これらとサンプルレート依存のパイプラインを
-  まとめて再構築する必要がある。本アプリにとって重要な未解決課題。
-  実装時は動作中の部品を個別に差し替えず、CATap / Aggregate Device / HALOutput /
-  RingBuffer を出力デバイス依存の一単位として、安全に停止・破棄・再構築する方針が望ましいとも思うが、計画時に再検討すること。
+- `kAudioHardwarePropertyDefaultOutputDevice` を専用シリアルキューで監視する。
+  通知コールバック自体では Core Audio リソースを操作しない。
+- 出力変更時は、IOProc、Aggregate Device、デバイス固有 CATap、HALOutput AUGraph、
+  およびレートが変化した場合の RingBuffer を一単位として再構築する。
+  再構築中の一時的な音声断は許容する。
+- 新しい CATap の ASBD が新しいパイプラインの唯一のレート源となる。
+  レート変更時は AppController が RingBuffer を作り直して TurnTableView を再接続する。
+- 失敗時は古い経路へ部分的に戻さず、安全に停止した状態を維持して診断ログを出す。
+  終了時にはリスナーを解除してから全リソースを破棄する。
 
 ### 関連ドキュメント
 

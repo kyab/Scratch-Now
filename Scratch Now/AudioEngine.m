@@ -21,6 +21,10 @@
     _tapID = kAudioObjectUnknown;
     _aggregateID = kAudioObjectUnknown;
     _ioProcID = NULL;
+    _graph = NULL;
+    _outUnit = NULL;
+    _reconfigurationQueue = dispatch_queue_create("com.kyab.ScratchNow.audio-reconfiguration",
+                                                  DISPATCH_QUEUE_SERIAL);
     return self;
 }
 
@@ -158,6 +162,23 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 
 
 -(BOOL)initialize{
+    if (![self buildPipeline]){
+        [self teardownInput];
+        [self teardownOutput];
+        return NO;
+    }
+
+    if (![self registerDefaultOutputDeviceListener]){
+        [self teardownInput];
+        [self teardownOutput];
+        return NO;
+    }
+
+    return YES;
+}
+
+// Build all resources tied to the current default output device.
+-(BOOL)buildPipeline{
     if (![self obtainDefaultOutputDevice]){
         return NO;
     }
@@ -188,11 +209,117 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     }
     
     return YES;
-    
 }
 
 -(double)sampleRate{
     return _engineSampleRate;
+}
+
+// The property callback runs on a serial queue so Core Audio notification threads
+// never perform teardown or allocation work directly.
+-(BOOL)registerDefaultOutputDeviceListener{
+    if (_defaultOutputListenerRegistered){
+        return YES;
+    }
+
+    AudioObjectPropertyAddress address = {
+        kAudioHardwarePropertyDefaultOutputDevice,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMain,
+    };
+    __weak AudioEngine *weakSelf = self;
+    _defaultOutputListener = ^(UInt32 numberAddresses,
+                               const AudioObjectPropertyAddress addresses[]) {
+        AudioEngine *strongSelf = weakSelf;
+        if (!strongSelf || strongSelf->_isTerminating){
+            return;
+        }
+        [strongSelf reconfigureForDefaultOutputDeviceChange];
+    };
+
+    OSStatus ret = AudioObjectAddPropertyListenerBlock(kAudioObjectSystemObject,
+                                                       &address,
+                                                       _reconfigurationQueue,
+                                                       _defaultOutputListener);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to register default output listener = %d(%@)", ret, [err description]);
+        _defaultOutputListener = nil;
+        return NO;
+    }
+
+    _defaultOutputListenerRegistered = YES;
+    return YES;
+}
+
+-(void)unregisterDefaultOutputDeviceListener{
+    if (!_defaultOutputListenerRegistered){
+        return;
+    }
+
+    AudioObjectPropertyAddress address = {
+        kAudioHardwarePropertyDefaultOutputDevice,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMain,
+    };
+    OSStatus ret = AudioObjectRemovePropertyListenerBlock(kAudioObjectSystemObject,
+                                                          &address,
+                                                          _reconfigurationQueue,
+                                                          _defaultOutputListener);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to remove default output listener = %d(%@)", ret, [err description]);
+    }
+    _defaultOutputListenerRegistered = NO;
+    _defaultOutputListener = nil;
+}
+
+-(void)reconfigureForDefaultOutputDeviceChange{
+    if (_isReconfiguring || _isTerminating){
+        return;
+    }
+
+    AudioDeviceID newOutputDeviceID = kAudioObjectUnknown;
+    if (![self readDefaultOutputDevice:&newOutputDeviceID]){
+        return;
+    }
+    if (newOutputDeviceID == _outputDeviceID){
+        return;
+    }
+
+    _isReconfiguring = YES;
+    BOOL wasPlaying = _bIsPlaying;
+    BOOL wasRecording = _bIsRecording;
+    NSLog(@"Default output changed from %u to %u; rebuilding audio pipeline",
+          _outputDeviceID, newOutputDeviceID);
+
+    [self stopInput];
+    [self stopOutput];
+    [self teardownInput];
+    [self teardownOutput];
+
+    if (![self buildPipeline]){
+        NSLog(@"Audio pipeline rebuild failed; audio remains stopped");
+        [self teardownInput];
+        [self teardownOutput];
+        _isReconfiguring = NO;
+        return;
+    }
+
+    if ([_delegate respondsToSelector:@selector(audioEngine:didReconfigureToSampleRate:)]){
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            [self->_delegate audioEngine:self didReconfigureToSampleRate:self->_engineSampleRate];
+        });
+    }
+
+    if (wasPlaying && ![self startOutput]){
+        NSLog(@"Failed to restart output after default device change");
+    }
+    if (wasRecording && ![self startInput]){
+        NSLog(@"Failed to restart input after default device change");
+    }
+
+    _isReconfiguring = NO;
 }
 
 -(BOOL)createProcessTap{
@@ -453,7 +580,10 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     if (_bIsPlaying){
         return YES;
     }
-    
+    if (_graph == NULL){
+        NSLog(@"Cannot start output without an audio graph");
+        return NO;
+    }
     
     OSStatus ret = AUGraphStart(_graph);
     if (FAILED(ret)){
@@ -467,6 +597,9 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 
 -(BOOL)stopOutput{
     _bIsPlaying = NO;
+    if (_graph == NULL){
+        return YES;
+    }
     OSStatus ret = AUGraphStop(_graph);
     if (FAILED(ret)){
         NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
@@ -479,6 +612,10 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 
 -(BOOL)startInput{
     //Note: this is the call that triggers the TCC dialog (System Audio Recording)
+    if (_aggregateID == kAudioObjectUnknown || _ioProcID == NULL){
+        NSLog(@"Cannot start input without a tap aggregate device");
+        return NO;
+    }
     OSStatus ret = AudioDeviceStart(_aggregateID, _ioProcID);
     if (FAILED(ret)){
         NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
@@ -493,7 +630,12 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 -(BOOL)stopInput{
     _bIsRecording = NO;
     if (_aggregateID != kAudioObjectUnknown && _ioProcID != NULL){
-        AudioDeviceStop(_aggregateID, _ioProcID);
+        OSStatus ret = AudioDeviceStop(_aggregateID, _ioProcID);
+        if (FAILED(ret)){
+            NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+            NSLog(@"Failed to stop tap aggregate device = %d(%@)", ret, [err description]);
+            return NO;
+        }
     }
     
     return YES;
@@ -501,17 +643,62 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 
 -(void)teardownInput{
     if (_aggregateID != kAudioObjectUnknown && _ioProcID != NULL){
-        AudioDeviceDestroyIOProcID(_aggregateID, _ioProcID);
+        OSStatus ret = AudioDeviceDestroyIOProcID(_aggregateID, _ioProcID);
+        if (FAILED(ret)){
+            NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+            NSLog(@"Failed to destroy tap IOProc = %d(%@)", ret, [err description]);
+        }
         _ioProcID = NULL;
     }
     if (_aggregateID != kAudioObjectUnknown){
-        AudioHardwareDestroyAggregateDevice(_aggregateID);
+        OSStatus ret = AudioHardwareDestroyAggregateDevice(_aggregateID);
+        if (FAILED(ret)){
+            NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+            NSLog(@"Failed to destroy tap aggregate device = %d(%@)", ret, [err description]);
+        }
         _aggregateID = kAudioObjectUnknown;
     }
     if (_tapID != kAudioObjectUnknown){
-        AudioHardwareDestroyProcessTap(_tapID);
+        OSStatus ret = AudioHardwareDestroyProcessTap(_tapID);
+        if (FAILED(ret)){
+            NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+            NSLog(@"Failed to destroy process tap = %d(%@)", ret, [err description]);
+        }
         _tapID = kAudioObjectUnknown;
     }
+}
+
+-(void)teardownOutput{
+    if (_graph == NULL){
+        _outUnit = NULL;
+        return;
+    }
+
+    OSStatus ret = AUGraphUninitialize(_graph);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to uninitialize output graph = %d(%@)", ret, [err description]);
+    }
+    ret = DisposeAUGraph(_graph);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to dispose output graph = %d(%@)", ret, [err description]);
+    }
+    _graph = NULL;
+    _outUnit = NULL;
+}
+
+-(void)shutdown{
+    if (_isTerminating){
+        return;
+    }
+
+    _isTerminating = YES;
+    [self unregisterDefaultOutputDeviceListener];
+    [self stopInput];
+    [self stopOutput];
+    [self teardownInput];
+    [self teardownOutput];
 }
 
 
@@ -524,16 +711,20 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 }
 
 -(BOOL)obtainDefaultOutputDevice{
+    return [self readDefaultOutputDevice:&_outputDeviceID];
+}
+
+-(BOOL)readDefaultOutputDevice:(AudioDeviceID *)outputDeviceID{
     AudioObjectPropertyAddress propAddress;
     propAddress.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
     propAddress.mScope = kAudioObjectPropertyScopeGlobal;
     propAddress.mElement = kAudioObjectPropertyElementMaster;
     
-    UInt32 size = sizeof(_outputDeviceID);
+    UInt32 size = sizeof(*outputDeviceID);
     OSStatus ret = AudioObjectGetPropertyData(kAudioObjectSystemObject,&propAddress,
-                                              0, NULL, &size, &_outputDeviceID);
+                                              0, NULL, &size, outputDeviceID);
     
-    if (0 < ret){
+    if (FAILED(ret) || *outputDeviceID == kAudioObjectUnknown){
         NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
         NSLog(@"Failed to get Current output %d(%@)", ret, [err description]);
         return NO;
