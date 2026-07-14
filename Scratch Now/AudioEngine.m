@@ -13,7 +13,7 @@
 #import <math.h>
 #import <os/log.h>
 
-#define ENABLE_OUTPUT_SWITCH_DIAGNOSTICS 1
+#define ENABLE_OUTPUT_SWITCH_DIAGNOSTICS 0
 
 static os_log_t OutputDiagnosticsLog(void){
     static os_log_t log;
