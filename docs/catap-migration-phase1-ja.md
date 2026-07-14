@@ -128,7 +128,7 @@ AudioObjectID aggregateID = kAudioObjectUnknown;
 ret = AudioHardwareCreateAggregateDevice((__bridge CFDictionaryRef)aggDesc, &aggregateID);
 ```
 
-- デフォルト出力デバイスがユーザー操作で切り替わった場合、メインサブデバイスが古いデバイスを指したままになる。`kAudioHardwarePropertyDefaultOutputDevice` の変更を監視して Aggregate Device を作り直す対応は、フェーズ1では既知の制限として記載に留める（現行実装も出力先は起動時のデバイス固定であり退行はない）
+- デフォルト出力デバイスが切り替わると、メインサブデバイスだけでなくデバイス固有 CATap も旧デバイスを指す。追従時は Aggregate Device だけを差し替えず、入力・出力パイプライン全体を再構築する（[§9](#9-デフォルト出力デバイス変更への追従)）。
 
 3. **IOProc の登録**
 
@@ -182,7 +182,7 @@ _engineSampleRate = tapASBD.mSampleRate;
 
 - チャンネルレイアウトも初期化時の `tapASBD` で1回だけ確定させる。インターリーブで渡ってくる場合は IOProc 内で L/R へデインターリーブしてからリングバッファへ書き込む（これはチャンネル並び替えのみで、レート変換ではない）
 - `MiniFader` の `FADE_SAMPLE_NUM` はサンプル数基準のため、48kHz ではフェード時間が約 8% 短くなるが聴感上問題ないレベル。気になる場合のみ「レート × 秒数」に置き換える
-- 実行中にデフォルト出力デバイスやそのレートが変わった場合の Aggregate Device / パイプライン再構築は、前述のデバイス切替と同様フェーズ1では既知の制限とする
+- 実行中にデフォルト出力デバイスやそのレートが変わった場合は、新しいタップ ASBD を採用してパイプライン全体を再構築する（[§9](#9-デフォルト出力デバイス変更への追従)）。
 
 5. **start / stop / 破棄**
 
@@ -260,3 +260,29 @@ _engineSampleRate = tapASBD.mSampleRate;
 - [CATapDescription — Apple Developer Docs](https://developer.apple.com/documentation/coreaudio/catapdescription)
 - [insidegui/AudioCap](https://github.com/insidegui/AudioCap) — Swift での実践的なタップ実装
 - [sbetko/catap](https://github.com/sbetko/catap) — mute behavior の詳細ドキュメント
+
+---
+
+## 9. デフォルト出力デバイス変更への追従
+
+デバイス固有 CATap は作成時に指定した出力デバイスへ束縛されるため、動作中のデフォルト出力変更では部分的な出力先差し替えを行わない。`kAudioHardwarePropertyDefaultOutputDevice` と、現在の出力デバイスの `kAudioDevicePropertyNominalSampleRate` を専用シリアルキューで監視し、再構築処理はメインスレッドで次の順に実行する。
+
+1. 入力と出力を停止する
+2. IOProc、Aggregate Device、CATap、HALOutput AUGraph を破棄する
+3. 新しいデフォルト出力を取得し、デバイス固有 CATap とタップ ASBD を作り直す
+4. 新しい ASBD で HALOutput、Aggregate Device、IOProc を作成する
+5. RingBuffer を再生成して TurnTableView に接続する
+6. 切替前に動作していた入出力だけを再開する
+
+再構築中の短時間の無音は許容する。作成に失敗した場合はクラッシュや旧リソースの部分的な再利用を避け、停止状態を保つ。
+
+### 実機検証結果（2026-07）
+
+macOS 14.4 以上で、A を MacBook Pro スピーカー（44.1kHz）、B を AirPods Pro（48kHz）として連続音源を再生しながら検証した。
+
+- 再構築前は A→B 後に旧 A 用タップがゼロ入力となり、B では加工前の音だけが聞こえた。B→A 後は数秒後にのみ加工音が A へ戻った。
+- 再構築後は A→B で 44.1kHz から 48kHz、B→A で 48kHz から 44.1kHz へタップ ASBD が追従した。
+- A→B、B→A のどちらでも、加工音は新しいデフォルト出力だけから聞こえ、タップキャプチャは非ゼロで継続した。
+- 実測した再構築処理は A→B が約0.7秒、B→A が約0.3秒だった。Bluetooth 切替直後には、デバイス側の安定化による短時間のゼロ入力が発生し得る。
+- 同じ A のまま 44.1kHz→48kHz に変更した場合も、約0.16秒で再構築し、48kHz の加工音が継続した。
+- A（48kHz）→B（48kHz）のようにデバイスだけを変更した場合も、出力IDに追従して再構築され、加工音はBだけから聞こえた。

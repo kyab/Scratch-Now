@@ -9,12 +9,15 @@
 #import <Foundation/Foundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreAudio/CoreAudio.h>
+#import <dispatch/dispatch.h>
 
 @protocol AudioEngineDelegate <NSObject>
 @optional
 - (OSStatus) outCallback:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData;
 
 - (OSStatus) inCallback:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData;
+
+- (void)audioEngineDidRebuildPipeline:(id)engine;
 
 @end
 
@@ -41,6 +44,13 @@
     
     AudioDeviceID _outputDeviceID;
 
+    dispatch_queue_t _defaultOutputListenerQueue;
+    AudioObjectPropertyListenerBlock _defaultOutputListener;
+    AudioObjectPropertyListenerBlock _outputSampleRateListener;
+    BOOL _defaultOutputListenerRegistered;
+    BOOL _outputSampleRateListenerRegistered;
+    BOOL _isReconfiguring;
+    BOOL _isTerminating;
     
 }
 
@@ -50,7 +60,7 @@
 -(BOOL)stopOutput;
 -(BOOL)startInput;
 -(BOOL)stopInput;
--(void)teardownInput;
+-(void)shutdown;
 -(BOOL)isPlaying;
 -(BOOL)isRecording;
 

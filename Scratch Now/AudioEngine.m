@@ -10,8 +10,35 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreAudio/CATapDescription.h>
 #import <CoreAudio/AudioHardwareTapping.h>
+#import <math.h>
+#import <os/log.h>
 
-#define AGGREGATE_DEVICE_UID @"com.kyab.Scratch-Now.tap-aggregate"
+#define ENABLE_OUTPUT_SWITCH_DIAGNOSTICS 0
+
+static os_log_t OutputDiagnosticsLog(void){
+    static os_log_t log;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        log = os_log_create("com.kyab.ScratchNow", "output-diagnostics");
+    });
+    return log;
+}
+
+#define OUTPUT_DIAGNOSTIC_LOG(format, ...) \
+    os_log_with_type(OutputDiagnosticsLog(), OS_LOG_TYPE_DEFAULT, format, ##__VA_ARGS__)
+
+@interface AudioEngine ()
+- (void)registerDefaultOutputListener;
+- (void)unregisterDefaultOutputListener;
+- (void)registerOutputSampleRateListener;
+- (void)unregisterOutputSampleRateListener;
+- (BOOL)readDefaultOutputDevice:(AudioDeviceID *)outputDeviceID;
+- (void)logOutputDevice:(AudioDeviceID)deviceID context:(NSString *)context;
+- (BOOL)buildPipeline;
+- (void)rebuildPipelineForOutputConfigurationChangeFromDevice:(AudioDeviceID)sourceDevice;
+- (void)teardownCapturePath;
+- (void)teardownOutput;
+@end
 
 
 @implementation AudioEngine
@@ -21,6 +48,10 @@
     _tapID = kAudioObjectUnknown;
     _aggregateID = kAudioObjectUnknown;
     _ioProcID = NULL;
+    _graph = NULL;
+    _outUnit = NULL;
+    _defaultOutputListenerQueue = dispatch_queue_create("com.kyab.ScratchNow.output-listener",
+                                                        DISPATCH_QUEUE_SERIAL);
     return self;
 }
 
@@ -41,6 +72,12 @@ OSStatus MyRender(void *inRefCon,
 }
 
 - (OSStatus) renderOutput:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData{
+    if (_isReconfiguring || _isTerminating){
+        for (UInt32 i = 0; i < ioData->mNumberBuffers; i++){
+            bzero(ioData->mBuffers[i].mData, ioData->mBuffers[i].mDataByteSize);
+        }
+        return noErr;
+    }
     return [_delegate outCallback:ioActionFlags inTimeStamp:inTimeStamp inBusNumber:inBusNumber inNumberFrames:inNumberFrames ioData:ioData];
 }
 
@@ -57,7 +94,9 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 }
 
 - (OSStatus) handleTapInput:(const AudioBufferList *)inInputData inTimeStamp:(const AudioTimeStamp *)inTimeStamp{
-    
+    if (_isReconfiguring || _isTerminating){
+        return noErr;
+    }
     if (!inInputData || inInputData->mNumberBuffers == 0){
         return noErr;
     }
@@ -72,26 +111,27 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         return noErr;
     }
     
-    // Peak logging for tap capture verification (~once per second).
-    // Uncomment to diagnose capture level, buffer layout, and callback size.
-    // Example: Tap capture: peak=0.323507 frames/callback=512 buffers=1 ch(buf0)=2
-//    {
-//        static UInt32 frameCounter = 0;
-//        static float peak = 0.0f;
-//        const float *p = (const float *)buf0->mData;
-//        UInt32 n = buf0->mDataByteSize / sizeof(float);
-//        for (UInt32 i = 0; i < n; i++){
-//            float v = fabsf(p[i]);
-//            if (v > peak) peak = v;
-//        }
-//        frameCounter += frames;
-//        if (frameCounter >= (UInt32)_engineSampleRate){
-//            NSLog(@"Tap capture: peak=%f frames/callback=%u buffers=%u ch(buf0)=%u",
-//                  peak, frames, inInputData->mNumberBuffers, buf0->mNumberChannels);
-//            frameCounter = 0;
-//            peak = 0.0f;
-//        }
-//    }
+#if ENABLE_OUTPUT_SWITCH_DIAGNOSTICS
+    // Temporary once-per-second capture proof for the hardware baseline.
+    {
+        static UInt32 frameCounter = 0;
+        static float peak = 0.0f;
+        const float *p = (const float *)buf0->mData;
+        UInt32 n = buf0->mDataByteSize / sizeof(float);
+        for (UInt32 i = 0; i < n; i++){
+            float v = fabsf(p[i]);
+            if (v > peak) peak = v;
+        }
+        frameCounter += frames;
+        if (frameCounter >= (UInt32)_engineSampleRate){
+            OUTPUT_DIAGNOSTIC_LOG("tapCapture peak=%{public}.6f framesPerCallback=%u buffers=%u channels=%u configuredOutput=%u",
+                                  peak, frames, inInputData->mNumberBuffers,
+                                  buf0->mNumberChannels, _outputDeviceID);
+            frameCounter = 0;
+            peak = 0.0f;
+        }
+    }
+#endif
     
     //Bridge push-style IOProc to the existing pull-style delegate flow:
     //the delegate calls back readFromInput, which copies from _currentTapBufferList.
@@ -158,6 +198,19 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 
 
 -(BOOL)initialize{
+    if (![self buildPipeline]){
+        [self teardownCapturePath];
+        [self teardownOutput];
+        return NO;
+    }
+
+    [self registerDefaultOutputListener];
+    [self registerOutputSampleRateListener];
+    return YES;
+}
+
+// Create every resource that is tied to the current default output device.
+-(BOOL)buildPipeline{
     if (![self obtainDefaultOutputDevice]){
         return NO;
     }
@@ -188,11 +241,242 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     }
     
     return YES;
-    
 }
 
 -(double)sampleRate{
     return _engineSampleRate;
+}
+
+// The listener forwards work to the main thread and never rebuilds on a Core Audio queue.
+-(void)registerDefaultOutputListener{
+    if (_defaultOutputListenerRegistered){
+        return;
+    }
+
+    AudioObjectPropertyAddress address = {
+        kAudioHardwarePropertyDefaultOutputDevice,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMain,
+    };
+    __weak AudioEngine *weakSelf = self;
+    _defaultOutputListener = ^(UInt32 numberAddresses,
+                               const AudioObjectPropertyAddress addresses[]) {
+        AudioEngine *strongSelf = weakSelf;
+        if (!strongSelf || strongSelf->_isTerminating){
+            return;
+        }
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (!strongSelf->_isTerminating){
+                [strongSelf rebuildPipelineForOutputConfigurationChangeFromDevice:kAudioObjectUnknown];
+            }
+        });
+    };
+
+    OSStatus ret = AudioObjectAddPropertyListenerBlock(kAudioObjectSystemObject,
+                                                       &address,
+                                                       _defaultOutputListenerQueue,
+                                                       _defaultOutputListener);
+    if (FAILED(ret)){
+        OUTPUT_DIAGNOSTIC_LOG("failed to register default output listener status=%d",
+                              ret);
+        _defaultOutputListener = nil;
+        return;
+    }
+    _defaultOutputListenerRegistered = YES;
+    OUTPUT_DIAGNOSTIC_LOG("default output listener registered");
+}
+
+-(void)unregisterDefaultOutputListener{
+    if (!_defaultOutputListenerRegistered){
+        return;
+    }
+
+    AudioObjectPropertyAddress address = {
+        kAudioHardwarePropertyDefaultOutputDevice,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMain,
+    };
+    OSStatus ret = AudioObjectRemovePropertyListenerBlock(kAudioObjectSystemObject,
+                                                          &address,
+                                                          _defaultOutputListenerQueue,
+                                                          _defaultOutputListener);
+    if (FAILED(ret)){
+        OUTPUT_DIAGNOSTIC_LOG("failed to remove default output listener status=%d",
+                              ret);
+    }
+    _defaultOutputListenerRegistered = NO;
+    _defaultOutputListener = nil;
+}
+
+-(void)registerOutputSampleRateListener{
+    if (_outputSampleRateListenerRegistered || _outputDeviceID == kAudioObjectUnknown){
+        return;
+    }
+
+    AudioObjectPropertyAddress address = {
+        kAudioDevicePropertyNominalSampleRate,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMain,
+    };
+    AudioDeviceID observedDeviceID = _outputDeviceID;
+    __weak AudioEngine *weakSelf = self;
+    _outputSampleRateListener = ^(UInt32 numberAddresses,
+                                  const AudioObjectPropertyAddress addresses[]) {
+        AudioEngine *strongSelf = weakSelf;
+        if (!strongSelf || strongSelf->_isTerminating){
+            return;
+        }
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (!strongSelf->_isTerminating){
+                [strongSelf rebuildPipelineForOutputConfigurationChangeFromDevice:observedDeviceID];
+            }
+        });
+    };
+
+    OSStatus ret = AudioObjectAddPropertyListenerBlock(observedDeviceID,
+                                                       &address,
+                                                       _defaultOutputListenerQueue,
+                                                       _outputSampleRateListener);
+    if (FAILED(ret)){
+        OUTPUT_DIAGNOSTIC_LOG("failed to register output sample rate listener status=%d",
+                              ret);
+        _outputSampleRateListener = nil;
+        return;
+    }
+    _outputSampleRateListenerRegistered = YES;
+    OUTPUT_DIAGNOSTIC_LOG("output sample rate listener registered output=%u",
+                          observedDeviceID);
+}
+
+-(void)unregisterOutputSampleRateListener{
+    if (!_outputSampleRateListenerRegistered){
+        return;
+    }
+
+    AudioObjectPropertyAddress address = {
+        kAudioDevicePropertyNominalSampleRate,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMain,
+    };
+    OSStatus ret = AudioObjectRemovePropertyListenerBlock(_outputDeviceID,
+                                                          &address,
+                                                          _defaultOutputListenerQueue,
+                                                          _outputSampleRateListener);
+    if (FAILED(ret)){
+        OUTPUT_DIAGNOSTIC_LOG("failed to remove output sample rate listener status=%d",
+                              ret);
+    }
+    _outputSampleRateListenerRegistered = NO;
+    _outputSampleRateListener = nil;
+}
+
+-(BOOL)readDefaultOutputDevice:(AudioDeviceID *)outputDeviceID{
+    AudioObjectPropertyAddress address = {
+        kAudioHardwarePropertyDefaultOutputDevice,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMain,
+    };
+    UInt32 size = sizeof(*outputDeviceID);
+    OSStatus ret = AudioObjectGetPropertyData(kAudioObjectSystemObject, &address,
+                                              0, NULL, &size, outputDeviceID);
+    if (FAILED(ret) || *outputDeviceID == kAudioObjectUnknown){
+        OUTPUT_DIAGNOSTIC_LOG("failed to read default output status=%d",
+                              ret);
+        return NO;
+    }
+    return YES;
+}
+
+-(void)logOutputDevice:(AudioDeviceID)deviceID context:(NSString *)context{
+    AudioObjectPropertyAddress address = {
+        kAudioObjectPropertyName,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMain,
+    };
+    CFStringRef name = NULL;
+    UInt32 size = sizeof(name);
+    OSStatus ret = AudioObjectGetPropertyData(deviceID, &address, 0, NULL, &size, &name);
+    NSString *deviceName = !FAILED(ret) && name ? CFBridgingRelease(name) : @"<unavailable>";
+
+    address.mSelector = kAudioDevicePropertyDeviceUID;
+    CFStringRef uid = NULL;
+    size = sizeof(uid);
+    ret = AudioObjectGetPropertyData(deviceID, &address, 0, NULL, &size, &uid);
+    NSString *deviceUID = !FAILED(ret) && uid ? CFBridgingRelease(uid) : @"<unavailable>";
+
+    Float64 nominalRate = 0.0;
+    size = sizeof(nominalRate);
+    address.mSelector = kAudioDevicePropertyNominalSampleRate;
+    ret = AudioObjectGetPropertyData(deviceID, &address, 0, NULL, &size, &nominalRate);
+    if (FAILED(ret)){
+        nominalRate = 0.0;
+    }
+
+    AudioStreamBasicDescription streamFormat = {0};
+    size = sizeof(streamFormat);
+    address.mSelector = kAudioDevicePropertyStreamFormat;
+    address.mScope = kAudioDevicePropertyScopeOutput;
+    ret = AudioObjectGetPropertyData(deviceID, &address, 0, NULL, &size, &streamFormat);
+    if (FAILED(ret)){
+        streamFormat.mSampleRate = 0.0;
+    }
+
+    OUTPUT_DIAGNOSTIC_LOG("%{public}@ id=%u name=%{public}@ uid=%{public}@ nominalRate=%{public}.1f streamRate=%{public}.1f",
+                          context, deviceID, deviceName, deviceUID, nominalRate,
+                          streamFormat.mSampleRate);
+}
+
+-(void)rebuildPipelineForOutputConfigurationChangeFromDevice:(AudioDeviceID)sourceDevice{
+    if (_isReconfiguring || _isTerminating){
+        return;
+    }
+
+    AudioDeviceID currentDefault = kAudioObjectUnknown;
+    if (![self readDefaultOutputDevice:&currentDefault]){
+        return;
+    }
+    if (currentDefault == _outputDeviceID &&
+        (sourceDevice == kAudioObjectUnknown || sourceDevice != _outputDeviceID)){
+        return;
+    }
+
+    _isReconfiguring = YES;
+    BOOL wasPlaying = _bIsPlaying;
+    BOOL wasRecording = _bIsRecording;
+    OUTPUT_DIAGNOSTIC_LOG("rebuildStarted oldOutput=%u newOutput=%u sourceOutput=%u oldRate=%{public}.1f",
+                          _outputDeviceID, currentDefault, sourceDevice, _engineSampleRate);
+
+    [self stopInput];
+    [self stopOutput];
+    [self unregisterOutputSampleRateListener];
+    [self teardownCapturePath];
+    [self teardownOutput];
+
+    if (![self buildPipeline]){
+        [self teardownCapturePath];
+        [self teardownOutput];
+        OUTPUT_DIAGNOSTIC_LOG("rebuildFailed newOutput=%u", currentDefault);
+        _isReconfiguring = NO;
+        return;
+    }
+
+    [self registerOutputSampleRateListener];
+    if ([_delegate respondsToSelector:@selector(audioEngineDidRebuildPipeline:)]){
+        [_delegate audioEngineDidRebuildPipeline:self];
+    }
+
+    if (wasPlaying && ![self startOutput]){
+        OUTPUT_DIAGNOSTIC_LOG("rebuildFailedToRestartOutput output=%u", _outputDeviceID);
+    }
+    if (wasRecording && ![self startInput]){
+        OUTPUT_DIAGNOSTIC_LOG("rebuildFailedToRestartInput output=%u", _outputDeviceID);
+    }
+
+    OUTPUT_DIAGNOSTIC_LOG("rebuildFinished output=%u rate=%{public}.1f",
+                          _outputDeviceID, _engineSampleRate);
+    _isReconfiguring = NO;
 }
 
 -(BOOL)createProcessTap{
@@ -299,9 +583,11 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         return NO;
     }
     
+    NSString *aggregateUID = [NSString stringWithFormat:@"com.kyab.Scratch-Now.tap-aggregate.%@",
+                              [NSUUID UUID].UUIDString];
     NSDictionary *aggDesc = @{
         @kAudioAggregateDeviceNameKey          : @"Scratch Now Tap Aggregate",
-        @kAudioAggregateDeviceUIDKey           : AGGREGATE_DEVICE_UID,
+        @kAudioAggregateDeviceUIDKey           : aggregateUID,
         @kAudioAggregateDeviceMainSubDeviceKey : (__bridge NSString *)outputUID,
         @kAudioAggregateDeviceIsPrivateKey     : @YES,
         @kAudioAggregateDeviceIsStackedKey     : @NO,
@@ -449,12 +735,13 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 
 
 -(BOOL)startOutput{
-    
     if (_bIsPlaying){
         return YES;
     }
-    
-    
+    if (_graph == NULL){
+        NSLog(@"Cannot start output without an audio graph");
+        return NO;
+    }
     OSStatus ret = AUGraphStart(_graph);
     if (FAILED(ret)){
         NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
@@ -467,6 +754,9 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 
 -(BOOL)stopOutput{
     _bIsPlaying = NO;
+    if (_graph == NULL){
+        return YES;
+    }
     OSStatus ret = AUGraphStop(_graph);
     if (FAILED(ret)){
         NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
@@ -479,6 +769,10 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 
 -(BOOL)startInput{
     //Note: this is the call that triggers the TCC dialog (System Audio Recording)
+    if (_aggregateID == kAudioObjectUnknown || _ioProcID == NULL){
+        NSLog(@"Cannot start input without a tap aggregate device");
+        return NO;
+    }
     OSStatus ret = AudioDeviceStart(_aggregateID, _ioProcID);
     if (FAILED(ret)){
         NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
@@ -493,25 +787,76 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 -(BOOL)stopInput{
     _bIsRecording = NO;
     if (_aggregateID != kAudioObjectUnknown && _ioProcID != NULL){
-        AudioDeviceStop(_aggregateID, _ioProcID);
+        OSStatus ret = AudioDeviceStop(_aggregateID, _ioProcID);
+        if (FAILED(ret)){
+            NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+            NSLog(@"Failed to stop tap aggregate device = %d(%@)", ret, [err description]);
+            return NO;
+        }
     }
     
     return YES;
 }
 
--(void)teardownInput{
+-(void)teardownCapturePath{
     if (_aggregateID != kAudioObjectUnknown && _ioProcID != NULL){
-        AudioDeviceDestroyIOProcID(_aggregateID, _ioProcID);
+        OSStatus ret = AudioDeviceDestroyIOProcID(_aggregateID, _ioProcID);
+        if (FAILED(ret)){
+            NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+            NSLog(@"Failed to destroy tap IOProc = %d(%@)", ret, [err description]);
+        }
         _ioProcID = NULL;
     }
     if (_aggregateID != kAudioObjectUnknown){
-        AudioHardwareDestroyAggregateDevice(_aggregateID);
+        OSStatus ret = AudioHardwareDestroyAggregateDevice(_aggregateID);
+        if (FAILED(ret)){
+            NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+            NSLog(@"Failed to destroy tap aggregate device = %d(%@)", ret, [err description]);
+        }
         _aggregateID = kAudioObjectUnknown;
     }
     if (_tapID != kAudioObjectUnknown){
-        AudioHardwareDestroyProcessTap(_tapID);
+        OSStatus ret = AudioHardwareDestroyProcessTap(_tapID);
+        if (FAILED(ret)){
+            NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+            NSLog(@"Failed to destroy process tap = %d(%@)", ret, [err description]);
+        }
         _tapID = kAudioObjectUnknown;
     }
+}
+
+-(void)teardownOutput{
+    if (_graph == NULL){
+        _outUnit = NULL;
+        return;
+    }
+
+    OSStatus ret = AUGraphUninitialize(_graph);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to uninitialize output graph = %d(%@)", ret, [err description]);
+    }
+    ret = DisposeAUGraph(_graph);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to dispose output graph = %d(%@)", ret, [err description]);
+    }
+    _graph = NULL;
+    _outUnit = NULL;
+}
+
+-(void)shutdown{
+    if (_isTerminating){
+        return;
+    }
+
+    _isTerminating = YES;
+    [self unregisterOutputSampleRateListener];
+    [self unregisterDefaultOutputListener];
+    [self stopInput];
+    [self stopOutput];
+    [self teardownCapturePath];
+    [self teardownOutput];
 }
 
 
@@ -524,20 +869,10 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 }
 
 -(BOOL)obtainDefaultOutputDevice{
-    AudioObjectPropertyAddress propAddress;
-    propAddress.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
-    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
-    propAddress.mElement = kAudioObjectPropertyElementMaster;
-    
-    UInt32 size = sizeof(_outputDeviceID);
-    OSStatus ret = AudioObjectGetPropertyData(kAudioObjectSystemObject,&propAddress,
-                                              0, NULL, &size, &_outputDeviceID);
-    
-    if (0 < ret){
-        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-        NSLog(@"Failed to get Current output %d(%@)", ret, [err description]);
+    if (![self readDefaultOutputDevice:&_outputDeviceID]){
         return NO;
     }
+    [self logOutputDevice:_outputDeviceID context:@"pipelineDefault"];
     return YES;
 }
 
