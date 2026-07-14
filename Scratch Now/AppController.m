@@ -164,8 +164,8 @@
 }
 
 // The engine has stopped its audio callbacks before this notification.
-- (void)audioEngine:(AudioEngine *)engine didReconfigureToSampleRate:(double)sampleRate{
-    _ring = [[RingBuffer alloc] initWithSampleRate:sampleRate];
+- (void)audioEngineDidRebuildPipeline:(AudioEngine *)engine{
+    _ring = [[RingBuffer alloc] initWithSampleRate:[engine sampleRate]];
     [_turnTableView setRingBuffer:_ring];
 }
 
