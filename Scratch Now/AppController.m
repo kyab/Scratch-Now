@@ -163,17 +163,6 @@
     
 }
 
-// The engine has stopped both audio callbacks before this notification.
-- (void)audioEngine:(AudioEngine *)engine didReconfigureToSampleRate:(double)sampleRate{
-    if ([_ring sampleRate] != sampleRate){
-        _ring = [[RingBuffer alloc] initWithSampleRate:sampleRate];
-        [_turnTableView setRingBuffer:_ring];
-    }else{
-        [_ring reset];
-        [_ring follow];
-    }
-}
-
 static double linearInterporation(int x0, double y0, int x1, double y1, double x){
     if (x0 == x1){
         return y0;
@@ -260,6 +249,8 @@ static double linearInterporation(int x0, double y0, int x1, double y1, double x
 
 
 -(void)terminate{
-    [_ae shutdown];
+    [_ae stopOutput];
+    [_ae stopInput];
+    [_ae teardownInput];
 }
 @end
