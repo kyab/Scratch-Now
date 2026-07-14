@@ -215,8 +215,8 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     return _engineSampleRate;
 }
 
-// The property callback runs on a serial queue and forwards rebuild work to the
-// main thread, which owns the UI delegate and application lifecycle.
+// The property callback runs on a serial queue so Core Audio notification threads
+// never perform teardown or allocation work directly.
 -(BOOL)registerDefaultOutputDeviceListener{
     if (_defaultOutputListenerRegistered){
         return YES;
@@ -234,11 +234,7 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         if (!strongSelf || strongSelf->_isTerminating){
             return;
         }
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (!strongSelf->_isTerminating){
-                [strongSelf reconfigureForDefaultOutputDeviceChange];
-            }
-        });
+        [strongSelf reconfigureForDefaultOutputDeviceChange];
     };
 
     OSStatus ret = AudioObjectAddPropertyListenerBlock(kAudioObjectSystemObject,
@@ -311,7 +307,9 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     }
 
     if ([_delegate respondsToSelector:@selector(audioEngine:didReconfigureToSampleRate:)]){
-        [_delegate audioEngine:self didReconfigureToSampleRate:_engineSampleRate];
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            [self->_delegate audioEngine:self didReconfigureToSampleRate:self->_engineSampleRate];
+        });
     }
 
     if (wasPlaying && ![self startOutput]){
