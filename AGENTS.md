@@ -23,8 +23,8 @@
 
 ### デフォルト出力デバイス変更への追従
 
-- `kAudioHardwarePropertyDefaultOutputDevice` を専用シリアルキューで監視する。
-  通知コールバック自体では Core Audio リソースを操作しない。
+- `kAudioHardwarePropertyDefaultOutputDevice` を専用シリアルキューで監視し、
+  再構築要求をメインスレッドへ渡す。通知コールバック自体では Core Audio リソースを操作しない。
 - 出力変更時は、IOProc、Aggregate Device、デバイス固有 CATap、HALOutput AUGraph、
   およびレートが変化した場合の RingBuffer を一単位として再構築する。
   再構築中の一時的な音声断は許容する。
