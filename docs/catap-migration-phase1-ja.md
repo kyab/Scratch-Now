@@ -265,7 +265,7 @@ _engineSampleRate = tapASBD.mSampleRate;
 
 ## 9. デフォルト出力デバイス変更への追従
 
-デバイス固有 CATap は作成時に指定した出力デバイスへ束縛されるため、動作中のデフォルト出力変更では部分的な出力先差し替えを行わない。`kAudioHardwarePropertyDefaultOutputDevice` の通知を専用シリアルキューで受け、再構築処理はメインスレッドで次の順に実行する。
+デバイス固有 CATap は作成時に指定した出力デバイスへ束縛されるため、動作中のデフォルト出力変更では部分的な出力先差し替えを行わない。`kAudioHardwarePropertyDefaultOutputDevice` と、現在の出力デバイスの `kAudioDevicePropertyNominalSampleRate` を専用シリアルキューで監視し、再構築処理はメインスレッドで次の順に実行する。
 
 1. 入力と出力を停止する
 2. IOProc、Aggregate Device、CATap、HALOutput AUGraph を破棄する
@@ -284,3 +284,5 @@ macOS 14.4 以上で、A を MacBook Pro スピーカー（44.1kHz）、B を Ai
 - 再構築後は A→B で 44.1kHz から 48kHz、B→A で 48kHz から 44.1kHz へタップ ASBD が追従した。
 - A→B、B→A のどちらでも、加工音は新しいデフォルト出力だけから聞こえ、タップキャプチャは非ゼロで継続した。
 - 実測した再構築処理は A→B が約0.7秒、B→A が約0.3秒だった。Bluetooth 切替直後には、デバイス側の安定化による短時間のゼロ入力が発生し得る。
+- 同じ A のまま 44.1kHz→48kHz に変更した場合も、約0.16秒で再構築し、48kHz の加工音が継続した。
+- A（48kHz）→B（48kHz）のようにデバイスだけを変更した場合も、出力IDに追従して再構築され、加工音はBだけから聞こえた。

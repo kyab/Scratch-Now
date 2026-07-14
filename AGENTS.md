@@ -23,9 +23,11 @@
 
 ### デフォルト出力デバイス変更への追従
 
-- `kAudioHardwarePropertyDefaultOutputDevice` を専用シリアルキューで監視し、
-  通知時の再構築処理はメインスレッドへ移す。通知コールバック自体では Core Audio
+- `kAudioHardwarePropertyDefaultOutputDevice` と、現在の出力デバイスの
+  `kAudioDevicePropertyNominalSampleRate` を専用シリアルキューで監視する。
+  通知時の再構築処理はメインスレッドへ移し、通知コールバック自体では Core Audio
   リソースを操作しない。
+- 出力デバイスだけ、サンプルレートだけ、または両方が変更された場合に同じ再構築経路を使う。
 - 出力変更時は、IOProc、Aggregate Device、デバイス固有 CATap、HALOutput AUGraph、
   RingBuffer を出力デバイス依存の一単位として停止・破棄・再構築する。
   再構築中の短時間の音声断は許容する。
