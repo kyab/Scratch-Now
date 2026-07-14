@@ -21,10 +21,10 @@
     //Initialize the engine first: the device-specific tap decides the pipeline sample rate,
     //which the ring buffer allocation depends on.
     _ae = [[AudioEngine alloc] init];
+    [_ae setRenderDelegate:(id<AudioEngineDelegate>)self];
     if([_ae initialize]){
         NSLog(@"AudioEngine all OK");
     }
-    [_ae setRenderDelegate:(id<AudioEngineDelegate>)self];
     
     _ring = [[RingBuffer alloc] initWithSampleRate:[_ae sampleRate]];
     [_turnTableView setRingBuffer:_ring];
@@ -163,6 +163,12 @@
     
 }
 
+// The engine has stopped its audio callbacks before this notification.
+- (void)audioEngine:(AudioEngine *)engine didReconfigureToSampleRate:(double)sampleRate{
+    _ring = [[RingBuffer alloc] initWithSampleRate:sampleRate];
+    [_turnTableView setRingBuffer:_ring];
+}
+
 static double linearInterporation(int x0, double y0, int x1, double y1, double x){
     if (x0 == x1){
         return y0;
@@ -249,8 +255,6 @@ static double linearInterporation(int x0, double y0, int x1, double y1, double x
 
 
 -(void)terminate{
-    [_ae stopOutput];
-    [_ae stopInput];
-    [_ae teardownInput];
+    [_ae shutdown];
 }
 @end
