@@ -21,21 +21,11 @@
 - 取り込んだ音声は RingBuffer（vm_remap ミラーリング、30 秒分）に書き込まれ、
   出力側は HALOutput AU（フレームサイズ 32 の低レイテンシ設定）で再生する。
 
-### デフォルト出力デバイス変更への追従
+### デフォルト出力デバイス変更の追従
 
-- `kAudioHardwarePropertyDefaultOutputDevice` と、現在の出力デバイスの
-  `kAudioDevicePropertyNominalSampleRate` を専用シリアルキューで監視する。
-  通知時の再構築処理はメインスレッドへ移し、通知コールバック自体では Core Audio
-  リソースを操作しない。
-- 出力デバイスだけ、サンプルレートだけ、または両方が変更された場合に同じ再構築経路を使う。
-- 出力変更時は、IOProc、Aggregate Device、デバイス固有 CATap、HALOutput AUGraph、
-  RingBuffer を出力デバイス依存の一単位として停止・破棄・再構築する。
-  再構築中の短時間の音声断は許容する。
-- 新しい CATap ASBD が新しいパイプラインの唯一のレート源となる。
-  AppController は再構築通知を受けて RingBuffer を新規生成し、TurnTableView を再接続する。
-- Aggregate Device は再構築ごとに一意な UID を使用し、破棄直後の UID 衝突を避ける。
-- 再構築に失敗した場合は旧リソースを部分的に再利用せず、停止状態を維持してログを出す。
-  終了時はリスナーを解除してから全リソースを破棄する。
+- **監視:** デフォルト出力デバイスと、そのデバイスのサンプルレートを監視する。
+- **再構築:** 変更時は入出力を停止し、CATap / Aggregate Device / IOProc /
+  HALOutput / RingBuffer を新しい出力デバイスの ASBD で作り直して再開する。
 
 ### 関連ドキュメント
 
