@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreAudio/CoreAudio.h>
+#import <dispatch/dispatch.h>
 
 @protocol AudioEngineDelegate <NSObject>
 @optional
@@ -41,6 +42,9 @@
     
     AudioDeviceID _outputDeviceID;
 
+    dispatch_queue_t _diagnosticsQueue;
+    AudioObjectPropertyListenerBlock _diagnosticDefaultOutputListener;
+    BOOL _diagnosticDefaultOutputListenerRegistered;
     
 }
 

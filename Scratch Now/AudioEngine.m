@@ -10,8 +10,19 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreAudio/CATapDescription.h>
 #import <CoreAudio/AudioHardwareTapping.h>
+#import <math.h>
 
 #define AGGREGATE_DEVICE_UID @"com.kyab.Scratch-Now.tap-aggregate"
+#define ENABLE_OUTPUT_SWITCH_DIAGNOSTICS 1
+
+@interface AudioEngine ()
+#if ENABLE_OUTPUT_SWITCH_DIAGNOSTICS
+- (void)registerDefaultOutputDiagnostics;
+- (void)unregisterDefaultOutputDiagnostics;
+- (BOOL)readDefaultOutputDevice:(AudioDeviceID *)outputDeviceID;
+- (void)logOutputDevice:(AudioDeviceID)deviceID context:(NSString *)context;
+#endif
+@end
 
 
 @implementation AudioEngine
@@ -21,6 +32,8 @@
     _tapID = kAudioObjectUnknown;
     _aggregateID = kAudioObjectUnknown;
     _ioProcID = NULL;
+    _diagnosticsQueue = dispatch_queue_create("com.kyab.ScratchNow.output-diagnostics",
+                                              DISPATCH_QUEUE_SERIAL);
     return self;
 }
 
@@ -72,26 +85,27 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         return noErr;
     }
     
-    // Peak logging for tap capture verification (~once per second).
-    // Uncomment to diagnose capture level, buffer layout, and callback size.
-    // Example: Tap capture: peak=0.323507 frames/callback=512 buffers=1 ch(buf0)=2
-//    {
-//        static UInt32 frameCounter = 0;
-//        static float peak = 0.0f;
-//        const float *p = (const float *)buf0->mData;
-//        UInt32 n = buf0->mDataByteSize / sizeof(float);
-//        for (UInt32 i = 0; i < n; i++){
-//            float v = fabsf(p[i]);
-//            if (v > peak) peak = v;
-//        }
-//        frameCounter += frames;
-//        if (frameCounter >= (UInt32)_engineSampleRate){
-//            NSLog(@"Tap capture: peak=%f frames/callback=%u buffers=%u ch(buf0)=%u",
-//                  peak, frames, inInputData->mNumberBuffers, buf0->mNumberChannels);
-//            frameCounter = 0;
-//            peak = 0.0f;
-//        }
-//    }
+#if ENABLE_OUTPUT_SWITCH_DIAGNOSTICS
+    // Temporary once-per-second capture proof for the hardware baseline.
+    {
+        static UInt32 frameCounter = 0;
+        static float peak = 0.0f;
+        const float *p = (const float *)buf0->mData;
+        UInt32 n = buf0->mDataByteSize / sizeof(float);
+        for (UInt32 i = 0; i < n; i++){
+            float v = fabsf(p[i]);
+            if (v > peak) peak = v;
+        }
+        frameCounter += frames;
+        if (frameCounter >= (UInt32)_engineSampleRate){
+            NSLog(@"Output diagnostics: tapCapture peak=%f framesPerCallback=%u buffers=%u channels=%u configuredOutput=%u",
+                  peak, frames, inInputData->mNumberBuffers, buf0->mNumberChannels,
+                  _outputDeviceID);
+            frameCounter = 0;
+            peak = 0.0f;
+        }
+    }
+#endif
     
     //Bridge push-style IOProc to the existing pull-style delegate flow:
     //the delegate calls back readFromInput, which copies from _currentTapBufferList.
@@ -186,6 +200,10 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     if (![self createIOProc]){
         return NO;
     }
+
+#if ENABLE_OUTPUT_SWITCH_DIAGNOSTICS
+    [self registerDefaultOutputDiagnostics];
+#endif
     
     return YES;
     
@@ -194,6 +212,132 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 -(double)sampleRate{
     return _engineSampleRate;
 }
+
+#if ENABLE_OUTPUT_SWITCH_DIAGNOSTICS
+// This listener only records state. It deliberately does not reconfigure audio.
+-(void)registerDefaultOutputDiagnostics{
+    if (_diagnosticDefaultOutputListenerRegistered){
+        return;
+    }
+
+    AudioObjectPropertyAddress address = {
+        kAudioHardwarePropertyDefaultOutputDevice,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMain,
+    };
+    __weak AudioEngine *weakSelf = self;
+    _diagnosticDefaultOutputListener = ^(UInt32 numberAddresses,
+                                         const AudioObjectPropertyAddress addresses[]) {
+        AudioEngine *strongSelf = weakSelf;
+        if (!strongSelf){
+            return;
+        }
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            AudioDeviceID currentDefault = kAudioObjectUnknown;
+            if ([strongSelf readDefaultOutputDevice:&currentDefault]){
+                NSLog(@"Output diagnostics: defaultChanged configuredOutput=%u currentDefault=%u tapID=%u aggregateID=%u tapRate=%f",
+                      strongSelf->_outputDeviceID, currentDefault, strongSelf->_tapID,
+                      strongSelf->_aggregateID, strongSelf->_engineSampleRate);
+                [strongSelf logOutputDevice:currentDefault context:@"defaultChanged"];
+            }
+        });
+    };
+
+    OSStatus ret = AudioObjectAddPropertyListenerBlock(kAudioObjectSystemObject,
+                                                       &address,
+                                                       _diagnosticsQueue,
+                                                       _diagnosticDefaultOutputListener);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Output diagnostics: failed to register default listener = %d(%@)",
+              ret, [err description]);
+        _diagnosticDefaultOutputListener = nil;
+        return;
+    }
+    _diagnosticDefaultOutputListenerRegistered = YES;
+    NSLog(@"Output diagnostics: default output listener registered");
+}
+
+-(void)unregisterDefaultOutputDiagnostics{
+    if (!_diagnosticDefaultOutputListenerRegistered){
+        return;
+    }
+
+    AudioObjectPropertyAddress address = {
+        kAudioHardwarePropertyDefaultOutputDevice,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMain,
+    };
+    OSStatus ret = AudioObjectRemovePropertyListenerBlock(kAudioObjectSystemObject,
+                                                          &address,
+                                                          _diagnosticsQueue,
+                                                          _diagnosticDefaultOutputListener);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Output diagnostics: failed to remove default listener = %d(%@)",
+              ret, [err description]);
+    }
+    _diagnosticDefaultOutputListenerRegistered = NO;
+    _diagnosticDefaultOutputListener = nil;
+}
+
+-(BOOL)readDefaultOutputDevice:(AudioDeviceID *)outputDeviceID{
+    AudioObjectPropertyAddress address = {
+        kAudioHardwarePropertyDefaultOutputDevice,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMain,
+    };
+    UInt32 size = sizeof(*outputDeviceID);
+    OSStatus ret = AudioObjectGetPropertyData(kAudioObjectSystemObject, &address,
+                                              0, NULL, &size, outputDeviceID);
+    if (FAILED(ret) || *outputDeviceID == kAudioObjectUnknown){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Output diagnostics: failed to read default output = %d(%@)",
+              ret, [err description]);
+        return NO;
+    }
+    return YES;
+}
+
+-(void)logOutputDevice:(AudioDeviceID)deviceID context:(NSString *)context{
+    AudioObjectPropertyAddress address = {
+        kAudioObjectPropertyName,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMain,
+    };
+    CFStringRef name = NULL;
+    UInt32 size = sizeof(name);
+    OSStatus ret = AudioObjectGetPropertyData(deviceID, &address, 0, NULL, &size, &name);
+    NSString *deviceName = !FAILED(ret) && name ? CFBridgingRelease(name) : @"<unavailable>";
+
+    address.mSelector = kAudioDevicePropertyDeviceUID;
+    CFStringRef uid = NULL;
+    size = sizeof(uid);
+    ret = AudioObjectGetPropertyData(deviceID, &address, 0, NULL, &size, &uid);
+    NSString *deviceUID = !FAILED(ret) && uid ? CFBridgingRelease(uid) : @"<unavailable>";
+
+    Float64 nominalRate = 0.0;
+    size = sizeof(nominalRate);
+    address.mSelector = kAudioDevicePropertyNominalSampleRate;
+    ret = AudioObjectGetPropertyData(deviceID, &address, 0, NULL, &size, &nominalRate);
+    if (FAILED(ret)){
+        nominalRate = 0.0;
+    }
+
+    AudioStreamBasicDescription streamFormat = {0};
+    size = sizeof(streamFormat);
+    address.mSelector = kAudioDevicePropertyStreamFormat;
+    address.mScope = kAudioDevicePropertyScopeOutput;
+    ret = AudioObjectGetPropertyData(deviceID, &address, 0, NULL, &size, &streamFormat);
+    if (FAILED(ret)){
+        streamFormat.mSampleRate = 0.0;
+    }
+
+    NSLog(@"Output diagnostics: %@ id=%u name=%@ uid=%@ nominalRate=%f streamRate=%f",
+          context, deviceID, deviceName, deviceUID, nominalRate, streamFormat.mSampleRate);
+}
+#endif
 
 -(BOOL)createProcessTap{
     
@@ -500,6 +644,9 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 }
 
 -(void)teardownInput{
+#if ENABLE_OUTPUT_SWITCH_DIAGNOSTICS
+    [self unregisterDefaultOutputDiagnostics];
+#endif
     if (_aggregateID != kAudioObjectUnknown && _ioProcID != NULL){
         AudioDeviceDestroyIOProcID(_aggregateID, _ioProcID);
         _ioProcID = NULL;
@@ -538,6 +685,9 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         NSLog(@"Failed to get Current output %d(%@)", ret, [err description]);
         return NO;
     }
+#if ENABLE_OUTPUT_SWITCH_DIAGNOSTICS
+    [self logOutputDevice:_outputDeviceID context:@"startupDefault"];
+#endif
     return YES;
 }
 
