@@ -9,3 +9,13 @@ CATap（Core Audio Process Tap）が別プロセスのシステム音声を継�
 3. Scratch Now を終了し、再生を停止する。
 
 タップ側ではゼロクロス由来で音の高さを簡易的に推定し、再生側の周波数変化への追従を確認します。
+
+## ローカル実行
+
+macOS 14.4+ / Xcode / Python 3 が必要です。初回のシステムオーディオ録音ダイアログは許可してください。
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r ./tap_smoke_ci/requirements.txt
+./tap_smoke_ci/run_tap_smoke_test.sh
+```
