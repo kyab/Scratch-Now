@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline-unit-tests:
+    name: Audio pipeline unit tests
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Run pipeline unit tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project "Scratch Now.xcodeproj" \
+            -scheme "Scratch NowTests" \
+            -destination 'platform=macOS' \
+            CODE_SIGNING_ALLOWED=NO
