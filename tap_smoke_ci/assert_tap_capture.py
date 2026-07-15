@@ -14,9 +14,14 @@ Exit code 0 means both checks passed; non-zero means the tap did not behave as
 expected.
 """
 
-import argparse
 import json
 import sys
+
+STATUS_FILE = "/tmp/scratch-now-tap-smoke-ci/tap.jsonl"
+MIN_RMS = 0.005
+BASE_HZ = 220.0
+FIFTH_HZ = 330.0
+FREQ_TOLERANCE = 60.0
 
 
 def load_samples(path):
@@ -34,22 +39,15 @@ def load_samples(path):
     return samples
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--status-file",
-                        default="/tmp/scratch-now-tap-smoke-ci/tap.jsonl")
-    parser.add_argument("--min-rms", type=float, default=0.005,
-                        help="minimum rms to consider the tap non-silent")
-    parser.add_argument("--base-hz", type=float, default=220.0)
-    parser.add_argument("--fifth-hz", type=float, default=330.0)
-    parser.add_argument("--freq-tolerance", type=float, default=60.0,
-                        help="Hz tolerance when matching a band")
-    args = parser.parse_args()
+def near(value, target):
+    return abs(value - target) <= FREQ_TOLERANCE
 
+
+def main() -> int:
     try:
-        samples = load_samples(args.status_file)
+        samples = load_samples(STATUS_FILE)
     except FileNotFoundError:
-        print(f"FAIL: status file not found: {args.status_file}")
+        print(f"FAIL: status file not found: {STATUS_FILE}")
         return 2
 
     if not samples:
@@ -67,27 +65,24 @@ def main() -> int:
     if frames_total <= 0:
         print("FAIL: framesTotal never advanced; tap produced no frames")
         return 3
-    if max_rms < args.min_rms:
-        print(f"FAIL: tap stayed near silence (max_rms {max_rms:.6f} < {args.min_rms})")
+    if max_rms < MIN_RMS:
+        print(f"FAIL: tap stayed near silence (max_rms {max_rms:.6f} < {MIN_RMS})")
         return 3
     print("PASS: tap captured non-silent audio")
 
     # Check 2: following the frequency change.
-    def near(value, target):
-        return abs(value - target) <= args.freq_tolerance
-
-    saw_base = any(near(s.get("estimatedHz", 0.0), args.base_hz) for s in samples)
+    saw_base = any(near(s.get("estimatedHz", 0.0), BASE_HZ) for s in samples)
     # The fifth must be seen and it must occur after a base-band sample, proving
     # the capture followed the change rather than starting there.
     first_base_index = next(
         (i for i, s in enumerate(samples)
-         if near(s.get("estimatedHz", 0.0), args.base_hz)),
+         if near(s.get("estimatedHz", 0.0), BASE_HZ)),
         None,
     )
     followed = False
     if first_base_index is not None:
         followed = any(
-            near(s.get("estimatedHz", 0.0), args.fifth_hz)
+            near(s.get("estimatedHz", 0.0), FIFTH_HZ)
             for s in samples[first_base_index:]
         )
 
@@ -95,10 +90,10 @@ def main() -> int:
     print(f"estimatedHz series: [{est_series}]")
 
     if not saw_base:
-        print(f"FAIL: never observed the base band (~{args.base_hz} Hz)")
+        print(f"FAIL: never observed the base band (~{BASE_HZ} Hz)")
         return 4
     if not followed:
-        print(f"FAIL: capture did not follow to the fifth band (~{args.fifth_hz} Hz)")
+        print(f"FAIL: capture did not follow to the fifth band (~{FIFTH_HZ} Hz)")
         return 4
 
     print("PASS: captured frequency followed the played tone change")

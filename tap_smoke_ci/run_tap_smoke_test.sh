@@ -21,11 +21,10 @@ STATUS_DIR="/tmp/scratch-now-tap-smoke-ci"
 STATUS_FILE="${STATUS_DIR}/tap.jsonl"
 DERIVED_DIR="${DERIVED_DIR:-${REPO_ROOT}/build/tap-smoke-ci}"
 
-# Timing (seconds). Keep in sync with the tone/assert defaults.
-PHASE_A_SECONDS="${PHASE_A_SECONDS:-5.0}"
-GLIDE_SECONDS="${GLIDE_SECONDS:-1.5}"
-TONE_DURATION="${TONE_DURATION:-14.0}"
-APP_SETTLE_SECONDS="${APP_SETTLE_SECONDS:-3.0}"
+# Timing matches tap_smoke_ci/play_pleasant_tone.py fixed constants.
+PHASE_A_SECONDS=5.0
+GLIDE_SECONDS=1.5
+APP_SETTLE_SECONDS=3.0
 
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
@@ -96,9 +95,6 @@ fi
 # 3) Start the real-time pleasant tone (separate process => tap can capture it).
 log "starting pleasant tone playback"
 "${PYTHON_BIN}" "${SCRIPT_DIR}/play_pleasant_tone.py" \
-  --duration "${TONE_DURATION}" \
-  --phase-a-seconds "${PHASE_A_SECONDS}" \
-  --glide-seconds "${GLIDE_SECONDS}" \
   > "${STATUS_DIR}/tone.log" 2>&1 &
 TONE_PID=$!
 sleep 1
@@ -131,8 +127,7 @@ if [ ! -f "${STATUS_FILE}" ]; then
   exit 1
 fi
 
-"${PYTHON_BIN}" "${SCRIPT_DIR}/assert_tap_capture.py" \
-  --status-file "${STATUS_FILE}"
+"${PYTHON_BIN}" "${SCRIPT_DIR}/assert_tap_capture.py"
 RESULT=$?
 
 if [ "${RESULT}" -eq 0 ]; then
