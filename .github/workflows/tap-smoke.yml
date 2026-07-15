@@ -1,0 +1,47 @@
+name: Tap smoke CI
+
+# Thin wrapper around tap_smoke_ci/. All real logic lives in the scripts there
+# so the same test runs locally on a MacBook (see tap_smoke_ci/README.md).
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tap-smoke:
+    # CATap requires macOS 14.4+. Run on the latest macOS runner and the one
+    # before it (currently macos-latest -> 26, plus macos-15).
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r tap_smoke_ci/requirements.txt
+
+      - name: Run tap smoke test
+        run: bash tap_smoke_ci/run_tap_smoke_test.sh
+
+      - name: Upload tap smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tap-smoke-ci-status-${{ matrix.os }}
+          path: /tmp/scratch-now-tap-smoke-ci/
+          if-no-files-found: warn
