@@ -8,31 +8,19 @@
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
 #import "AudioEngine.h"
-#import "RingBuffer.h"
+#import "ScratchPipeline.h"
 #import "TurnTableView.h"
-#import "MiniFader.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface AppController : NSObject{
+@interface AppController : NSObject <AudioEngineRebuildDelegate, TurnTableDelegate>{
     AudioEngine *_ae;
-    RingBuffer *_ring;
+    ScratchPipeline *_pipeline;
     __weak IBOutlet TurnTableView *_turnTableView;
     __weak IBOutlet NSSlider *_sliderDry;
     __weak IBOutlet NSButton *_btnStop;
-    
+
     NSTimer *_tableStopTimer;
-    Boolean _tableStopped;
-    double _speedRate;
-    
-    
-    float _dryVolume;
-    float _wetVolume;
-    
-    float _tempLeftPtr[1024];
-    float _tempRightPtr[1024];
-    
-    MiniFaderIn *_miniFaderIn;
 }
 
 -(void)terminate;
@@ -41,4 +29,3 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 NS_ASSUME_NONNULL_END
-

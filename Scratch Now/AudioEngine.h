@@ -10,38 +10,44 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <CoreAudio/CoreAudio.h>
 #import <dispatch/dispatch.h>
+#import "AudioPipelineProtocols.h"
 
-@protocol AudioEngineDelegate <NSObject>
-@optional
-- (OSStatus) outCallback:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData;
+NS_ASSUME_NONNULL_BEGIN
 
-- (OSStatus) inCallback:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData;
+@class AudioEngine;
 
-- (void)audioEngineDidRebuildPipeline:(id)engine;
-
+// Notified after the capture/output pipeline was rebuilt (e.g. the default output
+// device or its sample rate changed). The consumer/renderer should reconfigure any
+// sample-rate dependent state (such as the ring buffer) at this point.
+@protocol AudioEngineRebuildDelegate <NSObject>
+- (void)audioEngineDidRebuildPipeline:(AudioEngine *)engine;
 @end
 
-@interface AudioEngine : NSObject{
+// Production implementation of both audio abstractions: the CATap-based capture
+// (AudioInputSource) and the HAL-based output (AudioOutputSink). Capture and output
+// are one coupled unit here because the process tap is bound to the current output
+// device; tests substitute independent synthetic input / capture output doubles.
+@interface AudioEngine : NSObject <AudioInputSource, AudioOutputSink> {
     AUGraph _graph;
     AudioUnit _outUnit;
     AudioUnit _converterUnit;
-    
+
     // CATap capture path (replaces the former HAL input unit)
     AudioObjectID _tapID;
     AudioObjectID _aggregateID;
     AudioDeviceIOProcID _ioProcID;
     AudioStreamBasicDescription _tapASBD;
     double _engineSampleRate;
-    
-    // Valid only while the tap IOProc is invoking the delegate
-    const AudioBufferList *_currentTapBufferList;
-    UInt32 _currentTapFrames;
-    
+
+    // Scratch buffers used to deinterleave interleaved tap captures before handing
+    // non-interleaved L/R frames to the input consumer.
+    float *_deinterleaveLeft;
+    float *_deinterleaveRight;
+    UInt32 _deinterleaveCapacityFrames;
+
     BOOL _bIsPlaying;
     BOOL _bIsRecording;
-    
-    id<AudioEngineDelegate> _delegate;
-    
+
     AudioDeviceID _outputDeviceID;
 
     dispatch_queue_t _defaultOutputListenerQueue;
@@ -51,10 +57,12 @@
     BOOL _outputSampleRateListenerRegistered;
     BOOL _isReconfiguring;
     BOOL _isTerminating;
-    
 }
 
--(void)setRenderDelegate:(id<AudioEngineDelegate>)delegate;
+@property (nonatomic, weak, nullable) id<AudioInputConsumer> inputConsumer;
+@property (nonatomic, weak, nullable) id<AudioOutputRenderer> outputRenderer;
+@property (nonatomic, weak, nullable) id<AudioEngineRebuildDelegate> rebuildDelegate;
+
 -(BOOL)initialize;
 -(BOOL)startOutput;
 -(BOOL)stopOutput;
@@ -67,8 +75,13 @@
 // Sample rate the whole pipeline runs at (taken from the device-specific tap format)
 -(double)sampleRate;
 
-//called from delegate callback
-- (OSStatus) readFromInput:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData;
-    
+// AudioInputSource / AudioOutputSink protocol methods (thin aliases over the
+// input/output start/stop calls above).
+-(BOOL)startCapture;
+-(BOOL)stopCapture;
+-(BOOL)startPlayback;
+-(BOOL)stopPlayback;
 
 @end
+
+NS_ASSUME_NONNULL_END
