@@ -19,6 +19,15 @@
 		EBB7EF64267E0C7C0094DDB2 /* TurnTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF63267E0C7B0094DDB2 /* TurnTableView.m */; };
 		EBB7EF67267E0D5D0094DDB2 /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF66267E0D5D0094DDB2 /* AppController.m */; };
 		EBC5C546268524BE00CDA6DF /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = EBC5C545268524BE00CDA6DF /* README.md */; };
+		FE0000000000000000000030 /* ScratchPipeline.m in Sources */ = {isa = PBXBuildFile; fileRef = FE0000000000000000000003 /* ScratchPipeline.m */; };
+		FE0000000000000000000040 /* ScratchPipeline.m in Sources */ = {isa = PBXBuildFile; fileRef = FE0000000000000000000003 /* ScratchPipeline.m */; };
+		FE0000000000000000000041 /* RingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF5E267E0AB10094DDB2 /* RingBuffer.m */; };
+		FE0000000000000000000042 /* MiniFader.m in Sources */ = {isa = PBXBuildFile; fileRef = EB681285267F079000C475FF /* MiniFader.m */; };
+		FE0000000000000000000043 /* SyntheticInputSource.m in Sources */ = {isa = PBXBuildFile; fileRef = FE0000000000000000000011 /* SyntheticInputSource.m */; };
+		FE0000000000000000000044 /* CaptureOutputSink.m in Sources */ = {isa = PBXBuildFile; fileRef = FE0000000000000000000013 /* CaptureOutputSink.m */; };
+		FE0000000000000000000045 /* PipelineTestRunner.m in Sources */ = {isa = PBXBuildFile; fileRef = FE0000000000000000000015 /* PipelineTestRunner.m */; };
+		FE0000000000000000000046 /* WaveformAnalyzer.m in Sources */ = {isa = PBXBuildFile; fileRef = FE0000000000000000000017 /* WaveformAnalyzer.m */; };
+		FE0000000000000000000047 /* ConstantPitchStopTests.m in Sources */ = {isa = PBXBuildFile; fileRef = FE0000000000000000000018 /* ConstantPitchStopTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +56,19 @@
 		EBB7EF65267E0D5D0094DDB2 /* AppController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppController.h; sourceTree = "<group>"; };
 		EBB7EF66267E0D5D0094DDB2 /* AppController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppController.m; sourceTree = "<group>"; };
 		EBC5C545268524BE00CDA6DF /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		FE0000000000000000000001 /* AudioPipelineProtocols.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AudioPipelineProtocols.h; sourceTree = "<group>"; };
+		FE0000000000000000000002 /* ScratchPipeline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScratchPipeline.h; sourceTree = "<group>"; };
+		FE0000000000000000000003 /* ScratchPipeline.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ScratchPipeline.m; sourceTree = "<group>"; };
+		FE0000000000000000000010 /* SyntheticInputSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SyntheticInputSource.h; sourceTree = "<group>"; };
+		FE0000000000000000000011 /* SyntheticInputSource.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SyntheticInputSource.m; sourceTree = "<group>"; };
+		FE0000000000000000000012 /* CaptureOutputSink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CaptureOutputSink.h; sourceTree = "<group>"; };
+		FE0000000000000000000013 /* CaptureOutputSink.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CaptureOutputSink.m; sourceTree = "<group>"; };
+		FE0000000000000000000014 /* PipelineTestRunner.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PipelineTestRunner.h; sourceTree = "<group>"; };
+		FE0000000000000000000015 /* PipelineTestRunner.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PipelineTestRunner.m; sourceTree = "<group>"; };
+		FE0000000000000000000016 /* WaveformAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WaveformAnalyzer.h; sourceTree = "<group>"; };
+		FE0000000000000000000017 /* WaveformAnalyzer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WaveformAnalyzer.m; sourceTree = "<group>"; };
+		FE0000000000000000000018 /* ConstantPitchStopTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ConstantPitchStopTests.m; sourceTree = "<group>"; };
+		FE0000000000000000000020 /* Scratch NowTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Scratch NowTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +86,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FE0000000000000000000052 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -72,6 +101,7 @@
 			children = (
 				EBC5C545268524BE00CDA6DF /* README.md */,
 				EBB7EF39267DE6B40094DDB2 /* Scratch Now */,
+				FE0000000000000000000057 /* Scratch NowTests */,
 				EBB7EF51267DE7670094DDB2 /* Scratch Now Driver */,
 				EBB7EF38267DE6B40094DDB2 /* Products */,
 			);
@@ -82,8 +112,25 @@
 			children = (
 				EBB7EF37267DE6B40094DDB2 /* Scratch Now.app */,
 				EBB7EF50267DE7670094DDB2 /* Scratch Now Driver.driver */,
+				FE0000000000000000000020 /* Scratch NowTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		FE0000000000000000000057 /* Scratch NowTests */ = {
+			isa = PBXGroup;
+			children = (
+				FE0000000000000000000010 /* SyntheticInputSource.h */,
+				FE0000000000000000000011 /* SyntheticInputSource.m */,
+				FE0000000000000000000012 /* CaptureOutputSink.h */,
+				FE0000000000000000000013 /* CaptureOutputSink.m */,
+				FE0000000000000000000014 /* PipelineTestRunner.h */,
+				FE0000000000000000000015 /* PipelineTestRunner.m */,
+				FE0000000000000000000016 /* WaveformAnalyzer.h */,
+				FE0000000000000000000017 /* WaveformAnalyzer.m */,
+				FE0000000000000000000018 /* ConstantPitchStopTests.m */,
+			);
+			path = "Scratch NowTests";
 			sourceTree = "<group>";
 		};
 		EBB7EF39267DE6B40094DDB2 /* Scratch Now */ = {
@@ -91,6 +138,9 @@
 			children = (
 				EBB7EF65267E0D5D0094DDB2 /* AppController.h */,
 				EBB7EF66267E0D5D0094DDB2 /* AppController.m */,
+				FE0000000000000000000001 /* AudioPipelineProtocols.h */,
+				FE0000000000000000000002 /* ScratchPipeline.h */,
+				FE0000000000000000000003 /* ScratchPipeline.m */,
 				EBB7EF5C267E0AAF0094DDB2 /* AudioEngine.h */,
 				EBB7EF5D267E0AB00094DDB2 /* AudioEngine.m */,
 				EBB7EF5F267E0AB10094DDB2 /* RingBuffer.h */,
@@ -159,6 +209,23 @@
 			productReference = EBB7EF50267DE7670094DDB2 /* Scratch Now Driver.driver */;
 			productType = "com.apple.product-type.bundle";
 		};
+		FE0000000000000000000050 /* Scratch NowTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FE0000000000000000000054 /* Build configuration list for PBXNativeTarget "Scratch NowTests" */;
+			buildPhases = (
+				FE0000000000000000000051 /* Sources */,
+				FE0000000000000000000052 /* Frameworks */,
+				FE0000000000000000000053 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Scratch NowTests";
+			productName = "Scratch NowTests";
+			productReference = FE0000000000000000000020 /* Scratch NowTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -171,6 +238,9 @@
 						CreatedOnToolsVersion = 12.5;
 					};
 					EBB7EF4F267DE7670094DDB2 = {
+						CreatedOnToolsVersion = 12.5;
+					};
+					FE0000000000000000000050 = {
 						CreatedOnToolsVersion = 12.5;
 					};
 				};
@@ -190,6 +260,7 @@
 			targets = (
 				EBB7EF36267DE6B40094DDB2 /* Scratch Now */,
 				EBB7EF4F267DE7670094DDB2 /* Scratch Now Driver */,
+				FE0000000000000000000050 /* Scratch NowTests */,
 			);
 		};
 /* End PBXProject section */
@@ -212,6 +283,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FE0000000000000000000053 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -221,11 +299,27 @@
 			files = (
 				EBB7EF60267E0AB10094DDB2 /* AudioEngine.m in Sources */,
 				EB681287267F079000C475FF /* MiniFader.m in Sources */,
+				FE0000000000000000000030 /* ScratchPipeline.m in Sources */,
 				EBB7EF67267E0D5D0094DDB2 /* AppController.m in Sources */,
 				EBB7EF61267E0AB10094DDB2 /* RingBuffer.m in Sources */,
 				EBB7EF44267DE6B70094DDB2 /* main.m in Sources */,
 				EBB7EF3C267DE6B40094DDB2 /* AppDelegate.m in Sources */,
 				EBB7EF64267E0C7C0094DDB2 /* TurnTableView.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FE0000000000000000000051 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FE0000000000000000000040 /* ScratchPipeline.m in Sources */,
+				FE0000000000000000000041 /* RingBuffer.m in Sources */,
+				FE0000000000000000000042 /* MiniFader.m in Sources */,
+				FE0000000000000000000043 /* SyntheticInputSource.m in Sources */,
+				FE0000000000000000000044 /* CaptureOutputSink.m in Sources */,
+				FE0000000000000000000045 /* PipelineTestRunner.m in Sources */,
+				FE0000000000000000000046 /* WaveformAnalyzer.m in Sources */,
+				FE0000000000000000000047 /* ConstantPitchStopTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -481,6 +575,62 @@
 			};
 			name = Release;
 		};
+		FE0000000000000000000055 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_TESTING_SEARCH_PATHS = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Scratch Now",
+				);
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.4;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.kyab.Scratch-NowTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		FE0000000000000000000056 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_TESTING_SEARCH_PATHS = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Scratch Now",
+				);
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.4;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.kyab.Scratch-NowTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -507,6 +657,15 @@
 			buildConfigurations = (
 				EBB7EF54267DE7670094DDB2 /* Debug */,
 				EBB7EF55267DE7670094DDB2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FE0000000000000000000054 /* Build configuration list for PBXNativeTarget "Scratch NowTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FE0000000000000000000055 /* Debug */,
+				FE0000000000000000000056 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
