@@ -50,14 +50,17 @@ static os_log_t OutputDiagnosticsLog(void){
     _ioProcID = NULL;
     _graph = NULL;
     _outUnit = NULL;
+    _deinterleaveCapacityFrames = 8192;
+    _deinterleaveLeft = (float *)malloc(sizeof(float) * _deinterleaveCapacityFrames);
+    _deinterleaveRight = (float *)malloc(sizeof(float) * _deinterleaveCapacityFrames);
     _defaultOutputListenerQueue = dispatch_queue_create("com.kyab.ScratchNow.output-listener",
                                                         DISPATCH_QUEUE_SERIAL);
     return self;
 }
 
-
--(void)setRenderDelegate:(id<AudioEngineDelegate>)delegate{
-    _delegate = delegate;
+- (void)dealloc {
+    free(_deinterleaveLeft);
+    free(_deinterleaveRight);
 }
 
 
@@ -78,7 +81,19 @@ OSStatus MyRender(void *inRefCon,
         }
         return noErr;
     }
-    return [_delegate outCallback:ioActionFlags inTimeStamp:inTimeStamp inBusNumber:inBusNumber inNumberFrames:inNumberFrames ioData:ioData];
+
+    id<AudioOutputRenderer> renderer = self.outputRenderer;
+    if (!renderer || ioData->mNumberBuffers < 2){
+        for (UInt32 i = 0; i < ioData->mNumberBuffers; i++){
+            bzero(ioData->mBuffers[i].mData, ioData->mBuffers[i].mDataByteSize);
+        }
+        return noErr;
+    }
+
+    [renderer audioOutputNeedsFrames:inNumberFrames
+                                left:(float *)ioData->mBuffers[0].mData
+                               right:(float *)ioData->mBuffers[1].mData];
+    return noErr;
 }
 
 //IOProc attached to the private aggregate device. inInputData carries the tap capture.
@@ -133,65 +148,37 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     }
 #endif
     
-    //Bridge push-style IOProc to the existing pull-style delegate flow:
-    //the delegate calls back readFromInput, which copies from _currentTapBufferList.
-    _currentTapBufferList = inInputData;
-    _currentTapFrames = frames;
-    
-    AudioUnitRenderActionFlags flags = 0;
-    OSStatus ret = [_delegate inCallback:&flags inTimeStamp:inTimeStamp inBusNumber:1 inNumberFrames:frames ioData:NULL];
-    
-    _currentTapBufferList = NULL;
-    _currentTapFrames = 0;
-    
-    return ret;
-}
-
-
-//actual read from input. should be called from delegate's inCallback
-//copies the tap capture buffer into ioData (2 mono buffers, L/R)
-- (OSStatus) readFromInput:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData{
-
-    if (!ioData || ioData->mNumberBuffers < 2){
-        return kAudio_ParamError;
-    }
-    
-    float *dstL = (float *)ioData->mBuffers[0].mData;
-    float *dstR = (float *)ioData->mBuffers[1].mData;
-    
-    if (!_currentTapBufferList){
-        NSLog(@"readFromInput called outside of tap IOProc");
-        bzero(dstL, sizeof(float)*inNumberFrames);
-        bzero(dstR, sizeof(float)*inNumberFrames);
+    id<AudioInputConsumer> consumer = self.inputConsumer;
+    if (!consumer){
         return noErr;
     }
-    
-    UInt32 frames = MIN(inNumberFrames, _currentTapFrames);
-    const AudioBufferList *src = _currentTapBufferList;
-    
-    if (src->mNumberBuffers >= 2){
-        //non-interleaved: buffer per channel
-        memcpy(dstL, src->mBuffers[0].mData, sizeof(float)*frames);
-        memcpy(dstR, src->mBuffers[1].mData, sizeof(float)*frames);
-    }else if (src->mBuffers[0].mNumberChannels == 2){
-        //interleaved stereo: deinterleave
-        const float *p = (const float *)src->mBuffers[0].mData;
-        for (UInt32 i = 0; i < frames; i++){
-            dstL[i] = p[2*i];
-            dstR[i] = p[2*i + 1];
+
+    // Normalize the tap capture into non-interleaved L/R float frames, then push
+    // them to the consumer. Non-interleaved captures are forwarded without a copy;
+    // interleaved stereo is deinterleaved through the scratch buffers.
+    const float *left = NULL;
+    const float *right = NULL;
+
+    if (inInputData->mNumberBuffers >= 2){
+        left = (const float *)inInputData->mBuffers[0].mData;
+        right = (const float *)inInputData->mBuffers[1].mData;
+    }else if (buf0->mNumberChannels == 2){
+        UInt32 copyFrames = MIN(frames, _deinterleaveCapacityFrames);
+        const float *p = (const float *)buf0->mData;
+        for (UInt32 i = 0; i < copyFrames; i++){
+            _deinterleaveLeft[i] = p[2*i];
+            _deinterleaveRight[i] = p[2*i + 1];
         }
+        frames = copyFrames;
+        left = _deinterleaveLeft;
+        right = _deinterleaveRight;
     }else{
         //mono: duplicate to both channels
-        const float *p = (const float *)src->mBuffers[0].mData;
-        memcpy(dstL, p, sizeof(float)*frames);
-        memcpy(dstR, p, sizeof(float)*frames);
+        left = (const float *)buf0->mData;
+        right = (const float *)buf0->mData;
     }
-    
-    if (frames < inNumberFrames){
-        bzero(dstL + frames, sizeof(float)*(inNumberFrames - frames));
-        bzero(dstR + frames, sizeof(float)*(inNumberFrames - frames));
-    }
-    
+
+    [consumer audioInputProvidedFrames:frames left:left right:right];
     return noErr;
 }
 
@@ -463,8 +450,9 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     }
 
     [self registerOutputSampleRateListener];
-    if ([_delegate respondsToSelector:@selector(audioEngineDidRebuildPipeline:)]){
-        [_delegate audioEngineDidRebuildPipeline:self];
+    id<AudioEngineRebuildDelegate> rebuildDelegate = self.rebuildDelegate;
+    if ([rebuildDelegate respondsToSelector:@selector(audioEngineDidRebuildPipeline:)]){
+        [rebuildDelegate audioEngineDidRebuildPipeline:self];
     }
 
     if (wasPlaying && ![self startOutput]){
@@ -866,6 +854,24 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 
 -(BOOL)isRecording{
     return _bIsRecording;
+}
+
+#pragma mark - AudioInputSource / AudioOutputSink
+
+-(BOOL)startCapture{
+    return [self startInput];
+}
+
+-(BOOL)stopCapture{
+    return [self stopInput];
+}
+
+-(BOOL)startPlayback{
+    return [self startOutput];
+}
+
+-(BOOL)stopPlayback{
+    return [self stopOutput];
 }
 
 -(BOOL)obtainDefaultOutputDevice{
