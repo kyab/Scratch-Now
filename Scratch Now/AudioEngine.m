@@ -12,6 +12,8 @@
 #import <CoreAudio/AudioHardwareTapping.h>
 #import <math.h>
 #import <os/log.h>
+#import <stdio.h>
+#import <string.h>
 
 #define ENABLE_OUTPUT_SWITCH_DIAGNOSTICS 0
 
@@ -26,6 +28,41 @@ static os_log_t OutputDiagnosticsLog(void){
 
 #define OUTPUT_DIAGNOSTIC_LOG(format, ...) \
     os_log_with_type(OutputDiagnosticsLog(), OS_LOG_TYPE_DEFAULT, format, ##__VA_ARGS__)
+
+#if SCRATCH_NOW_TAP_SMOKE_CI
+// Tap smoke CI only: append one status line per second to a JSONL file so the
+// external harness can confirm the tap is delivering (non-silent) audio and
+// that changes in the played tone are followed with a small delay.
+// This whole block is compiled out of Debug/Release builds.
+static NSString *TapSmokeCIStatusPath(void){
+    static NSString *path;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString *dir = @"/tmp/scratch-now-tap-smoke-ci";
+        [[NSFileManager defaultManager] createDirectoryAtPath:dir
+                                  withIntermediateDirectories:YES
+                                                   attributes:nil
+                                                        error:NULL];
+        path = [dir stringByAppendingPathComponent:@"tap.jsonl"];
+    });
+    return path;
+}
+
+// Append a single JSON line. Opened/closed each second so a crash still leaves
+// a readable file for CI artifacts.
+static void TapSmokeCIAppendStatus(double ts, float peak, float rms,
+                                   unsigned long long framesTotal, double estimatedHz){
+    NSString *line = [NSString stringWithFormat:
+                      @"{\"ts\":%.3f,\"peak\":%.6f,\"rms\":%.6f,\"framesTotal\":%llu,\"estimatedHz\":%.2f}\n",
+                      ts, peak, rms, framesTotal, estimatedHz];
+    const char *utf8 = [line UTF8String];
+    FILE *f = fopen([TapSmokeCIStatusPath() fileSystemRepresentation], "a");
+    if (f){
+        fwrite(utf8, 1, strlen(utf8), f);
+        fclose(f);
+    }
+}
+#endif
 
 @interface AudioEngine ()
 - (void)registerDefaultOutputListener;
@@ -132,7 +169,56 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         }
     }
 #endif
-    
+
+#if SCRATCH_NOW_TAP_SMOKE_CI
+    // Tap smoke CI: accumulate peak/rms and a rough dominant-frequency estimate
+    // (zero crossings on the first channel) and flush once per second.
+    {
+        static UInt32 frameCounter = 0;
+        static unsigned long long framesTotal = 0;
+        static float peak = 0.0f;
+        static double sumSquares = 0.0;
+        static unsigned long long squareCount = 0;
+        static UInt32 zeroCrossings = 0;
+        static float prevSample = 0.0f;
+
+        const float *p = (const float *)buf0->mData;
+        UInt32 channels = buf0->mNumberChannels > 0 ? buf0->mNumberChannels : 1;
+        UInt32 n = buf0->mDataByteSize / sizeof(float);
+        for (UInt32 i = 0; i < n; i++){
+            float v = p[i];
+            float a = fabsf(v);
+            if (a > peak) peak = a;
+            sumSquares += (double)v * (double)v;
+            squareCount++;
+        }
+        // Count zero crossings on channel 0 only (interleaved or mono).
+        for (UInt32 i = 0; i < n; i += channels){
+            float v = p[i];
+            if ((prevSample < 0.0f && v >= 0.0f) || (prevSample >= 0.0f && v < 0.0f)){
+                zeroCrossings++;
+            }
+            prevSample = v;
+        }
+
+        frameCounter += frames;
+        framesTotal += frames;
+        if (frameCounter >= (UInt32)_engineSampleRate && _engineSampleRate > 0){
+            double rms = squareCount > 0 ? sqrt(sumSquares / (double)squareCount) : 0.0;
+            // Two zero crossings per period, over ~one second worth of frames.
+            double estimatedHz = ((double)zeroCrossings / 2.0)
+                * (_engineSampleRate / (double)frameCounter);
+            TapSmokeCIAppendStatus(CFAbsoluteTimeGetCurrent(), peak, (float)rms,
+                                   framesTotal, estimatedHz);
+            frameCounter = 0;
+            peak = 0.0f;
+            sumSquares = 0.0;
+            squareCount = 0;
+            zeroCrossings = 0;
+        }
+    }
+#endif
+
     //Bridge push-style IOProc to the existing pull-style delegate flow:
     //the delegate calls back readFromInput, which copies from _currentTapBufferList.
     _currentTapBufferList = inInputData;
