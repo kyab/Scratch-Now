@@ -35,6 +35,7 @@
     CGFloat _prevY;
     
     double _speedRate;
+    double _history[10];
     
     id<TurnTableDelegate> _delegate;
 }
