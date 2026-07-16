@@ -158,6 +158,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         gainEnd += (targetGain - gainEnd) * GAIN_SMOOTH_ALPHA;
     }
 
+    // Wet: variable-rate resample from the play (read) pointer.
     float *baseL = [_ring readPtrLeft];
     float *baseR = [_ring readPtrRight];
     SInt32 consumed = 0;
@@ -167,6 +168,11 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         memset(_tempLeftPtr, 0, sizeof(float) * numSamples);
         memset(_tempRightPtr, 0, sizeof(float) * numSamples);
     }
+
+    // Dry: independent 1x realtime pointer (same model as pre-Hermite path).
+    // leftBuf/rightBuf are AU output buffers and must not be used as dry source.
+    float *drySrcL = [_ring dryPtrLeft];
+    float *drySrcR = [_ring dryPtrRight];
 
     double gain = gainStart;
     double dGain = (gainEnd - gainStart) / (double)numSamples;
@@ -196,8 +202,8 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         dcInR = inR;
         dcOutR = outR;
 
-        float dryL = leftBuf[i] * _dryVolume;
-        float dryR = rightBuf[i] * _dryVolume;
+        float dryL = (drySrcL ? drySrcL[i] : 0.0f) * _dryVolume;
+        float dryR = (drySrcR ? drySrcR[i] : 0.0f) * _dryVolume;
         float wetL = outL * _wetVolume * (float)(gain * extraFade);
         float wetR = outR * _wetVolume * (float)(gain * extraFade);
 
@@ -224,6 +230,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     _smoothedSpeed = speedEnd;
     _wetGain = gainEnd;
     [_ring advanceReadPtrSample:consumed];
+    [_ring advanceDryPtrSample:numSamples];
 
     if (applyExtraFade){
         if (_fadeOutCounter >= numSamples){
@@ -247,32 +254,37 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         return;
     }
 
+    // Match pre-Hermite behavior at rate 1.0: full wet playback (dry/wet mix is for variable-rate only).
     for (UInt32 i = 0; i < numSamples; i++){
-        float dryL = srcL[i] * _dryVolume;
-        float dryR = srcR[i] * _dryVolume;
-        float wetL = srcL[i] * _wetVolume;
-        float wetR = srcR[i] * _wetVolume;
+        float sampleL = srcL[i];
+        float sampleR = srcR[i];
 
         if (_isFadingIn){
             float rate = _fadeInCounter / (float)FADE_SAMPLE_NUM;
-            wetL *= rate;
-            wetR *= rate;
+            sampleL *= rate;
+            sampleR *= rate;
             _fadeInCounter++;
             if (_fadeInCounter >= FADE_SAMPLE_NUM){
                 _isFadingIn = NO;
             }
         }
 
-        leftBuf[i] = dryL + wetL;
-        rightBuf[i] = dryR + wetR;
+        leftBuf[i] = sampleL;
+        rightBuf[i] = sampleR;
     }
     [_ring advanceReadPtrSample:numSamples];
+    [_ring advanceDryPtrSample:numSamples];
+    // Keep scratch gain/speed state aligned for a subsequent Stop deceleration.
+    _smoothedSpeed = 1.0;
+    _wetGain = 1.0;
 }
 
 -(UInt32)processFadeOutForScratchStart:(float *)leftBuf right:(float *)rightBuf samples:(UInt32)numSamples{
     UInt32 n = (numSamples < _fadeOutCounter) ? numSamples : _fadeOutCounter;
     float *srcL = [_ring readPtrLeft];
     float *srcR = [_ring readPtrRight];
+    float *drySrcL = [_ring dryPtrLeft];
+    float *drySrcR = [_ring dryPtrRight];
     if (srcL == NULL || srcR == NULL){
         memset(leftBuf, 0, sizeof(float) * n);
         memset(rightBuf, 0, sizeof(float) * n);
@@ -281,8 +293,8 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     }
 
     for (UInt32 i = 0; i < n; i++){
-        float dryL = srcL[i] * _dryVolume;
-        float dryR = srcR[i] * _dryVolume;
+        float dryL = (drySrcL ? drySrcL[i] : 0.0f) * _dryVolume;
+        float dryR = (drySrcR ? drySrcR[i] : 0.0f) * _dryVolume;
         float wetL = srcL[i] * _wetVolume;
         float wetR = srcR[i] * _wetVolume;
         float rate = _fadeOutCounter / (float)FADE_SAMPLE_NUM;
@@ -294,6 +306,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 
         if (_fadeOutCounter == 0){
             [_ring advanceReadPtrSample:(SInt32)(i + 1)];
+            [_ring advanceDryPtrSample:(SInt32)(i + 1)];
             [_ring follow];
             _subSamplePos = 0.0;
             _smoothedSpeed = 1.0;
@@ -308,6 +321,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     }
 
     [_ring advanceReadPtrSample:n];
+    [_ring advanceDryPtrSample:n];
     return n;
 }
 
@@ -346,7 +360,9 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         return;
     }
 
-    if (_isScratching){
+    // Variable-rate path: scratch, Stop deceleration, or fully stopped platter.
+    // Stop must not require _isScratching — tableStopTimer only updates _speedRate.
+    if (_isScratching || _tableStopped || _tableStopTimer != nil){
         [self processScratchState:leftBuf right:rightBuf samples:numSamples];
     }else{
         [self processNormalState:leftBuf right:rightBuf samples:numSamples];
@@ -354,6 +370,15 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 }
 
 -(void)turnTableSpeedRateChanged:(double)newSpeedRate{
+    // Manual platter interaction cancels an in-progress or completed Stop.
+    if (_tableStopTimer || _tableStopped){
+        if (_tableStopTimer){
+            [_tableStopTimer invalidate];
+            _tableStopTimer = nil;
+        }
+        _tableStopped = NO;
+    }
+
     _speedRate = newSpeedRate;
 
     if (_isScratchEnding && newSpeedRate != 1.0){
@@ -426,22 +451,6 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     float *dstL = (float *)ioData->mBuffers[0].mData;
     float *dstR = (float *)ioData->mBuffers[1].mData;
 
-    if (_tableStopped && !_tableStopTimer){
-        float *srcL = [_ring readPtrLeft];
-        float *srcR = [_ring readPtrRight];
-        if (!srcL || !srcR){
-            bzero(dstL, sizeof(float) * inNumberFrames);
-            bzero(dstR, sizeof(float) * inNumberFrames);
-            return noErr;
-        }
-        for (UInt32 i = 0; i < inNumberFrames; i++){
-            dstL[i] = srcL[i] * _dryVolume;
-            dstR[i] = srcR[i] * _dryVolume;
-        }
-        [_ring advanceReadPtrSample:inNumberFrames];
-        return noErr;
-    }
-
     [self processScratchOutput:dstL right:dstR samples:inNumberFrames];
     return noErr;
 }
@@ -461,6 +470,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     if (_btnStop.state == NSControlStateValueOn){
         if (_tableStopTimer){
             [_tableStopTimer invalidate];
+            _tableStopTimer = nil;
         }
 
         _tableStopped = NO;
@@ -471,6 +481,17 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         [_ring follow];
         [_btnStop setTitle:@"[S]top"];
     }else{
+        if (_tableStopTimer){
+            [_tableStopTimer invalidate];
+            _tableStopTimer = nil;
+        }
+        // Decelerate via _speedRate only; leave the scratch fade state machine.
+        _isScratchStarting = NO;
+        _isScratchEnding = NO;
+        _isFadingOut = NO;
+        _isScratching = NO;
+        _isFadingIn = NO;
+        _tableStopped = NO;
         _tableStopTimer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(tableStopTimer:) userInfo:nil repeats:YES];
         [_btnStop setTitle:@"[S]tart"];
     }
@@ -480,6 +501,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     if (_speedRate < 0.01f){
         _speedRate = 0.0f;
         [_tableStopTimer invalidate];
+        _tableStopTimer = nil;
         _tableStopped = YES;
     }else{
         _speedRate -= 0.02;
