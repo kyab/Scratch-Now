@@ -72,6 +72,7 @@ static void TapSmokeCIAppendStatus(double ts, float peak, float rms,
 - (BOOL)readDefaultOutputDevice:(AudioDeviceID *)outputDeviceID;
 - (void)logOutputDevice:(AudioDeviceID)deviceID context:(NSString *)context;
 - (BOOL)buildPipeline;
+- (BOOL)setupAggregateBufferFrameSize;
 - (void)rebuildPipelineForOutputConfigurationChangeFromDevice:(AudioDeviceID)sourceDevice;
 - (void)teardownCapturePath;
 - (void)teardownOutput;
@@ -319,6 +320,10 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     }
     
     if (![self createAggregateDevice]){
+        return NO;
+    }
+    
+    if (![self setupAggregateBufferFrameSize]){
         return NO;
     }
     
@@ -698,6 +703,64 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     }
     
     NSLog(@"Aggregate device created. aggregateID=%u", _aggregateID);
+    return YES;
+}
+
+// Request a smaller IO period on the tap aggregate.
+-(BOOL)setupAggregateBufferFrameSize{
+    const UInt32 desiredFrameSize = 64;
+    
+    AudioObjectPropertyAddress propAddress;
+    propAddress.mSelector = kAudioDevicePropertyBufferFrameSizeRange;
+    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
+    propAddress.mElement = kAudioObjectPropertyElementMain;
+    
+    AudioValueRange range = {0};
+    UInt32 size = sizeof(range);
+    OSStatus ret = AudioObjectGetPropertyData(_aggregateID, &propAddress, 0, NULL, &size, &range);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to get aggregate BufferFrameSizeRange = %d(%@)", ret, [err description]);
+        return NO;
+    }
+    
+    NSLog(@"Aggregate BufferFrameSizeRange: min=%.0f max=%.0f (desired=%u)",
+          range.mMinimum, range.mMaximum, desiredFrameSize);
+    
+    if ((Float64)desiredFrameSize < range.mMinimum ||
+        (Float64)desiredFrameSize > range.mMaximum){
+        NSLog(@"Desired BufferFrameSize %u is outside aggregate range [%.0f, %.0f]",
+              desiredFrameSize, range.mMinimum, range.mMaximum);
+        return NO;
+    }
+    
+    propAddress.mSelector = kAudioDevicePropertyBufferFrameSize;
+    UInt32 frameSize = desiredFrameSize;
+    ret = AudioObjectSetPropertyData(_aggregateID, &propAddress, 0, NULL,
+                                     sizeof(frameSize), &frameSize);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to set aggregate BufferFrameSize=%u = %d(%@)",
+              desiredFrameSize, ret, [err description]);
+        return NO;
+    }
+    
+    UInt32 actualFrameSize = 0;
+    size = sizeof(actualFrameSize);
+    ret = AudioObjectGetPropertyData(_aggregateID, &propAddress, 0, NULL, &size, &actualFrameSize);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to read back aggregate BufferFrameSize = %d(%@)", ret, [err description]);
+        return NO;
+    }
+    
+    if (actualFrameSize != desiredFrameSize){
+        NSLog(@"Aggregate BufferFrameSize mismatch: desired=%u actual=%u",
+              desiredFrameSize, actualFrameSize);
+        return NO;
+    }
+    
+    NSLog(@"Aggregate BufferFrameSize set to %u", actualFrameSize);
     return YES;
 }
 
