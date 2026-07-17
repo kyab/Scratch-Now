@@ -278,6 +278,18 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     _wetGain = 1.0;
 }
 
+-(void)completeScratchStartFade{
+    _subSamplePos = 0.0;
+    _smoothedSpeed = 1.0;
+    _wetGain = 1.0;
+    _isScratching = YES;
+    _isFadingOut = NO;
+    _isFadingIn = YES;
+    _fadeInCounter = 0;
+    _isScratchStarting = NO;
+    _fadeOutCounter = 0;
+}
+
 -(UInt32)processFadeOutForScratchStart:(float *)leftBuf right:(float *)rightBuf samples:(UInt32)numSamples{
     UInt32 n = (numSamples < _fadeOutCounter) ? numSamples : _fadeOutCounter;
     float *srcL = [_ring readPtrLeft];
@@ -287,7 +299,8 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     if (srcL == NULL || srcR == NULL){
         memset(leftBuf, 0, sizeof(float) * n);
         memset(rightBuf, 0, sizeof(float) * n);
-        _fadeOutCounter = 0;
+        [_ring follow];
+        [self completeScratchStartFade];
         return n;
     }
 
@@ -307,14 +320,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
             [_ring advanceReadPtrSample:(SInt32)(i + 1)];
             [_ring advanceDryPtrSample:(SInt32)(i + 1)];
             [_ring follow];
-            _subSamplePos = 0.0;
-            _smoothedSpeed = 1.0;
-            _wetGain = 1.0;
-            _isScratching = YES;
-            _isFadingOut = NO;
-            _isFadingIn = YES;
-            _fadeInCounter = 0;
-            _isScratchStarting = NO;
+            [self completeScratchStartFade];
             return i + 1;
         }
     }

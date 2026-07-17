@@ -36,6 +36,7 @@
     
     double _speedRate;
     double _history[10];
+    int _historyCount;
     
     id<TurnTableDelegate> _delegate;
 }

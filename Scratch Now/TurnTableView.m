@@ -149,6 +149,7 @@ double rad2deg(double rad){
         _prevRad = _currentRad;
         _prevRadValid = YES;
         _speedRate = 0.0;
+        _historyCount = 0;
         for (int i = 0; i < 10; i++){
             _history[i] = 0.0;
         }
@@ -217,7 +218,8 @@ double rad2deg(double rad){
 -(void)onTimerScratch:(NSTimer *)t{
     if (!_pressing) return;
 
-    double currentSec = [[NSDate date] timeIntervalSince1970];
+    // Same time base as NSEvent.timestamp (seconds since system startup).
+    double currentSec = [NSProcessInfo processInfo].systemUptime;
 
     //get mouse location
     NSPoint loc = [self.window mouseLocationOutsideOfEventStream];
@@ -262,11 +264,14 @@ double rad2deg(double rad){
         _history[7] = _history[8];
         _history[8] = _history[9];
         _history[9] = speedRate;
+        if (_historyCount < 10){
+            _historyCount++;
+        }
         double sum = 0.0;
-        for (int i = 0; i < 10; i++){
+        for (int i = 10 - _historyCount; i < 10; i++){
             sum += _history[i];
         }
-        _speedRate = sum / 10.0;
+        _speedRate = sum / (double)_historyCount;
 
         [_delegate turnTableSpeedRateChanged];
     }
