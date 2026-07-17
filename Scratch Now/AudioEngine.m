@@ -194,9 +194,13 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
             squareCount++;
         }
         // Count zero crossings on channel 0 only (interleaved or mono).
+        // Schmitt-trigger hysteresis rejects HF noise around zero that otherwise
+        // inflates estimatedHz (seen on some CI runners after shorter IO periods).
+        const float kZcrHysteresis = 0.02f;
         for (UInt32 i = 0; i < n; i += channels){
             float v = p[i];
-            if ((prevSample < 0.0f && v >= 0.0f) || (prevSample >= 0.0f && v < 0.0f)){
+            if ((prevSample < -kZcrHysteresis && v >= kZcrHysteresis) ||
+                (prevSample >= kZcrHysteresis && v < -kZcrHysteresis)){
                 zeroCrossings++;
             }
             prevSample = v;
