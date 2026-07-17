@@ -22,9 +22,12 @@ STATUS_FILE="${STATUS_DIR}/tap.jsonl"
 DERIVED_DIR="${DERIVED_DIR:-${REPO_ROOT}/build/tap-smoke-ci}"
 
 # Timing matches tap_smoke_ci/play_pleasant_tone.py fixed constants.
-PHASE_A_SECONDS=5.0
+# Phase A is long enough that app startup still leaves base-band samples for the assert.
+PHASE_A_SECONDS=8.0
 GLIDE_SECONDS=1.5
-APP_SETTLE_SECONDS=3.0
+PHASE_B_SECONDS=5.0
+APP_SETTLE_SECONDS=2.0
+TONE_WARMUP_SECONDS=1.0
 
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
@@ -97,15 +100,16 @@ log "starting pleasant tone playback"
 "${PYTHON_BIN}" "${SCRIPT_DIR}/play_pleasant_tone.py" \
   > "${STATUS_DIR}/tone.log" 2>&1 &
 TONE_PID=$!
-sleep 1
+sleep "${TONE_WARMUP_SECONDS}"
 
 # 4) Launch Scratch Now via LaunchServices so TCC attributes capture to the app
 #    bundle (a loose binary would be attributed to the terminal -> silent deny).
 log "launching ${SCHEME} via open (LaunchServices)"
 open "${APP_PATH}"
 
-# Let the app start capturing and let the tone run through both phases.
-WAIT_SECONDS="$(${PYTHON_BIN} -c "print(${APP_SETTLE_SECONDS} + ${PHASE_A_SECONDS} + ${GLIDE_SECONDS} + 4.0)")"
+# Wait through app settle + remaining phase A + glide + phase B.
+# Phase A is measured from tone start; subtract the warmup already slept.
+WAIT_SECONDS="$(${PYTHON_BIN} -c "print(${APP_SETTLE_SECONDS} + max(0.0, ${PHASE_A_SECONDS} - ${TONE_WARMUP_SECONDS}) + ${GLIDE_SECONDS} + ${PHASE_B_SECONDS})")"
 log "capturing for ${WAIT_SECONDS}s (phase A -> glide -> phase B)"
 sleep "${WAIT_SECONDS}"
 

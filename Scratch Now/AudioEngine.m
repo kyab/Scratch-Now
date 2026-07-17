@@ -72,6 +72,7 @@ static void TapSmokeCIAppendStatus(double ts, float peak, float rms,
 - (BOOL)readDefaultOutputDevice:(AudioDeviceID *)outputDeviceID;
 - (void)logOutputDevice:(AudioDeviceID)deviceID context:(NSString *)context;
 - (BOOL)buildPipeline;
+- (BOOL)setupAggregateBufferFrameSize;
 - (void)rebuildPipelineForOutputConfigurationChangeFromDevice:(AudioDeviceID)sourceDevice;
 - (void)teardownCapturePath;
 - (void)teardownOutput;
@@ -180,7 +181,6 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         static double sumSquares = 0.0;
         static unsigned long long squareCount = 0;
         static UInt32 zeroCrossings = 0;
-        static float prevSample = 0.0f;
 
         const float *p = (const float *)buf0->mData;
         UInt32 channels = buf0->mNumberChannels > 0 ? buf0->mNumberChannels : 1;
@@ -193,12 +193,19 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
             squareCount++;
         }
         // Count zero crossings on channel 0 only (interleaved or mono).
+        // Schmitt-trigger state rejects HF chatter around zero without requiring
+        // a single-sample jump across the full hysteresis band.
+        const float kZcrHysteresis = 0.02f;
+        static int zcrState = 0; // -1 below low threshold, +1 above high threshold
         for (UInt32 i = 0; i < n; i += channels){
             float v = p[i];
-            if ((prevSample < 0.0f && v >= 0.0f) || (prevSample >= 0.0f && v < 0.0f)){
+            if (zcrState <= 0 && v >= kZcrHysteresis){
+                zcrState = 1;
+                zeroCrossings++;
+            } else if (zcrState >= 0 && v <= -kZcrHysteresis){
+                zcrState = -1;
                 zeroCrossings++;
             }
-            prevSample = v;
         }
 
         frameCounter += frames;
@@ -319,6 +326,10 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     }
     
     if (![self createAggregateDevice]){
+        return NO;
+    }
+    
+    if (![self setupAggregateBufferFrameSize]){
         return NO;
     }
     
@@ -698,6 +709,64 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     }
     
     NSLog(@"Aggregate device created. aggregateID=%u", _aggregateID);
+    return YES;
+}
+
+// Request a smaller IO period on the tap aggregate.
+-(BOOL)setupAggregateBufferFrameSize{
+    const UInt32 desiredFrameSize = 64;
+    
+    AudioObjectPropertyAddress propAddress;
+    propAddress.mSelector = kAudioDevicePropertyBufferFrameSizeRange;
+    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
+    propAddress.mElement = kAudioObjectPropertyElementMain;
+    
+    AudioValueRange range = {0};
+    UInt32 size = sizeof(range);
+    OSStatus ret = AudioObjectGetPropertyData(_aggregateID, &propAddress, 0, NULL, &size, &range);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to get aggregate BufferFrameSizeRange = %d(%@)", ret, [err description]);
+        return NO;
+    }
+    
+    NSLog(@"Aggregate BufferFrameSizeRange: min=%.0f max=%.0f (desired=%u)",
+          range.mMinimum, range.mMaximum, desiredFrameSize);
+    
+    if ((Float64)desiredFrameSize < range.mMinimum ||
+        (Float64)desiredFrameSize > range.mMaximum){
+        NSLog(@"Desired BufferFrameSize %u is outside aggregate range [%.0f, %.0f]",
+              desiredFrameSize, range.mMinimum, range.mMaximum);
+        return NO;
+    }
+    
+    propAddress.mSelector = kAudioDevicePropertyBufferFrameSize;
+    UInt32 frameSize = desiredFrameSize;
+    ret = AudioObjectSetPropertyData(_aggregateID, &propAddress, 0, NULL,
+                                     sizeof(frameSize), &frameSize);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to set aggregate BufferFrameSize=%u = %d(%@)",
+              desiredFrameSize, ret, [err description]);
+        return NO;
+    }
+    
+    UInt32 actualFrameSize = 0;
+    size = sizeof(actualFrameSize);
+    ret = AudioObjectGetPropertyData(_aggregateID, &propAddress, 0, NULL, &size, &actualFrameSize);
+    if (FAILED(ret)){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to read back aggregate BufferFrameSize = %d(%@)", ret, [err description]);
+        return NO;
+    }
+    
+    if (actualFrameSize != desiredFrameSize){
+        NSLog(@"Aggregate BufferFrameSize mismatch: desired=%u actual=%u",
+              desiredFrameSize, actualFrameSize);
+        return NO;
+    }
+    
+    NSLog(@"Aggregate BufferFrameSize set to %u", actualFrameSize);
     return YES;
 }
 
