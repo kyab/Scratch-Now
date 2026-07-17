@@ -246,15 +246,14 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 }
 
 -(void)processNormalState:(float *)leftBuf right:(float *)rightBuf samples:(UInt32)numSamples{
-    float *srcL = [_ring readPtrLeft];
-    float *srcR = [_ring readPtrRight];
+    float *srcL = [_ring dryPtrLeft];
+    float *srcR = [_ring dryPtrRight];
     if (srcL == NULL || srcR == NULL){
         memset(leftBuf, 0, sizeof(float) * numSamples);
         memset(rightBuf, 0, sizeof(float) * numSamples);
         return;
     }
 
-    // Match pre-Hermite behavior at rate 1.0: full wet playback (dry/wet mix is for variable-rate only).
     for (UInt32 i = 0; i < numSamples; i++){
         float sampleL = srcL[i];
         float sampleR = srcR[i];
