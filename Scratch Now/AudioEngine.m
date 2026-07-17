@@ -181,7 +181,6 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         static double sumSquares = 0.0;
         static unsigned long long squareCount = 0;
         static UInt32 zeroCrossings = 0;
-        static float prevSample = 0.0f;
 
         const float *p = (const float *)buf0->mData;
         UInt32 channels = buf0->mNumberChannels > 0 ? buf0->mNumberChannels : 1;
@@ -194,16 +193,19 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
             squareCount++;
         }
         // Count zero crossings on channel 0 only (interleaved or mono).
-        // Schmitt-trigger hysteresis rejects HF noise around zero that otherwise
-        // inflates estimatedHz (seen on some CI runners after shorter IO periods).
+        // Schmitt-trigger state rejects HF chatter around zero without requiring
+        // a single-sample jump across the full hysteresis band.
         const float kZcrHysteresis = 0.02f;
+        static int zcrState = 0; // -1 below low threshold, +1 above high threshold
         for (UInt32 i = 0; i < n; i += channels){
             float v = p[i];
-            if ((prevSample < -kZcrHysteresis && v >= kZcrHysteresis) ||
-                (prevSample >= kZcrHysteresis && v < -kZcrHysteresis)){
+            if (zcrState <= 0 && v >= kZcrHysteresis){
+                zcrState = 1;
+                zeroCrossings++;
+            } else if (zcrState >= 0 && v <= -kZcrHysteresis){
+                zcrState = -1;
                 zeroCrossings++;
             }
-            prevSample = v;
         }
 
         frameCounter += frames;
