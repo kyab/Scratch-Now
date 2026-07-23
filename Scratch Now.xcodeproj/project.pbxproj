@@ -19,6 +19,7 @@
 		EBB7EF64267E0C7C0094DDB2 /* TurnTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF63267E0C7B0094DDB2 /* TurnTableView.m */; };
 		EBB7EF67267E0D5D0094DDB2 /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF66267E0D5D0094DDB2 /* AppController.m */; };
 		EBC5C546268524BE00CDA6DF /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = EBC5C545268524BE00CDA6DF /* README.md */; };
+		87A693E4EA084D89AEAF2CA2 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A7BBBA21865A4772BA8148E0 /* InfoPlist.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +48,7 @@
 		EBB7EF65267E0D5D0094DDB2 /* AppController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppController.h; sourceTree = "<group>"; };
 		EBB7EF66267E0D5D0094DDB2 /* AppController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppController.m; sourceTree = "<group>"; };
 		EBC5C545268524BE00CDA6DF /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		A7BBBA21865A4772BA8148E0 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = InfoPlist.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -104,6 +106,7 @@
 				EBB7EF3D267DE6B70094DDB2 /* Assets.xcassets */,
 				EBB7EF3F267DE6B70094DDB2 /* MainMenu.xib */,
 				EBB7EF42267DE6B70094DDB2 /* Info.plist */,
+				EC92550170E649A5B8D3B6A5 /* ja */,
 				EBB7EF43267DE6B70094DDB2 /* main.m */,
 				EBB7EF45267DE6B70094DDB2 /* Scratch_Now.entitlements */,
 			);
@@ -120,6 +123,15 @@
 				EBB7EF5A267DE82D0094DDB2 /* RingBuffer.m */,
 			);
 			path = "Scratch Now Driver";
+			sourceTree = "<group>";
+		};
+		EC92550170E649A5B8D3B6A5 /* ja */ = {
+			isa = PBXGroup;
+			children = (
+				A7BBBA21865A4772BA8148E0 /* InfoPlist.strings */,
+			);
+			name = ja;
+			path = ja.lproj;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -182,6 +194,7 @@
 			knownRegions = (
 				en,
 				Base,
+				ja,
 			);
 			mainGroup = EBB7EF2E267DE6B40094DDB2;
 			productRefGroup = EBB7EF38267DE6B40094DDB2 /* Products */;
@@ -202,6 +215,7 @@
 				EBC5C546268524BE00CDA6DF /* README.md in Resources */,
 				EBB7EF3E267DE6B70094DDB2 /* Assets.xcassets in Resources */,
 				EBB7EF41267DE6B70094DDB2 /* MainMenu.xib in Resources */,
+				87A693E4EA084D89AEAF2CA2 /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

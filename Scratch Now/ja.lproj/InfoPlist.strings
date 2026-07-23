@@ -1,0 +1,2 @@
+/* Localized Info.plist keys */
+"NSAudioCaptureUsageDescription" = "再生中のシステム音声にリアルタイムでスクラッチ加工を行うためにオーディオをキャプチャします。";
