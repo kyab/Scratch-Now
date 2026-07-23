@@ -22,6 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
     
     NSTimer *_tableStopTimer;
     Boolean _tableStopped;
+    // Stop deceleration target; continues even while scratch temporarily owns _speedRate.
+    double _tableStopSpeed;
     double _speedRate;
     
     

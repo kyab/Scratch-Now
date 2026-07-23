@@ -46,6 +46,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 
 -(void)awakeFromNib{
     _speedRate = 1.0;
+    _tableStopSpeed = 1.0;
     _dryVolume = 0.0;
     _wetVolume = 1.0;
     [self resetScratchState];
@@ -137,7 +138,8 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     *consumed = integerBase;
 }
 
--(void)processScratchBlock:(float *)leftBuf right:(float *)rightBuf samples:(UInt32)numSamples applyExtraFade:(BOOL)applyExtraFade{
+// Variable-rate wet (Hermite) + 1x dry mix. Used for scratch, Stop ramp, and stopped platter.
+-(void)processVariableRateBlock:(float *)leftBuf right:(float *)rightBuf samples:(UInt32)numSamples applyExtraFade:(BOOL)applyExtraFade{
     if (numSamples == 0) return;
 
     double targetSpeed = _speedRate;
@@ -241,8 +243,8 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     }
 }
 
--(void)processScratchState:(float *)leftBuf right:(float *)rightBuf samples:(UInt32)numSamples{
-    [self processScratchBlock:leftBuf right:rightBuf samples:numSamples applyExtraFade:NO];
+-(void)processVariableRateState:(float *)leftBuf right:(float *)rightBuf samples:(UInt32)numSamples{
+    [self processVariableRateBlock:leftBuf right:rightBuf samples:numSamples applyExtraFade:NO];
 }
 
 -(void)processNormalState:(float *)leftBuf right:(float *)rightBuf samples:(UInt32)numSamples{
@@ -278,6 +280,17 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     _wetGain = 1.0;
 }
 
+-(BOOL)isStopActive{
+    return _tableStopTimer != nil || _tableStopped;
+}
+
+// Catch up to the live edge only when Stop is not holding a playhead.
+-(void)followLiveUnlessStopping{
+    if (![self isStopActive]){
+        [_ring follow];
+    }
+}
+
 -(void)completeScratchStartFade{
     _subSamplePos = 0.0;
     _smoothedSpeed = 1.0;
@@ -299,7 +312,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     if (srcL == NULL || srcR == NULL){
         memset(leftBuf, 0, sizeof(float) * n);
         memset(rightBuf, 0, sizeof(float) * n);
-        [_ring follow];
+        [self followLiveUnlessStopping];
         [self completeScratchStartFade];
         return n;
     }
@@ -319,7 +332,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         if (_fadeOutCounter == 0){
             [_ring advanceReadPtrSample:(SInt32)(i + 1)];
             [_ring advanceDryPtrSample:(SInt32)(i + 1)];
-            [_ring follow];
+            [self followLiveUnlessStopping];
             [self completeScratchStartFade];
             return i + 1;
         }
@@ -332,13 +345,20 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 
 -(UInt32)processFadeOutForScratchEnd:(float *)leftBuf right:(float *)rightBuf samples:(UInt32)numSamples{
     UInt32 n = (numSamples < _fadeOutCounter) ? numSamples : _fadeOutCounter;
-    [self processScratchBlock:leftBuf right:rightBuf samples:n applyExtraFade:YES];
+    [self processVariableRateBlock:leftBuf right:rightBuf samples:n applyExtraFade:YES];
 
     if (_fadeOutCounter == 0){
-        [_ring follow];
+        [self followLiveUnlessStopping];
         _subSamplePos = 0.0;
-        _smoothedSpeed = 1.0;
-        _wetGain = 0.0;
+        if ([self isStopActive]){
+            // Resume the Stop ramp that continued under the scratch.
+            _speedRate = _tableStopped ? 0.0 : _tableStopSpeed;
+            _smoothedSpeed = _speedRate;
+            _wetGain = (_speedRate < STOPPED_SPEED_EPSILON) ? 0.0 : 1.0;
+        }else{
+            _smoothedSpeed = 1.0;
+            _wetGain = 0.0;
+        }
         _isScratching = NO;
         _isFadingOut = NO;
         _isFadingIn = YES;
@@ -354,39 +374,38 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         if (_isScratchStarting){
             processed = [self processFadeOutForScratchStart:leftBuf right:rightBuf samples:numSamples];
             if (processed < numSamples){
-                [self processScratchState:&leftBuf[processed] right:&rightBuf[processed] samples:numSamples - processed];
+                [self processVariableRateState:&leftBuf[processed] right:&rightBuf[processed] samples:numSamples - processed];
             }
         }else if (_isScratchEnding){
             processed = [self processFadeOutForScratchEnd:leftBuf right:rightBuf samples:numSamples];
             if (!_isFadingOut && processed < numSamples){
-                [self processNormalState:&leftBuf[processed] right:&rightBuf[processed] samples:numSamples - processed];
+                // Same callback may still have frames left after the fade ends.
+                if ([self isStopActive]){
+                    [self processVariableRateState:&leftBuf[processed] right:&rightBuf[processed] samples:numSamples - processed];
+                }else{
+                    [self processNormalState:&leftBuf[processed] right:&rightBuf[processed] samples:numSamples - processed];
+                }
             }
         }
         return;
     }
 
     // Variable-rate path: scratch, Stop deceleration, or fully stopped platter.
-    // Stop must not require _isScratching — tableStopTimer only updates _speedRate.
+    // Stop must not require _isScratching — tableStopTimer only updates stop speed.
     if (_isScratching || _tableStopped || _tableStopTimer != nil){
-        [self processScratchState:leftBuf right:rightBuf samples:numSamples];
+        [self processVariableRateState:leftBuf right:rightBuf samples:numSamples];
     }else{
         [self processNormalState:leftBuf right:rightBuf samples:numSamples];
     }
 }
 
 -(void)turnTableSpeedRateChanged:(double)newSpeedRate{
-    // Manual platter interaction cancels an in-progress or completed Stop.
-    if (_tableStopTimer || _tableStopped){
-        if (_tableStopTimer){
-            [_tableStopTimer invalidate];
-            _tableStopTimer = nil;
-        }
-        _tableStopped = NO;
-    }
-
+    // Stop is not cancelled by platter input: scratch owns audible speed while held,
+    // and the Stop ramp continues underneath via _tableStopSpeed.
+    BOOL pressing = [_turnTableView isScratching];
     _speedRate = newSpeedRate;
 
-    if (_isScratchEnding && newSpeedRate != 1.0){
+    if (_isScratchEnding && pressing){
         _isScratchEnding = NO;
         _isScratchStarting = YES;
         _isFadingOut = YES;
@@ -394,7 +413,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         return;
     }
 
-    if (_isScratchStarting && newSpeedRate == 1.0){
+    if (_isScratchStarting && !pressing){
         _isScratchStarting = NO;
         _isScratchEnding = YES;
         _isFadingOut = YES;
@@ -402,14 +421,14 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         return;
     }
 
-    if (!_isScratching && !_isFadingOut && newSpeedRate != 1.0){
+    if (!_isScratching && !_isFadingOut && pressing){
         _isScratchStarting = YES;
         _isFadingOut = YES;
         _fadeOutCounter = FADE_SAMPLE_NUM;
         return;
     }
 
-    if (_isScratching && !_isFadingOut && newSpeedRate == 1.0){
+    if (_isScratching && !_isFadingOut && !pressing){
         _isScratchEnding = YES;
         _isFadingOut = YES;
         _fadeOutCounter = FADE_SAMPLE_NUM;
@@ -479,6 +498,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         }
 
         _tableStopped = NO;
+        _tableStopSpeed = 1.0;
         _speedRate = 1.0;
         [self resetScratchState];
         _isFadingIn = YES;
@@ -490,34 +510,49 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
             [_tableStopTimer invalidate];
             _tableStopTimer = nil;
         }
-        // Decelerate via _speedRate only; leave the scratch fade state machine.
+        // Decelerate via _tableStopSpeed; leave the scratch fade state machine alone.
+        // Scratch may still own audible _speedRate while this ramp continues underneath.
         _isScratchStarting = NO;
         _isScratchEnding = NO;
         _isFadingOut = NO;
         _isScratching = NO;
         _isFadingIn = NO;
         _tableStopped = NO;
+        _tableStopSpeed = (_speedRate > 0.0) ? _speedRate : 1.0;
+        _speedRate = _tableStopSpeed;
         _tableStopTimer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(tableStopTimer:) userInfo:nil repeats:YES];
         [_btnStop setTitle:@"[S]tart"];
     }
 }
 
 - (void)tableStopTimer:(NSTimer *)t {
-    if (_speedRate < 0.01f){
-        _speedRate = 0.0f;
+    if (_tableStopSpeed < 0.01f){
+        _tableStopSpeed = 0.0f;
         [_tableStopTimer invalidate];
         _tableStopTimer = nil;
         _tableStopped = YES;
     }else{
-        _speedRate -= 0.02;
+        _tableStopSpeed -= 0.02;
+    }
+
+    // Scratch owns audible speed while the platter is held or mid fade handoff.
+    BOOL scratchOwnsSpeed = [_turnTableView isScratching] || _isScratching || _isScratchStarting || _isScratchEnding;
+    if (!scratchOwnsSpeed){
+        _speedRate = _tableStopSpeed;
     }
 }
 
 -(void)turnTableSpeedRateChanged{
     double newSpeedRate = [_turnTableView speedRate];
-    if (newSpeedRate == 0.0 && ![_turnTableView isScratching] && !_tableStopped){
-        newSpeedRate = 1.0;
-        [_turnTableView setSpeedRate:newSpeedRate];
+    if (![_turnTableView isScratching]){
+        if ([self isStopActive]){
+            // Released into an active Stop: resume the underlying decelerated speed.
+            newSpeedRate = _tableStopped ? 0.0 : _tableStopSpeed;
+            [_turnTableView setSpeedRate:newSpeedRate];
+        }else if (newSpeedRate == 0.0){
+            newSpeedRate = 1.0;
+            [_turnTableView setSpeedRate:newSpeedRate];
+        }
     }
     [self turnTableSpeedRateChanged:newSpeedRate];
 }
