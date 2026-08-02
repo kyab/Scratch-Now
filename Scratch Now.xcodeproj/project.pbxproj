@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		87A693E4EA084D89AEAF2CA2 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A7BBBA21865A4772BA8148E0 /* InfoPlist.strings */; };
 		EB681287267F079000C475FF /* MiniFader.m in Sources */ = {isa = PBXBuildFile; fileRef = EB681285267F079000C475FF /* MiniFader.m */; };
 		EBB7EF3C267DE6B40094DDB2 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF3B267DE6B40094DDB2 /* AppDelegate.m */; };
 		EBB7EF3E267DE6B70094DDB2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EBB7EF3D267DE6B70094DDB2 /* Assets.xcassets */; };
@@ -19,10 +20,10 @@
 		EBB7EF64267E0C7C0094DDB2 /* TurnTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF63267E0C7B0094DDB2 /* TurnTableView.m */; };
 		EBB7EF67267E0D5D0094DDB2 /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF66267E0D5D0094DDB2 /* AppController.m */; };
 		EBC5C546268524BE00CDA6DF /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = EBC5C545268524BE00CDA6DF /* README.md */; };
-		87A693E4EA084D89AEAF2CA2 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A7BBBA21865A4772BA8148E0 /* InfoPlist.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A7BBBA21865A4772BA8148E0 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = InfoPlist.strings; sourceTree = "<group>"; };
 		EB681285267F079000C475FF /* MiniFader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MiniFader.m; sourceTree = "<group>"; };
 		EB681286267F079000C475FF /* MiniFader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MiniFader.h; sourceTree = "<group>"; };
 		EBB7EF37267DE6B40094DDB2 /* Scratch Now.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Scratch Now.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -48,7 +49,6 @@
 		EBB7EF65267E0D5D0094DDB2 /* AppController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppController.h; sourceTree = "<group>"; };
 		EBB7EF66267E0D5D0094DDB2 /* AppController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppController.m; sourceTree = "<group>"; };
 		EBC5C545268524BE00CDA6DF /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		A7BBBA21865A4772BA8148E0 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = InfoPlist.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
