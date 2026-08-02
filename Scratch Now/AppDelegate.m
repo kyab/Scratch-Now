@@ -18,6 +18,12 @@
     // Insert code here to initialize your application
 }
 
+- (IBAction)showPrivacyPolicy:(id)sender {
+    NSURL *url = [NSURL URLWithString:@"https://github.com/kyab/Scratch-Now/blob/main/PRIVACY.md"];
+    if (url) {
+        [[NSWorkspace sharedWorkspace] openURL:url];
+    }
+}
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
     [_controller terminate];

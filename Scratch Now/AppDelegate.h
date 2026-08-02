@@ -14,6 +14,7 @@
     __weak IBOutlet AppController *_controller;
 }
 
+- (IBAction)showPrivacyPolicy:(id)sender;
 
 @end
 
