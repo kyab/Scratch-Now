@@ -29,6 +29,29 @@ static os_log_t OutputDiagnosticsLog(void){
 #define OUTPUT_DIAGNOSTIC_LOG(format, ...) \
     os_log_with_type(OutputDiagnosticsLog(), OS_LOG_TYPE_DEFAULT, format, ##__VA_ARGS__)
 
+// Aggregate IOProc input lists subdevice input streams first, then the tap.
+// Interleaved tap: one buffer at the end (L,R,L,R,...).
+// Non-interleaved tap: one mono buffer per channel at the end (L buffer, then R, ...).
+static BOOL TapFormatIsNonInterleaved(const AudioStreamBasicDescription *asbd){
+    return (asbd->mFormatFlags & kAudioFormatFlagIsNonInterleaved) != 0;
+}
+
+static UInt32 TapFormatChannelCount(const AudioStreamBasicDescription *asbd){
+    return asbd->mChannelsPerFrame > 0 ? asbd->mChannelsPerFrame : 1;
+}
+
+static UInt32 TapFirstBufferIndex(const AudioBufferList *abl,
+                                  const AudioStreamBasicDescription *tapASBD){
+    UInt32 bufferCount = abl->mNumberBuffers;
+    if (TapFormatIsNonInterleaved(tapASBD)){
+        UInt32 tapChannels = TapFormatChannelCount(tapASBD);
+        if (bufferCount >= tapChannels){
+            return bufferCount - tapChannels;
+        }
+    }
+    return bufferCount - 1;
+}
+
 #if SCRATCH_NOW_TAP_SMOKE_CI
 // Tap smoke CI only: append one status line per second to a JSONL file so the
 // external harness can confirm the tap is delivering (non-silent) audio and
@@ -139,23 +162,25 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         return noErr;
     }
     
-    const AudioBuffer *buf0 = &inInputData->mBuffers[0];
-    UInt32 bytesPerFrame = buf0->mNumberChannels * sizeof(float);
+    // Skip any leading subdevice input buffers; the tap occupies the tail.
+    UInt32 tapBufferIndex = TapFirstBufferIndex(inInputData, &_tapASBD);
+    const AudioBuffer *tapBuf = &inInputData->mBuffers[tapBufferIndex];
+    UInt32 bytesPerFrame = tapBuf->mNumberChannels * sizeof(float);
     if (bytesPerFrame == 0){
         return noErr;
     }
-    UInt32 frames = buf0->mDataByteSize / bytesPerFrame;
+    UInt32 frames = tapBuf->mDataByteSize / bytesPerFrame;
     if (frames == 0){
         return noErr;
     }
-    
+
 #if ENABLE_OUTPUT_SWITCH_DIAGNOSTICS
     // Temporary once-per-second capture proof for the hardware baseline.
     {
         static UInt32 frameCounter = 0;
         static float peak = 0.0f;
-        const float *p = (const float *)buf0->mData;
-        UInt32 n = buf0->mDataByteSize / sizeof(float);
+        const float *p = (const float *)tapBuf->mData;
+        UInt32 n = tapBuf->mDataByteSize / sizeof(float);
         for (UInt32 i = 0; i < n; i++){
             float v = fabsf(p[i]);
             if (v > peak) peak = v;
@@ -164,7 +189,7 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         if (frameCounter >= (UInt32)_engineSampleRate){
             OUTPUT_DIAGNOSTIC_LOG("tapCapture peak=%{public}.6f framesPerCallback=%u buffers=%u channels=%u configuredOutput=%u",
                                   peak, frames, inInputData->mNumberBuffers,
-                                  buf0->mNumberChannels, _outputDeviceID);
+                                  tapBuf->mNumberChannels, _outputDeviceID);
             frameCounter = 0;
             peak = 0.0f;
         }
@@ -182,9 +207,9 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         static unsigned long long squareCount = 0;
         static UInt32 zeroCrossings = 0;
 
-        const float *p = (const float *)buf0->mData;
-        UInt32 channels = buf0->mNumberChannels > 0 ? buf0->mNumberChannels : 1;
-        UInt32 n = buf0->mDataByteSize / sizeof(float);
+        const float *p = (const float *)tapBuf->mData;
+        UInt32 channels = tapBuf->mNumberChannels > 0 ? tapBuf->mNumberChannels : 1;
+        UInt32 n = tapBuf->mDataByteSize / sizeof(float);
         for (UInt32 i = 0; i < n; i++){
             float v = p[i];
             float a = fabsf(v);
@@ -261,23 +286,32 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     
     UInt32 frames = MIN(inNumberFrames, _currentTapFrames);
     const AudioBufferList *src = _currentTapBufferList;
-    
-    if (src->mNumberBuffers >= 2){
-        //non-interleaved: buffer per channel
-        memcpy(dstL, src->mBuffers[0].mData, sizeof(float)*frames);
-        memcpy(dstR, src->mBuffers[1].mData, sizeof(float)*frames);
-    }else if (src->mBuffers[0].mNumberChannels == 2){
-        //interleaved stereo: deinterleave
-        const float *p = (const float *)src->mBuffers[0].mData;
-        for (UInt32 i = 0; i < frames; i++){
-            dstL[i] = p[2*i];
-            dstR[i] = p[2*i + 1];
+    UInt32 tapBufferIndex = TapFirstBufferIndex(src, &_tapASBD);
+
+    if (TapFormatIsNonInterleaved(&_tapASBD)){
+        // Tail buffers are one channel each: [..., L, R].
+        const float *srcL = (const float *)src->mBuffers[tapBufferIndex].mData;
+        memcpy(dstL, srcL, sizeof(float)*frames);
+        UInt32 tapChannels = TapFormatChannelCount(&_tapASBD);
+        if (tapChannels >= 2 && (tapBufferIndex + 1) < src->mNumberBuffers){
+            memcpy(dstR, src->mBuffers[tapBufferIndex + 1].mData, sizeof(float)*frames);
+        }else{
+            memcpy(dstR, srcL, sizeof(float)*frames);
         }
     }else{
-        //mono: duplicate to both channels
-        const float *p = (const float *)src->mBuffers[0].mData;
-        memcpy(dstL, p, sizeof(float)*frames);
-        memcpy(dstR, p, sizeof(float)*frames);
+        // Last buffer is interleaved stereo (or mono).
+        const AudioBuffer *tapBuf = &src->mBuffers[tapBufferIndex];
+        const float *p = (const float *)tapBuf->mData;
+        UInt32 ch = tapBuf->mNumberChannels > 0 ? tapBuf->mNumberChannels : 1;
+        if (ch >= 2){
+            for (UInt32 i = 0; i < frames; i++){
+                dstL[i] = p[ch * i];
+                dstR[i] = p[ch * i + 1];
+            }
+        }else{
+            memcpy(dstL, p, sizeof(float)*frames);
+            memcpy(dstR, p, sizeof(float)*frames);
+        }
     }
     
     if (frames < inNumberFrames){
