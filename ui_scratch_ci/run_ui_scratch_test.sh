@@ -167,11 +167,16 @@ if [ -n "${FFMPEG_BIN}" ]; then
     | sed -n 's/.*\[\([0-9][0-9]*\)\] Capture screen 0.*/\1/p' | head -1)"
   if [ -n "${SCREEN_IDX}" ]; then
     log "starting screen recording (avfoundation device ${SCREEN_IDX}, cursor captured)"
+    # Capture as rawvideo (zero-CPU) at 60 fps: encoding with x264 while the
+    # test runs competes with the runner's fragile virtual audio stack and was
+    # correlated with periodic clicks in the captured audio. The raw capture is
+    # a few GB but is re-encoded offline (and deleted) right after the test.
+    df -m /tmp | tail -1 >> "${STATUS_DIR}/screen_record.log" 2>&1 || true
     "${FFMPEG_BIN}" -hide_banner -loglevel warning -y \
       -f avfoundation -capture_cursor 1 -capture_mouse_clicks 1 \
-      -pixel_format uyvy422 -framerate 30 -i "${SCREEN_IDX}:none" \
-      -c:v libx264 -preset ultrafast -crf 26 -pix_fmt yuv420p \
-      "${STATUS_DIR}/screen.mkv" > "${STATUS_DIR}/screen_record.log" 2>&1 &
+      -pixel_format uyvy422 -framerate 60 -i "${SCREEN_IDX}:none" \
+      -c:v rawvideo \
+      "${STATUS_DIR}/screen.mkv" >> "${STATUS_DIR}/screen_record.log" 2>&1 &
     RECORD_PID=$!
     sleep 2
     if ! kill -0 "${RECORD_PID}" >/dev/null 2>&1; then

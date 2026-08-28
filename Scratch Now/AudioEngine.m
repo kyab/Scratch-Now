@@ -71,15 +71,31 @@ static NSString *TapSmokeCIStatusPath(void){
     return path;
 }
 
-// Append a single JSON line. Opened/closed each second so a crash still leaves
-// a readable file for CI artifacts.
+// All CI logging I/O funnels through one serial background queue. The audio
+// render / tap IOProc threads must never touch the disk: a synchronous
+// fopen/fwrite under CI VM load can blow the render deadline, which drops
+// capture buffers and is audible as periodic clicks in the recorded output.
+static dispatch_queue_t TapSmokeCIQueue(void){
+    static dispatch_queue_t queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("scratch-now.tap-smoke-ci.io",
+                                      DISPATCH_QUEUE_SERIAL);
+    });
+    return queue;
+}
+
+// Append a single JSON line (asynchronously, off the calling thread). The file
+// is opened/closed per line so a crash still leaves a readable CI artifact.
 static void TapSmokeCIAppendLine(NSString *path, NSString *line){
-    const char *utf8 = [line UTF8String];
-    FILE *f = fopen([path fileSystemRepresentation], "a");
-    if (f){
-        fwrite(utf8, 1, strlen(utf8), f);
-        fclose(f);
-    }
+    dispatch_async(TapSmokeCIQueue(), ^{
+        const char *utf8 = [line UTF8String];
+        FILE *f = fopen([path fileSystemRepresentation], "a");
+        if (f){
+            fwrite(utf8, 1, strlen(utf8), f);
+            fclose(f);
+        }
+    });
 }
 
 static void TapSmokeCIAppendStatus(double ts, float peak, float rms,
@@ -104,36 +120,45 @@ static NSString *TapSmokeCIOutputStatusPath(void){
 
 // Raw PCM dump (mono float32 LE) of the rendered output plus a sidecar meta
 // file with the wall-clock start time, so the harness can mux the app's real
-// audio into the evidence screen recording. Flushed every second so an abrupt
-// app kill loses at most the final second.
+// audio into the evidence screen recording. The render thread only copies the
+// samples (NSData) and hands them to the serial CI queue; the queue owns the
+// FILE and flushes every second so an abrupt app kill loses at most ~1 s.
 static void TapSmokeCIDumpOutputPCM(const float *left, UInt32 frames, double sampleRate){
-    static FILE *pcmFile = NULL;
-    static BOOL initFailed = NO;
-    static UInt32 framesSinceFlush = 0;
-    if (initFailed){
-        return;
-    }
-    if (!pcmFile){
-        NSString *dir = [TapSmokeCIStatusPath() stringByDeletingLastPathComponent];
-        NSString *pcmPath = [dir stringByAppendingPathComponent:@"output.pcm"];
-        pcmFile = fopen([pcmPath fileSystemRepresentation], "wb");
-        if (!pcmFile){
-            initFailed = YES;
-            return;
-        }
+    static BOOL metaWritten = NO;
+    if (!metaWritten){
+        metaWritten = YES;
         double ts = CFAbsoluteTimeGetCurrent() + kCFAbsoluteTimeIntervalSince1970;
+        NSString *dir = [TapSmokeCIStatusPath() stringByDeletingLastPathComponent];
         NSString *meta = [NSString stringWithFormat:
                           @"{\"startTs\":%.3f,\"sampleRate\":%.0f,\"channels\":1,\"format\":\"f32le\"}\n",
                           ts, sampleRate];
         TapSmokeCIAppendLine([dir stringByAppendingPathComponent:@"output_pcm_meta.json"],
                              meta);
     }
-    fwrite(left, sizeof(float), frames, pcmFile);
-    framesSinceFlush += frames;
-    if (sampleRate > 0 && framesSinceFlush >= (UInt32)sampleRate){
-        fflush(pcmFile);
-        framesSinceFlush = 0;
-    }
+    NSData *chunk = [NSData dataWithBytes:left length:frames * sizeof(float)];
+    dispatch_async(TapSmokeCIQueue(), ^{
+        static FILE *pcmFile = NULL;
+        static BOOL initFailed = NO;
+        static UInt32 framesSinceFlush = 0;
+        if (initFailed){
+            return;
+        }
+        if (!pcmFile){
+            NSString *dir = [TapSmokeCIStatusPath() stringByDeletingLastPathComponent];
+            NSString *pcmPath = [dir stringByAppendingPathComponent:@"output.pcm"];
+            pcmFile = fopen([pcmPath fileSystemRepresentation], "wb");
+            if (!pcmFile){
+                initFailed = YES;
+                return;
+            }
+        }
+        fwrite(chunk.bytes, 1, chunk.length, pcmFile);
+        framesSinceFlush += (UInt32)(chunk.length / sizeof(float));
+        if (sampleRate > 0 && framesSinceFlush >= (UInt32)sampleRate){
+            fflush(pcmFile);
+            framesSinceFlush = 0;
+        }
+    });
 }
 
 // Accumulate peak/rms and a zero-crossing pitch estimate on the rendered output

@@ -117,6 +117,27 @@ def longest_silent_run(samples: list, rate: int):
     return best[0] * seconds_per_window, (best[1] + 1) * seconds_per_window
 
 
+def count_clicks(ffmpeg: str, out_path: str) -> None:
+    """Diagnostic: count waveform discontinuities (audible clicks).
+
+    A 220/440 Hz tone at the test amplitude cannot produce sample-to-sample
+    jumps anywhere near 0.08, so larger first differences indicate capture
+    dropouts or DSP discontinuities. Informational only, for tracking the
+    audio infra health across runs.
+    """
+    probe_rate = 48000
+    samples = decode_mono_f32(ffmpeg, out_path, probe_rate)
+    clicks = []
+    for index in range(1, len(samples)):
+        if abs(samples[index] - samples[index - 1]) > 0.08:
+            t = index / probe_rate
+            if not clicks or t - clicks[-1] > 0.05:
+                clicks.append(t)
+    positions = " ".join(f"{t:.2f}" for t in clicks)
+    print(f"[mux] click diagnostic: {len(clicks)} discontinuities "
+          f"(>0.08 sample jump) at [{positions}]", flush=True)
+
+
 def sync_self_check(ffmpeg: str, out_path: str, phases_path: str,
                     video_start: float) -> None:
     with open(phases_path, "r", encoding="utf-8") as handle:
@@ -146,24 +167,24 @@ def sync_self_check(ffmpeg: str, out_path: str, phases_path: str,
 
 
 def run_mux(args, skip: float, rate: int, burn_timestamp: bool) -> int:
-    video_filter = []
+    # The capture is rawvideo (recording-time encoding competes with the
+    # runner's virtual audio stack), so the video is always re-encoded here,
+    # offline: upscale 2x for a sharper artifact and burn in the elapsed time
+    # (when the ffmpeg build has drawtext) so sync can be verified visually.
+    filters = ["scale=iw*2:ih*2:flags=lanczos"]
     if burn_timestamp:
-        # Burnt-in elapsed time lets a human verify sync frame by frame.
-        video_filter = [
-            "-vf",
+        filters.append(
             "drawtext=text='%{pts\\:hms}':fontcolor=yellow:fontsize=28:"
-            "box=1:boxcolor=black@0.5:x=8:y=8",
-            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
-        ]
-    else:
-        video_filter = ["-c:v", "copy"]
+            "box=1:boxcolor=black@0.5:x=8:y=8")
     cmd = [args.ffmpeg, "-hide_banner", "-loglevel", "warning", "-y",
            "-i", args.video,
            "-ss", f"{skip:.3f}",
            "-f", "f32le", "-ar", str(rate), "-ac", "1",
            "-i", args.pcm,
            "-map", "0:v", "-map", "1:a",
-           *video_filter,
+           "-vf", ",".join(filters),
+           "-c:v", "libx264", "-preset", "veryfast", "-crf", "21",
+           "-pix_fmt", "yuv420p",
            "-c:a", "aac", "-b:a", "128k", "-ar", "48000",
            "-shortest", "-movflags", "+faststart",
            args.out]
@@ -217,13 +238,17 @@ def main() -> int:
     rate_int = int(round(rate))
     code = run_mux(args, skip, rate_int, burn_timestamp=True)
     if code != 0:
-        # drawtext needs fontconfig; fall back to a plain stream copy.
-        print("[mux] WARNING: timestamp overlay failed; retrying with "
-              "video stream copy", flush=True)
+        # Not every ffmpeg build has drawtext; retry without the overlay.
+        print("[mux] WARNING: timestamp overlay failed; retrying without it",
+              flush=True)
         code = run_mux(args, skip, rate_int, burn_timestamp=False)
     if code != 0:
         return code
 
+    try:
+        count_clicks(args.ffmpeg, args.out)
+    except Exception as error:  # diagnostics only; never fail the mux
+        print(f"[mux] click diagnostic errored: {error}", flush=True)
     if args.phases:
         try:
             sync_self_check(args.ffmpeg, args.out, args.phases, video_start)
