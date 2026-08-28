@@ -62,10 +62,12 @@ def load_jsonl(path):
     return entries
 
 
-def lines_in_window(entries, start, end, head_trim):
+def lines_in_window(entries, start, end, head_trim, tail_trim=0.0):
+    # tail_trim excludes lines whose 1 s aggregation span may bleed into the
+    # next phase (needed for silence checks right before a resume click).
     return [e for e in entries
             if e.get("ts", 0.0) - LINE_SPAN >= start + head_trim
-            and e.get("ts", 0.0) <= end + END_SLACK]
+            and e.get("ts", 0.0) <= end + END_SLACK - tail_trim]
 
 
 def state_in_window(entries, start, end, head_trim):
@@ -170,7 +172,8 @@ def main() -> int:
 
     # Table-stop case 1: full stop -> silence with tableStopped set.
     phase = phases["stopped"]
-    lines = lines_in_window(output, phase["start"], phase["end"], head_trim=0.5)
+    lines = lines_in_window(output, phase["start"], phase["end"], head_trim=0.5,
+                            tail_trim=0.5)
     describe("stopped", lines)
     expect(len(lines) >= 1, "stopped produced output status lines")
     if lines:
