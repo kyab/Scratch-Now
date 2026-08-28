@@ -878,7 +878,15 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 
 // Request a smaller IO period on the tap aggregate.
 -(BOOL)setupAggregateBufferFrameSize{
-    const UInt32 desiredFrameSize = 64;
+#if SCRATCH_NOW_TAP_SMOKE_CI
+    // CI VMs cannot sustain millisecond realtime deadlines: a 64-frame IO
+    // period (~1.3 ms at 48 kHz) drops capture buffers under load, audible
+    // as periodic clicks. Latency is irrelevant for the test, so relax the
+    // period to ~85 ms (clamped to the device's supported range below).
+    UInt32 desiredFrameSize = 4096;
+#else
+    UInt32 desiredFrameSize = 64;
+#endif
     
     AudioObjectPropertyAddress propAddress;
     propAddress.mSelector = kAudioDevicePropertyBufferFrameSizeRange;
@@ -896,6 +904,15 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     
     NSLog(@"Aggregate BufferFrameSizeRange: min=%.0f max=%.0f (desired=%u)",
           range.mMinimum, range.mMaximum, desiredFrameSize);
+    
+#if SCRATCH_NOW_TAP_SMOKE_CI
+    if ((Float64)desiredFrameSize > range.mMaximum){
+        desiredFrameSize = (UInt32)range.mMaximum;
+    }
+    if ((Float64)desiredFrameSize < range.mMinimum){
+        desiredFrameSize = (UInt32)range.mMinimum;
+    }
+#endif
     
     if ((Float64)desiredFrameSize < range.mMinimum ||
         (Float64)desiredFrameSize > range.mMaximum){
@@ -1010,6 +1027,20 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         return NO;
     }
     
+#if SCRATCH_NOW_TAP_SMOKE_CI
+    // The CI build uses a large device buffer (see setupLowLatencyOutput);
+    // the AU must accept render slices bigger than the 1156-frame default.
+    // Must be set before AUGraphInitialize.
+    UInt32 ciMaxFrames = 4096;
+    ret = AudioUnitSetProperty(_outUnit, kAudioUnitProperty_MaximumFramesPerSlice,
+                               kAudioUnitScope_Global, 0,
+                               &ciMaxFrames, sizeof(ciMaxFrames));
+    if (FAILED(ret)){
+        NSLog(@"failed to set MaximumFramesPerSlice for CI = %d", ret);
+        return NO;
+    }
+#endif
+    
     ret = AUGraphInitialize(_graph);
     if (FAILED(ret)){
         NSLog(@"failed to AUGraphInitialize");
@@ -1040,7 +1071,14 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     propAddress.mSelector = kAudioDevicePropertyBufferFrameSize;
     propAddress.mScope = kAudioObjectPropertyScopeGlobal;
     propAddress.mElement = kAudioObjectPropertyElementMaster;
+#if SCRATCH_NOW_TAP_SMOKE_CI
+    // Match the relaxed capture-side IO period (see
+    // setupAggregateBufferFrameSize): a 32-frame render deadline (~0.7 ms)
+    // is not sustainable on a CI VM.
+    UInt32 frameSize = 2048;
+#else
     UInt32 frameSize = 32;
+#endif
     ret = AudioObjectSetPropertyData(builtInOutput,
                                      &propAddress,0, NULL, sizeof(UInt32), &frameSize);
     if(FAILED(ret)){
