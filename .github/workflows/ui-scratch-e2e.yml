@@ -14,8 +14,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, macos-15]
+        include:
+          - os: macos-15
+            experimental: false
+          # The macos-latest (macOS 26) runner's virtual audio stack degrades
+          # into a persistent ~20% duty stutter roughly 20-35 s into sustained
+          # capture+playback (regardless of tone player: sounddevice and
+          # afplay both hit it), which corrupts the capture-side reference.
+          # The assert script flags this via the INFRA tone-health check.
+          # Keep the job as a non-blocking signal until the runner image
+          # stabilizes; macos-15 has been reliable on every run.
+          - os: macos-latest
+            experimental: true
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
     timeout-minutes: 25
 
     steps:
