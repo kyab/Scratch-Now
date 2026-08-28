@@ -102,6 +102,40 @@ static NSString *TapSmokeCIOutputStatusPath(void){
     return path;
 }
 
+// Raw PCM dump (mono float32 LE) of the rendered output plus a sidecar meta
+// file with the wall-clock start time, so the harness can mux the app's real
+// audio into the evidence screen recording. Flushed every second so an abrupt
+// app kill loses at most the final second.
+static void TapSmokeCIDumpOutputPCM(const float *left, UInt32 frames, double sampleRate){
+    static FILE *pcmFile = NULL;
+    static BOOL initFailed = NO;
+    static UInt32 framesSinceFlush = 0;
+    if (initFailed){
+        return;
+    }
+    if (!pcmFile){
+        NSString *dir = [TapSmokeCIStatusPath() stringByDeletingLastPathComponent];
+        NSString *pcmPath = [dir stringByAppendingPathComponent:@"output.pcm"];
+        pcmFile = fopen([pcmPath fileSystemRepresentation], "wb");
+        if (!pcmFile){
+            initFailed = YES;
+            return;
+        }
+        double ts = CFAbsoluteTimeGetCurrent() + kCFAbsoluteTimeIntervalSince1970;
+        NSString *meta = [NSString stringWithFormat:
+                          @"{\"startTs\":%.3f,\"sampleRate\":%.0f,\"channels\":1,\"format\":\"f32le\"}\n",
+                          ts, sampleRate];
+        TapSmokeCIAppendLine([dir stringByAppendingPathComponent:@"output_pcm_meta.json"],
+                             meta);
+    }
+    fwrite(left, sizeof(float), frames, pcmFile);
+    framesSinceFlush += frames;
+    if (sampleRate > 0 && framesSinceFlush >= (UInt32)sampleRate){
+        fflush(pcmFile);
+        framesSinceFlush = 0;
+    }
+}
+
 // Accumulate peak/rms and a zero-crossing pitch estimate on the rendered output
 // (left channel) and flush one JSON line per second. ts is unix epoch seconds so
 // the harness can correlate with its own phase timeline.
@@ -113,6 +147,8 @@ static void TapSmokeCIObserveOutput(const float *left, UInt32 frames, double sam
     static UInt32 zeroCrossings = 0;
     static int zcrState = 0;
     const float kZcrHysteresis = 0.02f;
+
+    TapSmokeCIDumpOutputPCM(left, frames, sampleRate);
 
     for (UInt32 i = 0; i < frames; i++){
         float v = left[i];

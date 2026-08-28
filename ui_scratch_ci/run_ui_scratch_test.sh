@@ -28,11 +28,35 @@ TONE_DURATION_SECONDS=90
 OUTPUT_WAIT_TIMEOUT=45
 
 TONE_PID=""
+RECORD_PID=""
+RECORD_STOP_TS=""
+FFMPEG_BIN="$(command -v ffmpeg || true)"
+FFPROBE_BIN="$(command -v ffprobe || true)"
 
 log() { echo "[ui-scratch] $*"; }
 
+# Stop the evidence screen recording gracefully (SIGINT lets ffmpeg finalize
+# the container) and remember the wall-clock stop time for audio alignment.
+stop_screen_recording() {
+  if [ -z "${RECORD_PID}" ]; then
+    return
+  fi
+  RECORD_STOP_TS="$(${PYTHON_BIN} -c 'import time; print(f"{time.time():.3f}")')"
+  kill -INT "${RECORD_PID}" >/dev/null 2>&1 || true
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    if ! kill -0 "${RECORD_PID}" >/dev/null 2>&1; then
+      break
+    fi
+    sleep 1
+  done
+  kill -9 "${RECORD_PID}" >/dev/null 2>&1 || true
+  wait "${RECORD_PID}" 2>/dev/null || true
+  RECORD_PID=""
+}
+
 cleanup() {
   log "cleaning up"
+  stop_screen_recording
   osascript -e "tell application id \"${BUNDLE_ID}\" to quit" >/dev/null 2>&1 || true
   sleep 1
   killall "${SCHEME}" >/dev/null 2>&1 || true
@@ -79,10 +103,16 @@ fi
 log "built app: ${APP_PATH}"
 
 # 2) Pre-grant TCC: system audio recording for the app, event posting for the
-#    Python driver.
+#    Python driver, screen recording for ffmpeg (evidence video).
 bash "${REPO_ROOT}/tap_smoke_ci/grant_audio_capture_tcc.sh" "${BUNDLE_ID}" "${APP_PATH}"
 PYTHON_REAL="$(${PYTHON_BIN} -c 'import os, sys; print(os.path.realpath(sys.executable))')"
 bash "${SCRIPT_DIR}/grant_ui_automation_tcc.sh" "${PYTHON_REAL}"
+if [ -n "${FFMPEG_BIN}" ]; then
+  FFMPEG_REAL="$(${PYTHON_BIN} -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "${FFMPEG_BIN}")"
+  bash "${SCRIPT_DIR}/grant_screen_capture_tcc.sh" "${FFMPEG_REAL}"
+else
+  log "WARNING: ffmpeg not found; evidence video disabled"
+fi
 
 # 3) Start the steady reference tone (separate process => tap can capture it).
 log "starting steady tone playback"
@@ -119,6 +149,29 @@ log "app is rendering audio"
 osascript -e "tell application id \"${BUNDLE_ID}\" to activate" >/dev/null 2>&1 || true
 sleep 1
 
+# 6a) Start the evidence screen recording (video only; the runner has no audio
+#     loopback device, so the app's rendered audio is dumped as PCM and muxed
+#     in afterwards). -capture_cursor makes the synthetic mouse visible.
+if [ -n "${FFMPEG_BIN}" ]; then
+  SCREEN_IDX="$(${FFMPEG_BIN} -hide_banner -f avfoundation -list_devices true -i "" 2>&1 \
+    | sed -n 's/.*\[\([0-9][0-9]*\)\] Capture screen 0.*/\1/p' | head -1)"
+  if [ -n "${SCREEN_IDX}" ]; then
+    log "starting screen recording (avfoundation device ${SCREEN_IDX}, cursor captured)"
+    "${FFMPEG_BIN}" -hide_banner -loglevel warning -y \
+      -f avfoundation -capture_cursor 1 -framerate 30 -i "${SCREEN_IDX}:none" \
+      -c:v libx264 -preset ultrafast -crf 26 -pix_fmt yuv420p \
+      "${STATUS_DIR}/screen.mkv" > "${STATUS_DIR}/screen_record.log" 2>&1 &
+    RECORD_PID=$!
+    sleep 2
+    if ! kill -0 "${RECORD_PID}" >/dev/null 2>&1; then
+      log "WARNING: screen recording failed to start (see screen_record.log)"
+      RECORD_PID=""
+    fi
+  else
+    log "WARNING: no avfoundation screen device found; evidence video disabled"
+  fi
+fi
+
 # 6) Drive the turntable with synthetic mouse events.
 log "driving scratch gestures"
 "${PYTHON_BIN}" "${SCRIPT_DIR}/drive_scratch.py" 2>&1 | tee "${STATUS_DIR}/driver.log"
@@ -128,7 +181,9 @@ if [ "${DRIVER_RESULT}" -ne 0 ]; then
   exit "${DRIVER_RESULT}"
 fi
 
-# 7) Stop the app and playback, then assert.
+# 7) Stop the recording, then the app and playback, then assert.
+stop_screen_recording
+
 log "stopping app and playback"
 osascript -e "tell application id \"${BUNDLE_ID}\" to quit" >/dev/null 2>&1 || true
 sleep 1
@@ -137,6 +192,27 @@ if [ -n "${TONE_PID}" ]; then
   kill "${TONE_PID}" >/dev/null 2>&1 || true
   wait "${TONE_PID}" 2>/dev/null || true
   TONE_PID=""
+fi
+
+# 8) Mux the evidence video: screen capture + the app's rendered audio.
+if [ -f "${STATUS_DIR}/screen.mkv" ] && [ -f "${STATUS_DIR}/output.pcm" ] \
+   && [ -n "${RECORD_STOP_TS}" ] && [ -n "${FFPROBE_BIN}" ]; then
+  log "muxing evidence video"
+  if "${PYTHON_BIN}" "${SCRIPT_DIR}/make_evidence_video.py" \
+       --video "${STATUS_DIR}/screen.mkv" \
+       --pcm "${STATUS_DIR}/output.pcm" \
+       --pcm-meta "${STATUS_DIR}/output_pcm_meta.json" \
+       --out "${STATUS_DIR}/evidence.mp4" \
+       --video-stop-ts "${RECORD_STOP_TS}" \
+       --ffmpeg "${FFMPEG_BIN}" --ffprobe "${FFPROBE_BIN}"; then
+    log "evidence video: ${STATUS_DIR}/evidence.mp4"
+    # Keep the artifact lean; the mp4 already contains video + audio.
+    rm -f "${STATUS_DIR}/screen.mkv" "${STATUS_DIR}/output.pcm"
+  else
+    log "WARNING: evidence video muxing failed (raw screen.mkv/output.pcm kept)"
+  fi
+else
+  log "WARNING: evidence video inputs missing; skipping mux"
 fi
 
 log "asserting scratch effect on the rendered output"

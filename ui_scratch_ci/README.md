@@ -30,6 +30,12 @@
    - リリース: ≈ 220 Hz に復帰
    - 単純停止: 停止後は無音 かつ `tableStopped` がセットされ、再クリックで ≈ 220 Hz に復帰
    - 停止途中で live 復帰: 減速中の速度（0 < speedRate < 1）を観測しつつ `tableStopped` を経由せず ≈ 220 Hz に復帰
+5. 証拠動画 `evidence.mp4` を CI アーティファクトに保存する:
+   - ffmpeg（avfoundation, `-capture_cursor 1`）でマウスポインタ込みの画面を録画
+   - ランナーには音声ループバックが無いため、アプリがスピーカーへレンダリングした
+     出力そのもの（`output.pcm`, mono f32le）をアプリ側 CI フックでダンプし、
+     壁時計タイムスタンプで映像と整列して mux する（`make_evidence_video.py`）
+   - 同期精度は ±0.1 秒程度（録画停止時刻 − 動画長 で開始時刻を逆算）
 
 ## TCC（権限）について
 
