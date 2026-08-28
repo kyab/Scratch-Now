@@ -241,13 +241,13 @@ double rad2deg(double rad){
     }
     
     double delta = _currentRad - _prevRad;
-    if (fabs(rad2deg(delta)) > 340){
-        if (_currentRad > _prevRad){
-            delta = -1.0*_prevRad - (2*M_PI - _currentRad);
-        }else{
-            delta = (2*M_PI-_prevRad) + _currentRad;
-        }
-    }
+    // Normalize to the shortest arc. The platter cannot plausibly move more
+    // than a half turn between polls, so any larger apparent jump is a 0/2pi
+    // wrap. The previous fixed 340-degree threshold missed wraps whenever a
+    // delayed timer tick let the true movement exceed 20 degrees, producing
+    // huge bogus reverse-speed spikes during sustained fast rotation.
+    while (delta > M_PI) delta -= 2.0 * M_PI;
+    while (delta < -M_PI) delta += 2.0 * M_PI;
 
     double dt = currentSec - _prevSec;
     if (dt > 0.0){
