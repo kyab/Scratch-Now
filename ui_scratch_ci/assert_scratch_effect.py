@@ -35,6 +35,7 @@ import sys
 STATUS_DIR = "/tmp/scratch-now-tap-smoke-ci"
 OUTPUT_FILE = f"{STATUS_DIR}/output.jsonl"
 SCRATCH_FILE = f"{STATUS_DIR}/scratch.jsonl"
+TAP_FILE = f"{STATUS_DIR}/tap.jsonl"
 PHASES_FILE = f"{STATUS_DIR}/phases.json"
 
 BASE_HZ = 220.0
@@ -43,6 +44,11 @@ MIN_RMS = 0.005
 # Each output.jsonl line aggregates roughly the second ending at ts.
 LINE_SPAN = 1.0
 END_SLACK = 0.3
+# tap.jsonl timestamps are CFAbsoluteTime (2001 epoch).
+CF_EPOCH_OFFSET = 978307200.0
+# The captured reference tone plays at rms ~0.179; anything well below that
+# means the tone playback itself glitched (CI audio infra, not the app).
+TONE_HEALTH_MIN_RMS = 0.15
 
 
 def load_jsonl(path):
@@ -110,6 +116,20 @@ def main() -> int:
 
     def max_rms(lines):
         return max(e.get("rms", 0.0) for e in lines)
+
+    # Infra sanity check: the tap-side capture of the reference tone must be
+    # steady for the whole scenario, otherwise every downstream expectation is
+    # meaningless. A degraded line here means the tone playback or the CI
+    # audio device glitched — not the app under test.
+    run_start = phases["baseline"]["start"]
+    run_end = max(p["end"] for p in phases.values())
+    tap = [e for e in load_jsonl(TAP_FILE)
+           if run_start + LINE_SPAN <= e.get("ts", 0.0) + CF_EPOCH_OFFSET <= run_end]
+    degraded = [e for e in tap if e.get("rms", 0.0) < TONE_HEALTH_MIN_RMS]
+    detail = ", ".join(f"{e.get('rms', 0.0):.4f}" for e in degraded[:5])
+    expect(tap and not degraded,
+           f"INFRA: captured reference tone stayed healthy for the whole run "
+           f"({len(tap)} lines, degraded rms [{detail}])")
 
     # Baseline: normal 1x playthrough of the 220 Hz tone.
     phase = phases["baseline"]

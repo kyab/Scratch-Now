@@ -5,6 +5,7 @@
 ## 動作説明
 
 1. `play_steady_tone.py` が別プロセスで 220 Hz の定常トーンを再生する（CATap のキャプチャ元）。
+   WAV を生成して `afplay` で再生する（Python のリアルタイム描画は CI VM のジッタで途切れが発生したため不採用）。
 2. `SCRATCH_NOW_TAP_SMOKE_CI` を有効にした Scratch Now をビルド・起動する。この CI ビルドは以下を `/tmp/scratch-now-tap-smoke-ci/` に書き出す:
    - `ui.jsonl` — ターンテーブルの画面座標（CGEvent グローバル座標系）
    - `output.jsonl` — スクラッチ DSP 通過後にスピーカーへ送る音の rms / ゼロクロス由来の推定周波数（毎秒 1 行）
