@@ -217,13 +217,21 @@ fi
 if [ -f "${STATUS_DIR}/screen.mkv" ] && [ -f "${STATUS_DIR}/output.pcm" ] \
    && [ -n "${RECORD_STOP_TS}" ] && [ -n "${FFPROBE_BIN}" ]; then
   log "muxing evidence video"
+  MUX_EXTRA_ARGS=()
+  if [ -f "${STATUS_DIR}/output.jsonl" ]; then
+    MUX_EXTRA_ARGS+=(--output-jsonl "${STATUS_DIR}/output.jsonl")
+  fi
+  if [ -f "${STATUS_DIR}/phases.json" ]; then
+    MUX_EXTRA_ARGS+=(--phases "${STATUS_DIR}/phases.json")
+  fi
   if "${PYTHON_BIN}" "${SCRIPT_DIR}/make_evidence_video.py" \
        --video "${STATUS_DIR}/screen.mkv" \
        --pcm "${STATUS_DIR}/output.pcm" \
        --pcm-meta "${STATUS_DIR}/output_pcm_meta.json" \
        --out "${STATUS_DIR}/evidence.mp4" \
        --video-stop-ts "${RECORD_STOP_TS}" \
-       --ffmpeg "${FFMPEG_BIN}" --ffprobe "${FFPROBE_BIN}"; then
+       --ffmpeg "${FFMPEG_BIN}" --ffprobe "${FFPROBE_BIN}" \
+       ${MUX_EXTRA_ARGS[@]+"${MUX_EXTRA_ARGS[@]}"}; then
     log "evidence video: ${STATUS_DIR}/evidence.mp4"
     # Keep the artifact lean; the mp4 already contains video + audio.
     rm -f "${STATUS_DIR}/screen.mkv" "${STATUS_DIR}/output.pcm"
