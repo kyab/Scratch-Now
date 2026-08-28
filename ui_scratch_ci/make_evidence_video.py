@@ -117,24 +117,41 @@ def longest_silent_run(samples: list, rate: int):
     return best[0] * seconds_per_window, (best[1] + 1) * seconds_per_window
 
 
-def count_clicks(ffmpeg: str, out_path: str) -> None:
-    """Diagnostic: count waveform discontinuities (audible clicks).
+def find_clicks(samples: list, rate: int) -> list:
+    """Waveform discontinuity (click) positions in seconds.
 
     A 220/440 Hz tone at the test amplitude cannot produce sample-to-sample
     jumps anywhere near 0.08, so larger first differences indicate capture
-    dropouts or DSP discontinuities. Informational only, for tracking the
-    audio infra health across runs.
+    dropouts or DSP discontinuities.
     """
-    probe_rate = 48000
-    samples = decode_mono_f32(ffmpeg, out_path, probe_rate)
     clicks = []
     for index in range(1, len(samples)):
         if abs(samples[index] - samples[index - 1]) > 0.08:
-            t = index / probe_rate
+            t = index / rate
             if not clicks or t - clicks[-1] > 0.05:
                 clicks.append(t)
+    return clicks
+
+
+def count_raw_clicks(pcm_path: str, rate: int, skip: float) -> None:
+    """Diagnostic: clicks in the unfiltered PCM (video-time positions)."""
+    with open(pcm_path, "rb") as handle:
+        raw = handle.read()
+    count = len(raw) // 4
+    samples = struct.unpack(f"<{count}f", raw[:count * 4])
+    clicks = [t - skip for t in find_clicks(samples, rate) if t >= skip]
     positions = " ".join(f"{t:.2f}" for t in clicks)
-    print(f"[mux] click diagnostic: {len(clicks)} discontinuities "
+    print(f"[mux] raw click diagnostic: {len(clicks)} discontinuities "
+          f"(>0.08 sample jump) at [{positions}]", flush=True)
+
+
+def count_clicks(ffmpeg: str, out_path: str) -> None:
+    """Diagnostic: clicks remaining in the muxed (de-clicked) audio track."""
+    probe_rate = 48000
+    samples = decode_mono_f32(ffmpeg, out_path, probe_rate)
+    clicks = find_clicks(samples, probe_rate)
+    positions = " ".join(f"{t:.2f}" for t in clicks)
+    print(f"[mux] muxed click diagnostic: {len(clicks)} discontinuities "
           f"(>0.08 sample jump) at [{positions}]", flush=True)
 
 
@@ -166,23 +183,36 @@ def sync_self_check(ffmpeg: str, out_path: str, phases_path: str,
               f"exceeds 0.35s", flush=True)
 
 
-def run_mux(args, skip: float, rate: int, burn_timestamp: bool) -> int:
+# The virtual display delivers frames at irregular 15-100 ms intervals
+# (~27 fps VFR), which reads as judder; motion interpolation re-times the
+# capture to a smooth constant 60 fps before the 2x upscale.
+MINTERPOLATE = ("minterpolate=fps=60:mi_mode=mci:mc_mode=aobmc:"
+                "me_mode=bidir:vsbmc=1")
+SCALE_2X = "scale=iw*2:ih*2:flags=lanczos"
+# Burnt-in elapsed time for visual sync verification (not present in every
+# ffmpeg build, hence the fallback chain in main()).
+DRAWTEXT = ("drawtext=text='%{pts\\:hms}':fontcolor=yellow:fontsize=28:"
+            "box=1:boxcolor=black@0.5:x=8:y=8")
+# The runner's virtual audio stack drops capture buffers under load every few
+# seconds, which is audible as impulsive clicks. They are infra artifacts, not
+# app behavior (the test asserts on the unfiltered signals), so the evidence
+# track is de-clicked for listenability.
+ADECLICK = "adeclick"
+
+
+def run_mux(args, skip: float, rate: int, video_filters: list,
+            audio_filters: list) -> int:
     # The capture is rawvideo (recording-time encoding competes with the
     # runner's virtual audio stack), so the video is always re-encoded here,
-    # offline: upscale 2x for a sharper artifact and burn in the elapsed time
-    # (when the ffmpeg build has drawtext) so sync can be verified visually.
-    filters = ["scale=iw*2:ih*2:flags=lanczos"]
-    if burn_timestamp:
-        filters.append(
-            "drawtext=text='%{pts\\:hms}':fontcolor=yellow:fontsize=28:"
-            "box=1:boxcolor=black@0.5:x=8:y=8")
+    # offline.
     cmd = [args.ffmpeg, "-hide_banner", "-loglevel", "warning", "-y",
            "-i", args.video,
            "-ss", f"{skip:.3f}",
            "-f", "f32le", "-ar", str(rate), "-ac", "1",
            "-i", args.pcm,
            "-map", "0:v", "-map", "1:a",
-           "-vf", ",".join(filters),
+           "-vf", ",".join(video_filters),
+           *(["-af", ",".join(audio_filters)] if audio_filters else []),
            "-c:v", "libx264", "-preset", "veryfast", "-crf", "21",
            "-pix_fmt", "yuv420p",
            "-c:a", "aac", "-b:a", "128k", "-ar", "48000",
@@ -236,12 +266,28 @@ def main() -> int:
         skip = 0.0
 
     rate_int = int(round(rate))
-    code = run_mux(args, skip, rate_int, burn_timestamp=True)
-    if code != 0:
-        # Not every ffmpeg build has drawtext; retry without the overlay.
-        print("[mux] WARNING: timestamp overlay failed; retrying without it",
-              flush=True)
-        code = run_mux(args, skip, rate_int, burn_timestamp=False)
+    try:
+        count_raw_clicks(args.pcm, rate_int, skip)
+    except Exception as error:  # diagnostics only; never fail the mux
+        print(f"[mux] raw click diagnostic errored: {error}", flush=True)
+
+    # Filter-availability fallback chain (a missing filter fails at graph
+    # init, i.e. cheaply): full chain first, then drop drawtext (absent in
+    # some ffmpeg builds), then minterpolate, then adeclick.
+    attempts = [
+        ([MINTERPOLATE, SCALE_2X, DRAWTEXT], [ADECLICK]),
+        ([MINTERPOLATE, SCALE_2X], [ADECLICK]),
+        ([SCALE_2X], [ADECLICK]),
+        ([SCALE_2X], []),
+    ]
+    code = 1
+    for index, (video_filters, audio_filters) in enumerate(attempts):
+        code = run_mux(args, skip, rate_int, video_filters, audio_filters)
+        if code == 0:
+            break
+        if index + 1 < len(attempts):
+            print("[mux] WARNING: filter chain failed; retrying with a "
+                  "reduced chain", flush=True)
     if code != 0:
         return code
 
