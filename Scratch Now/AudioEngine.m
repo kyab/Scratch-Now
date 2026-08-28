@@ -1072,10 +1072,11 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     propAddress.mScope = kAudioObjectPropertyScopeGlobal;
     propAddress.mElement = kAudioObjectPropertyElementMaster;
 #if SCRATCH_NOW_TAP_SMOKE_CI
-    // Match the relaxed capture-side IO period (see
-    // setupAggregateBufferFrameSize): a 32-frame render deadline (~0.7 ms)
-    // is not sustainable on a CI VM.
-    UInt32 frameSize = 2048;
+    // Relax the render deadline like the capture side (see
+    // setupAggregateBufferFrameSize): 32 frames (~0.7 ms) is not sustainable
+    // on a CI VM. Capped at 1024 because AppController's variable-rate temp
+    // buffers (_tempLeftPtr/_tempRightPtr) hold 1024 frames per render call.
+    UInt32 frameSize = 1024;
 #else
     UInt32 frameSize = 32;
 #endif

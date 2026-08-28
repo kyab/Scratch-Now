@@ -19,7 +19,7 @@
     
 #if SCRATCH_NOW_TAP_SMOKE_CI
     // The CI build runs with large IO buffers (see AudioEngine.m): one output
-    // render quantum is 2048 frames and capture arrives in 4096-frame chunks,
+    // render quantum is 1024 frames and capture arrives in 4096-frame chunks,
     // so the live read head must sit far enough behind the write head that a
     // whole render quantum never reads past the captured data, even right
     // after -follow. ~170 ms of latency is irrelevant for the test.
