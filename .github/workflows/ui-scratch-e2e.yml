@@ -1,0 +1,45 @@
+name: UI scratch E2E CI
+
+# Thin wrapper around ui_scratch_ci/. All real logic lives in the scripts there
+# so the same test runs locally on a MacBook (see ui_scratch_ci/README.md).
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ui-scratch:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r ui_scratch_ci/requirements.txt
+
+      - name: Run UI scratch E2E test
+        run: bash ui_scratch_ci/run_ui_scratch_test.sh
+
+      - name: Upload UI scratch artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-scratch-ci-status-${{ matrix.os }}
+          path: /tmp/scratch-now-tap-smoke-ci/
+          if-no-files-found: warn

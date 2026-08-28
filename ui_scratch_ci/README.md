@@ -1,0 +1,34 @@
+# UI scratch E2E CI
+
+スクラッチ操作（ターンテーブルのマウスドラッグ）による音声効果を、実機の UI 操作込みでエンドツーエンドに検証するテストです。ブラウザテスト（Playwright 等）の macOS ネイティブ版に相当し、合成マウスイベント（CGEvent）で実際にプラッターを回し、アプリが出力する音のピッチが追従することを確認します。GitHub Actions と手元の MacBook の両方で同じスクリプトを実行できます。
+
+## 動作説明
+
+1. `play_steady_tone.py` が別プロセスで 220 Hz の定常トーンを再生する（CATap のキャプチャ元）。
+2. `SCRATCH_NOW_TAP_SMOKE_CI` を有効にした Scratch Now をビルド・起動する。この CI ビルドは以下を `/tmp/scratch-now-tap-smoke-ci/` に書き出す:
+   - `ui.jsonl` — ターンテーブルの画面座標（CGEvent グローバル座標系）
+   - `output.jsonl` — スクラッチ DSP 通過後にスピーカーへ送る音の rms / ゼロクロス由来の推定周波数（毎秒 1 行）
+   - `scratch.jsonl` — スクラッチ状態（speedRate、押下中フラグ等、10 Hz）
+3. `drive_scratch.py` が CGEvent で実際にマウスを動かし、通常の UI 経路（`TurnTableView` → `AppController` → 可変速リサンプラ）でスクラッチを実行する:
+   - ベースライン（無操作、1x）→ 逆回転 -1x（4 秒）→ 順方向 2x（5 秒）→ リリース
+   - 逆回転を先に行うのは、リングバッファに再生ヘッドの余裕を作り、順方向 2x が録音ヘッドを追い越して仕様上の無音になるのを防ぐため。
+4. `assert_scratch_effect.py` が検証する:
+   - ベースライン: 出力 ≈ 220 Hz・非無音
+   - 逆回転: 非無音 かつ DSP 速度が負（正弦波は逆再生しても同じピッチになるため、方向は状態ストリームで確認）
+   - 順方向 2x: **出力 ≈ 440 Hz（ピッチ 2 倍）— これがスクラッチ効果本体の検証**
+   - リリース: ≈ 220 Hz に復帰
+
+## TCC（権限）について
+
+- システムオーディオ録音: `tap_smoke_ci/grant_audio_capture_tcc.sh` を再利用してアプリに事前付与。
+- 合成マウスイベント: `grant_ui_automation_tcc.sh` が Python 実行ファイルに Accessibility / PostEvent を事前付与（GitHub ランナーは TCC DB へ書き込み可能）。ローカル Mac では初回にシステム設定でターミナル/Python にアクセシビリティを許可してください。
+
+## ローカル実行
+
+macOS 14.4+ / Xcode / Python 3 が必要です。実行中はマウスカーソルがテストに奪われる点に注意してください。
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r ./ui_scratch_ci/requirements.txt
+./ui_scratch_ci/run_ui_scratch_test.sh
+```
