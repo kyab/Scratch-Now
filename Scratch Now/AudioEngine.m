@@ -73,16 +73,76 @@ static NSString *TapSmokeCIStatusPath(void){
 
 // Append a single JSON line. Opened/closed each second so a crash still leaves
 // a readable file for CI artifacts.
+static void TapSmokeCIAppendLine(NSString *path, NSString *line){
+    const char *utf8 = [line UTF8String];
+    FILE *f = fopen([path fileSystemRepresentation], "a");
+    if (f){
+        fwrite(utf8, 1, strlen(utf8), f);
+        fclose(f);
+    }
+}
+
 static void TapSmokeCIAppendStatus(double ts, float peak, float rms,
                                    unsigned long long framesTotal, double estimatedHz){
     NSString *line = [NSString stringWithFormat:
                       @"{\"ts\":%.3f,\"peak\":%.6f,\"rms\":%.6f,\"framesTotal\":%llu,\"estimatedHz\":%.2f}\n",
                       ts, peak, rms, framesTotal, estimatedHz];
-    const char *utf8 = [line UTF8String];
-    FILE *f = fopen([TapSmokeCIStatusPath() fileSystemRepresentation], "a");
-    if (f){
-        fwrite(utf8, 1, strlen(utf8), f);
-        fclose(f);
+    TapSmokeCIAppendLine(TapSmokeCIStatusPath(), line);
+}
+
+// Output-side status file for the UI scratch E2E test: describes what the app
+// is actually sending to the speaker after the scratch DSP.
+static NSString *TapSmokeCIOutputStatusPath(void){
+    static NSString *path;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        path = [[TapSmokeCIStatusPath() stringByDeletingLastPathComponent]
+                stringByAppendingPathComponent:@"output.jsonl"];
+    });
+    return path;
+}
+
+// Accumulate peak/rms and a zero-crossing pitch estimate on the rendered output
+// (left channel) and flush one JSON line per second. ts is unix epoch seconds so
+// the harness can correlate with its own phase timeline.
+static void TapSmokeCIObserveOutput(const float *left, UInt32 frames, double sampleRate){
+    static UInt32 frameCounter = 0;
+    static unsigned long long framesTotal = 0;
+    static float peak = 0.0f;
+    static double sumSquares = 0.0;
+    static UInt32 zeroCrossings = 0;
+    static int zcrState = 0;
+    const float kZcrHysteresis = 0.02f;
+
+    for (UInt32 i = 0; i < frames; i++){
+        float v = left[i];
+        float a = fabsf(v);
+        if (a > peak) peak = a;
+        sumSquares += (double)v * (double)v;
+        if (zcrState <= 0 && v >= kZcrHysteresis){
+            zcrState = 1;
+            zeroCrossings++;
+        } else if (zcrState >= 0 && v <= -kZcrHysteresis){
+            zcrState = -1;
+            zeroCrossings++;
+        }
+    }
+
+    frameCounter += frames;
+    framesTotal += frames;
+    if (sampleRate > 0 && frameCounter >= (UInt32)sampleRate){
+        double rms = sqrt(sumSquares / (double)frameCounter);
+        double estimatedHz = ((double)zeroCrossings / 2.0)
+            * (sampleRate / (double)frameCounter);
+        double ts = CFAbsoluteTimeGetCurrent() + kCFAbsoluteTimeIntervalSince1970;
+        NSString *line = [NSString stringWithFormat:
+                          @"{\"ts\":%.3f,\"peak\":%.6f,\"rms\":%.6f,\"framesTotal\":%llu,\"estimatedHz\":%.2f}\n",
+                          ts, peak, rms, framesTotal, estimatedHz];
+        TapSmokeCIAppendLine(TapSmokeCIOutputStatusPath(), line);
+        frameCounter = 0;
+        peak = 0.0f;
+        sumSquares = 0.0;
+        zeroCrossings = 0;
     }
 }
 #endif
@@ -139,7 +199,16 @@ OSStatus MyRender(void *inRefCon,
         }
         return noErr;
     }
-    return [_delegate outCallback:ioActionFlags inTimeStamp:inTimeStamp inBusNumber:inBusNumber inNumberFrames:inNumberFrames ioData:ioData];
+    OSStatus ret = [_delegate outCallback:ioActionFlags inTimeStamp:inTimeStamp inBusNumber:inBusNumber inNumberFrames:inNumberFrames ioData:ioData];
+#if SCRATCH_NOW_TAP_SMOKE_CI
+    // Observe whatever ended up in the output buffers (including zero-filled
+    // fallback paths) so the E2E harness sees a continuous 1 Hz status stream.
+    if (ret == noErr && ioData && ioData->mNumberBuffers > 0 && ioData->mBuffers[0].mData){
+        TapSmokeCIObserveOutput((const float *)ioData->mBuffers[0].mData,
+                                inNumberFrames, _engineSampleRate);
+    }
+#endif
+    return ret;
 }
 
 //IOProc attached to the private aggregate device. inInputData carries the tap capture.
