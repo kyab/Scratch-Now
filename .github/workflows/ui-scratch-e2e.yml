@@ -45,6 +45,11 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r ui_scratch_ci/requirements.txt
 
+      # Needed for the evidence video (screen capture + audio mux). The
+      # arm64 macOS runner images no longer preinstall ffmpeg.
+      - name: Install ffmpeg
+        run: brew install ffmpeg
+
       - name: Run UI scratch E2E test
         run: bash ui_scratch_ci/run_ui_scratch_test.sh
 
