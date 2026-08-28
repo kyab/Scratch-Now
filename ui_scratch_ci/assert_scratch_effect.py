@@ -17,6 +17,15 @@ Expectations:
   forward2x: platter dragged forward at 2x -> output pitch doubles (~440 Hz).
              This is the audible scratch effect under test.
   release  : back to ~220 Hz at 1x.
+
+Table-stop expectations:
+  stopped       : after clicking Stop the platter decelerates to a full stop
+                  -> output is silent and tableStopped is set.
+  resumeFromStop: clicking Start returns to live playback at ~220 Hz.
+  midStopRamp   : Stop then Start mid-deceleration -> the DSP speed visibly
+                  dropped below 1x but the platter never reached a full stop
+                  (tableStopped stays 0).
+  resumeMidStop : live playback at ~220 Hz is restored.
 """
 
 import json
@@ -158,6 +167,62 @@ def main() -> int:
         hz = median_hz(lines)
         expect(abs(hz - BASE_HZ) <= 40.0,
                f"release returned to ~{BASE_HZ:.0f} Hz (got {hz:.0f})")
+
+    # Table-stop case 1: full stop -> silence with tableStopped set.
+    phase = phases["stopped"]
+    lines = lines_in_window(output, phase["start"], phase["end"], head_trim=0.5)
+    describe("stopped", lines)
+    expect(len(lines) >= 1, "stopped produced output status lines")
+    if lines:
+        rms = max_rms(lines)
+        expect(rms < 0.01,
+               f"stopped platter is silent (max rms {rms:.4f})")
+    states = state_in_window(scratch, phase["start"], phase["end"], head_trim=0.5)
+    expect(len(states) >= 5, "stopped recorded scratch state samples")
+    if states:
+        stopped_ratio = sum(s.get("tableStopped", 0) for s in states) / len(states)
+        expect(stopped_ratio >= 0.9,
+               f"platter reached the tableStopped state "
+               f"(stopped ratio {stopped_ratio:.2f})")
+        speed = max(abs(s.get("speedRate", 0.0)) for s in states)
+        expect(speed < 0.01,
+               f"stopped platter speed is 0 (max |speedRate| {speed:.4f})")
+
+    # Table-stop case 1: resume from a full stop back to live.
+    phase = phases["resumeFromStop"]
+    lines = lines_in_window(output, phase["start"], phase["end"], head_trim=1.5)
+    describe("resumeFromStop", lines)
+    expect(len(lines) >= 1, "resumeFromStop produced output status lines")
+    if lines:
+        expect(max_rms(lines) >= MIN_RMS, "resumeFromStop playback is non-silent")
+        hz = median_hz(lines)
+        expect(abs(hz - BASE_HZ) <= 40.0,
+               f"resumeFromStop returned to ~{BASE_HZ:.0f} Hz (got {hz:.0f})")
+
+    # Table-stop case 2: resume mid-deceleration, before any full stop.
+    ramp = phases["midStopRamp"]
+    resume = phases["resumeMidStop"]
+    states = state_in_window(scratch, ramp["start"], resume["end"], head_trim=0.0)
+    expect(len(states) >= 3, "midStopRamp recorded scratch state samples")
+    if states:
+        ever_stopped = any(s.get("tableStopped", 0) for s in states)
+        expect(not ever_stopped,
+               "mid-stop resume never reached the tableStopped state")
+        ramp_states = state_in_window(scratch, ramp["start"],
+                                      resume["start"] + 0.15, head_trim=0.0)
+        ramp_speeds = [s.get("speedRate", 1.0) for s in ramp_states]
+        seen = ", ".join(f"{v:.2f}" for v in ramp_speeds)
+        expect(any(0.02 <= v <= 0.95 for v in ramp_speeds),
+               f"Stop ramp was observed mid-deceleration "
+               f"(speedRate samples [{seen}])")
+    lines = lines_in_window(output, resume["start"], resume["end"], head_trim=1.5)
+    describe("resumeMidStop", lines)
+    expect(len(lines) >= 1, "resumeMidStop produced output status lines")
+    if lines:
+        expect(max_rms(lines) >= MIN_RMS, "resumeMidStop playback is non-silent")
+        hz = median_hz(lines)
+        expect(abs(hz - BASE_HZ) <= 40.0,
+               f"resumeMidStop returned to ~{BASE_HZ:.0f} Hz (got {hz:.0f})")
 
     if failures:
         print(f"FAILURES ({len(failures)}):")

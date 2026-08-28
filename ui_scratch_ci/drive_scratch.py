@@ -14,6 +14,14 @@ Scenario (phase timestamps are written to phases.json for the assert step):
              live record head (which would produce silence by design).
   forward2x: hold + rotate forward at 2x -> output pitch should double.
   release  : mouse up, platter returns to 1x.
+
+Table-stop cases (Stop button clicks):
+  stopRamp      : click Stop -> platter decelerates (1x -> 0 in ~0.5 s).
+  stopped       : fully stopped platter -> silence, tableStopped flag set.
+  resumeFromStop: click Start -> back to live at 1x (~220 Hz).
+  midStopRamp   : click Stop, then click Start mid-deceleration (~0.3 s in),
+                  before the platter ever reaches a full stop.
+  resumeMidStop : back to live at 1x without passing through tableStopped.
 """
 
 import json
@@ -40,6 +48,13 @@ REVERSE_SPEED_RATE = -1.0
 FORWARD_SECONDS = 5.0
 FORWARD_SPEED_RATE = 2.0
 RELEASE_SECONDS = 4.0
+
+# Table-stop cases. The Stop ramp runs 1.0 -> 0 in ~0.5 s (0.02 per 10 ms
+# tick), so the mid-stop resume click must land well inside that window.
+STOP_RAMP_SECONDS = 1.5
+STOPPED_SECONDS = 3.0
+RESUME_SECONDS = 3.0
+MID_STOP_RESUME_AFTER = 0.2
 
 
 def log(message: str) -> None:
@@ -95,6 +110,14 @@ def verify_cursor_control(point: tuple) -> None:
         raise RuntimeError(
             "cursor did not follow the posted CGEvent; event posting is "
             "likely blocked by TCC (Accessibility not granted)")
+
+
+def click(point: tuple) -> None:
+    post_mouse(Quartz.kCGEventMouseMoved, point)
+    time.sleep(0.05)
+    post_mouse(Quartz.kCGEventLeftMouseDown, point)
+    time.sleep(0.05)
+    post_mouse(Quartz.kCGEventLeftMouseUp, point)
 
 
 def rotate(geo: dict, theta: float, speed_rate: float, seconds: float) -> float:
@@ -154,6 +177,37 @@ def main() -> int:
 
     run_phase("release", RELEASE_SECONDS,
               lambda: time.sleep(RELEASE_SECONDS))
+
+    # Table-stop cases via the Stop button.
+    btn_x = geo.get("btnStopCenterX", 0.0)
+    btn_y = geo.get("btnStopCenterY", 0.0)
+    if btn_x <= 0.0 and btn_y <= 0.0:
+        raise RuntimeError("Stop button geometry missing from ui.jsonl")
+    btn = (btn_x, btn_y)
+
+    # Case 1: simple stop -> full stop -> resume from the Stop button.
+    def stop_ramp():
+        click(btn)
+        time.sleep(STOP_RAMP_SECONDS)
+    run_phase("stopRamp", STOP_RAMP_SECONDS, stop_ramp)
+    run_phase("stopped", STOPPED_SECONDS,
+              lambda: time.sleep(STOPPED_SECONDS))
+
+    def resume_from_stop():
+        click(btn)
+        time.sleep(RESUME_SECONDS)
+    run_phase("resumeFromStop", RESUME_SECONDS, resume_from_stop)
+
+    # Case 2: click Stop, then return to live mid-deceleration.
+    def mid_stop_ramp():
+        click(btn)
+        time.sleep(MID_STOP_RESUME_AFTER)
+    run_phase("midStopRamp", MID_STOP_RESUME_AFTER, mid_stop_ramp)
+
+    def resume_mid_stop():
+        click(btn)
+        time.sleep(RESUME_SECONDS)
+    run_phase("resumeMidStop", RESUME_SECONDS, resume_mid_stop)
 
     with open(PHASES_FILE, "w", encoding="utf-8") as handle:
         json.dump({"phases": phases}, handle, indent=2)
