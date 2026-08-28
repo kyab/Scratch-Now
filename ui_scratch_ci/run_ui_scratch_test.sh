@@ -109,7 +109,10 @@ PYTHON_REAL="$(${PYTHON_BIN} -c 'import os, sys; print(os.path.realpath(sys.exec
 bash "${SCRIPT_DIR}/grant_ui_automation_tcc.sh" "${PYTHON_REAL}"
 if [ -n "${FFMPEG_BIN}" ]; then
   FFMPEG_REAL="$(${PYTHON_BIN} -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "${FFMPEG_BIN}")"
-  bash "${SCRIPT_DIR}/grant_screen_capture_tcc.sh" "${FFMPEG_REAL}"
+  # TCC attributes scripted captures to the responsible shell, so grant the
+  # shell too, or macOS 15 pops a '"bash" is requesting to bypass the system
+  # private window picker' dialog over the app window mid-test.
+  bash "${SCRIPT_DIR}/grant_screen_capture_tcc.sh" "${FFMPEG_REAL}" /bin/bash /bin/zsh /bin/sh
 else
   log "WARNING: ffmpeg not found; evidence video disabled"
 fi
@@ -167,6 +170,10 @@ if [ -n "${FFMPEG_BIN}" ]; then
       log "WARNING: screen recording failed to start (see screen_record.log)"
       RECORD_PID=""
     fi
+    # Any capture-related dialog would have stolen focus from the app window;
+    # re-activate so the synthetic mouse press reaches the turntable view.
+    osascript -e "tell application id \"${BUNDLE_ID}\" to activate" >/dev/null 2>&1 || true
+    sleep 1
   else
     log "WARNING: no avfoundation screen device found; evidence video disabled"
   fi
