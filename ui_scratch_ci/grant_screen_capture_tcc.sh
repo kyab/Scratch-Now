@@ -3,16 +3,19 @@
 # can capture the screen (with the cursor) for the evidence video without a
 # blocking dialog.
 #
-# Two mechanisms are needed:
+# Two mechanisms are needed (proven combination used by other projects doing
+# E2E screen recording on macOS runners, e.g. manaflow-ai/cmux PR #784, and by
+# the runner image itself in actions/runner-images configure-tccdb-macos.sh):
 #   1. kTCCServiceScreenCapture rows in the TCC databases (same approach as
 #      grant_ui_automation_tcc.sh). TCC attributes the request to the
-#      *responsible* process, which for a scripted ffmpeg is the shell, so the
-#      caller should pass both the ffmpeg binary and /bin/bash.
+#      *responsible* process — for scripted job steps this can be the shell or
+#      the runner provisioner binary — so grant every plausible client path.
 #   2. On macOS 15+ the legacy capture APIs (AVCaptureScreenInput) addition-
 #      ally trigger the "requesting to bypass the system private window
 #      picker" prompt managed by replayd. Its approvals live in
 #      ScreenCaptureApprovals.plist keyed by executable path with an expiry
-#      date, so a far-future entry silences the prompt.
+#      date, so a far-future entry silences the prompt
+#      (https://lapcatsoftware.com/articles/2024/8/10.html).
 #
 # Usage: grant_screen_capture_tcc.sh <executable-path> [<executable-path>...]
 set -uo pipefail

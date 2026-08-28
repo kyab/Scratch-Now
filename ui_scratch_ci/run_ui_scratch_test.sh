@@ -109,10 +109,17 @@ PYTHON_REAL="$(${PYTHON_BIN} -c 'import os, sys; print(os.path.realpath(sys.exec
 bash "${SCRIPT_DIR}/grant_ui_automation_tcc.sh" "${PYTHON_REAL}"
 if [ -n "${FFMPEG_BIN}" ]; then
   FFMPEG_REAL="$(${PYTHON_BIN} -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "${FFMPEG_BIN}")"
-  # TCC attributes scripted captures to the responsible shell, so grant the
-  # shell too, or macOS 15 pops a '"bash" is requesting to bypass the system
-  # private window picker' dialog over the app window mid-test.
-  bash "${SCRIPT_DIR}/grant_screen_capture_tcc.sh" "${FFMPEG_REAL}" /bin/bash /bin/zsh /bin/sh
+  # TCC/replayd may attribute the capture to the ffmpeg binary (symlink or
+  # resolved path), the responsible shell, or the runner provisioner, so
+  # pre-approve every plausible client path. Otherwise macOS 15+ pops a
+  # '"bash" is requesting to bypass the system private window picker' dialog
+  # over the app window mid-test.
+  bash "${SCRIPT_DIR}/grant_screen_capture_tcc.sh" \
+    "${FFMPEG_BIN}" "${FFMPEG_REAL}" \
+    /bin/bash /bin/zsh /bin/sh \
+    /usr/local/opt/runner/provisioner/provisioner \
+    /opt/off/opt/runner/provisioner/provisioner \
+    /opt/hca/hosted-compute-agent
 else
   log "WARNING: ffmpeg not found; evidence video disabled"
 fi
@@ -161,7 +168,8 @@ if [ -n "${FFMPEG_BIN}" ]; then
   if [ -n "${SCREEN_IDX}" ]; then
     log "starting screen recording (avfoundation device ${SCREEN_IDX}, cursor captured)"
     "${FFMPEG_BIN}" -hide_banner -loglevel warning -y \
-      -f avfoundation -capture_cursor 1 -framerate 30 -i "${SCREEN_IDX}:none" \
+      -f avfoundation -capture_cursor 1 -capture_mouse_clicks 1 \
+      -pixel_format uyvy422 -framerate 30 -i "${SCREEN_IDX}:none" \
       -c:v libx264 -preset ultrafast -crf 26 -pix_fmt yuv420p \
       "${STATUS_DIR}/screen.mkv" > "${STATUS_DIR}/screen_record.log" 2>&1 &
     RECORD_PID=$!
@@ -170,8 +178,12 @@ if [ -n "${FFMPEG_BIN}" ]; then
       log "WARNING: screen recording failed to start (see screen_record.log)"
       RECORD_PID=""
     fi
-    # Any capture-related dialog would have stolen focus from the app window;
-    # re-activate so the synthetic mouse press reaches the turntable view.
+    # macOS 15+ pops a capture-approval dialog over the app even with the TCC
+    # grants in place; click its Allow button if it is showing.
+    "${PYTHON_BIN}" "${SCRIPT_DIR}/dismiss_capture_prompt.py" 2>&1 \
+      | tee "${STATUS_DIR}/dismiss_prompt.log"
+    # The dialog stole focus from the app window; re-activate so the synthetic
+    # mouse press reaches the turntable view.
     osascript -e "tell application id \"${BUNDLE_ID}\" to activate" >/dev/null 2>&1 || true
     sleep 1
   else
