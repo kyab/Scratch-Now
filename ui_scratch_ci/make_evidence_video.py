@@ -183,12 +183,6 @@ def sync_self_check(ffmpeg: str, out_path: str, phases_path: str,
               f"exceeds 0.35s", flush=True)
 
 
-# The virtual display delivers frames at irregular 15-100 ms intervals
-# (~27 fps VFR), which reads as judder; motion interpolation re-times the
-# capture to a smooth constant 60 fps before the 2x upscale.
-MINTERPOLATE = ("minterpolate=fps=60:mi_mode=mci:mc_mode=aobmc:"
-                "me_mode=bidir:vsbmc=1")
-SCALE_2X = "scale=iw*2:ih*2:flags=lanczos"
 # Burnt-in elapsed time for visual sync verification (not present in every
 # ffmpeg build, hence the fallback chain in main()).
 DRAWTEXT = ("drawtext=text='%{pts\\:hms}':fontcolor=yellow:fontsize=28:"
@@ -204,14 +198,15 @@ def run_mux(args, skip: float, rate: int, video_filters: list,
             audio_filters: list) -> int:
     # The capture is rawvideo (recording-time encoding competes with the
     # runner's virtual audio stack), so the video is always re-encoded here,
-    # offline.
+    # offline. Keep native capture resolution and frame timing — no upscale
+    # and no motion interpolation.
     cmd = [args.ffmpeg, "-hide_banner", "-loglevel", "warning", "-y",
            "-i", args.video,
            "-ss", f"{skip:.3f}",
            "-f", "f32le", "-ar", str(rate), "-ac", "1",
            "-i", args.pcm,
            "-map", "0:v", "-map", "1:a",
-           "-vf", ",".join(video_filters),
+           *(["-vf", ",".join(video_filters)] if video_filters else []),
            *(["-af", ",".join(audio_filters)] if audio_filters else []),
            "-c:v", "libx264", "-preset", "veryfast", "-crf", "21",
            "-pix_fmt", "yuv420p",
@@ -272,13 +267,12 @@ def main() -> int:
         print(f"[mux] raw click diagnostic errored: {error}", flush=True)
 
     # Filter-availability fallback chain (a missing filter fails at graph
-    # init, i.e. cheaply): full chain first, then drop drawtext (absent in
-    # some ffmpeg builds), then minterpolate, then adeclick.
+    # init, i.e. cheaply): optional drawtext overlay, then adeclick-only,
+    # then plain encode with no filters.
     attempts = [
-        ([MINTERPOLATE, SCALE_2X, DRAWTEXT], [ADECLICK]),
-        ([MINTERPOLATE, SCALE_2X], [ADECLICK]),
-        ([SCALE_2X], [ADECLICK]),
-        ([SCALE_2X], []),
+        ([DRAWTEXT], [ADECLICK]),
+        ([], [ADECLICK]),
+        ([], []),
     ]
     code = 1
     for index, (video_filters, audio_filters) in enumerate(attempts):
