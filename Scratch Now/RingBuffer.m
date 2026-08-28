@@ -387,18 +387,13 @@
 
 
 -(void)follow{
-    // Rebase play/dry just behind the live edge, but keep several IO cycles
-    // of margin beyond the shortage threshold. Rebasing to exactly
-    // _minOffsetFrame makes every subsequent render block race the tap input;
-    // with an unlucky input/output callback interleaving the ring then drops
-    // blocks (persistently choppy output) until the next rebase. 256 frames
-    // is ~5 ms at 48 kHz — inaudible for the live playthrough.
-    UInt32 margin = _minOffsetFrame + 256;
-    if (0 > (SInt32)_recordFrame - (SInt32)margin){
-        _playFrame = [self frames] - (margin - _recordFrame);
+    
+    if (0 > (SInt32)_recordFrame - _minOffsetFrame){
+        _playFrame = [self frames] - (_minOffsetFrame - _recordFrame);
         _dryFrame = _playFrame;
+        
     }else{
-        _playFrame = _recordFrame - margin;
+        _playFrame = _recordFrame - _minOffsetFrame;
         _dryFrame = _playFrame;
     }
 //    NSLog(@"frames = %u, w = %u, r = %u", [self frames], _recordFrame, _playFrame);
