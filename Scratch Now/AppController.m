@@ -29,7 +29,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 
 -(void)resetScratchState{
     _isScratchStarting = NO;
-    _isScratchEnding = NO;
+    _isReturningToLive = NO;
     _isFadingOut = NO;
     _isFadingIn = NO;
     _isScratching = NO;
@@ -38,10 +38,10 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     _smoothedSpeed = 1.0;
     _subSamplePos = 0.0;
     _wetGain = 1.0;
-    _dcInL = 0.0f;
-    _dcOutL = 0.0f;
-    _dcInR = 0.0f;
-    _dcOutR = 0.0f;
+    _dcPrevInL = 0.0f;
+    _dcPrevOutL = 0.0f;
+    _dcPrevInR = 0.0f;
+    _dcPrevOutR = 0.0f;
 }
 
 -(void)awakeFromNib{
@@ -178,10 +178,10 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 
     double gain = gainStart;
     double dGain = (gainEnd - gainStart) / (double)numSamples;
-    float dcInL = _dcInL;
-    float dcOutL = _dcOutL;
-    float dcInR = _dcInR;
-    float dcOutR = _dcOutR;
+    float dcPrevInL = _dcPrevInL;
+    float dcPrevOutL = _dcPrevOutL;
+    float dcPrevInR = _dcPrevInR;
+    float dcPrevOutR = _dcPrevOutR;
 
     double extraFade = applyExtraFade ? (_fadeOutCounter / (double)FADE_SAMPLE_NUM) : 1.0;
     double extraFadeEnd;
@@ -197,12 +197,12 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     for (UInt32 i = 0; i < numSamples; i++){
         float inL = _tempLeftPtr[i];
         float inR = _tempRightPtr[i];
-        float outL = inL - dcInL + DC_BLOCKER_R * dcOutL;
-        float outR = inR - dcInR + DC_BLOCKER_R * dcOutR;
-        dcInL = inL;
-        dcOutL = outL;
-        dcInR = inR;
-        dcOutR = outR;
+        float outL = inL - dcPrevInL + DC_BLOCKER_R * dcPrevOutL;
+        float outR = inR - dcPrevInR + DC_BLOCKER_R * dcPrevOutR;
+        dcPrevInL = inL;
+        dcPrevOutL = outL;
+        dcPrevInR = inR;
+        dcPrevOutR = outR;
 
         float dryL = (drySrcL ? drySrcL[i] : 0.0f) * _dryVolume;
         float dryR = (drySrcR ? drySrcR[i] : 0.0f) * _dryVolume;
@@ -225,10 +225,10 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         extraFade += dExtraFade;
     }
 
-    _dcInL = dcInL;
-    _dcOutL = dcOutL;
-    _dcInR = dcInR;
-    _dcOutR = dcOutR;
+    _dcPrevInL = dcPrevInL;
+    _dcPrevOutL = dcPrevOutL;
+    _dcPrevInR = dcPrevInR;
+    _dcPrevOutR = dcPrevOutR;
     _smoothedSpeed = speedEnd;
     _wetGain = gainEnd;
     [_ring advanceReadPtrSample:consumed];
@@ -278,6 +278,14 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     // Keep scratch gain/speed state aligned for a subsequent Stop deceleration.
     _smoothedSpeed = 1.0;
     _wetGain = 1.0;
+    // Normal playback does not run the DC blocker. Seed it from the last
+    // audible sample so a later switch to variable-rate (Stop) is continuous.
+    if (numSamples > 0){
+        _dcPrevInL = leftBuf[numSamples - 1];
+        _dcPrevOutL = _dcPrevInL;
+        _dcPrevInR = rightBuf[numSamples - 1];
+        _dcPrevOutR = _dcPrevInR;
+    }
 }
 
 -(BOOL)isStopActive{
@@ -343,7 +351,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     return n;
 }
 
--(UInt32)processFadeOutForScratchEnd:(float *)leftBuf right:(float *)rightBuf samples:(UInt32)numSamples{
+-(UInt32)processFadeOutForReturnToLive:(float *)leftBuf right:(float *)rightBuf samples:(UInt32)numSamples{
     UInt32 n = (numSamples < _fadeOutCounter) ? numSamples : _fadeOutCounter;
     [self processVariableRateBlock:leftBuf right:rightBuf samples:n applyExtraFade:YES];
 
@@ -356,6 +364,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
             _smoothedSpeed = _speedRate;
             _wetGain = (_speedRate < STOPPED_SPEED_EPSILON) ? 0.0 : 1.0;
         }else{
+            _speedRate = 1.0;
             _smoothedSpeed = 1.0;
             _wetGain = 0.0;
         }
@@ -363,7 +372,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         _isFadingOut = NO;
         _isFadingIn = YES;
         _fadeInCounter = 0;
-        _isScratchEnding = NO;
+        _isReturningToLive = NO;
     }
     return n;
 }
@@ -376,8 +385,8 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
             if (processed < numSamples){
                 [self processVariableRateState:&leftBuf[processed] right:&rightBuf[processed] samples:numSamples - processed];
             }
-        }else if (_isScratchEnding){
-            processed = [self processFadeOutForScratchEnd:leftBuf right:rightBuf samples:numSamples];
+        }else if (_isReturningToLive){
+            processed = [self processFadeOutForReturnToLive:leftBuf right:rightBuf samples:numSamples];
             if (!_isFadingOut && processed < numSamples){
                 // Same callback may still have frames left after the fade ends.
                 if ([self isStopActive]){
@@ -405,8 +414,8 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     BOOL pressing = [_turnTableView isScratching];
     _speedRate = newSpeedRate;
 
-    if (_isScratchEnding && pressing){
-        _isScratchEnding = NO;
+    if (_isReturningToLive && pressing){
+        _isReturningToLive = NO;
         _isScratchStarting = YES;
         _isFadingOut = YES;
         _fadeOutCounter = FADE_SAMPLE_NUM;
@@ -415,7 +424,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 
     if (_isScratchStarting && !pressing){
         _isScratchStarting = NO;
-        _isScratchEnding = YES;
+        _isReturningToLive = YES;
         _isFadingOut = YES;
         _fadeOutCounter = FADE_SAMPLE_NUM;
         return;
@@ -429,7 +438,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     }
 
     if (_isScratching && !_isFadingOut && !pressing){
-        _isScratchEnding = YES;
+        _isReturningToLive = YES;
         _isFadingOut = YES;
         _fadeOutCounter = FADE_SAMPLE_NUM;
         return;
@@ -492,18 +501,27 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 
 - (IBAction)startStopButtonClicked:(id)sender {
     if (_btnStop.state == NSControlStateValueOn){
+        BOOL isStopRampInProgress = (_tableStopTimer != nil);
         if (_tableStopTimer){
             [_tableStopTimer invalidate];
             _tableStopTimer = nil;
         }
-
         _tableStopped = NO;
         _tableStopSpeed = 1.0;
-        _speedRate = 1.0;
-        [self resetScratchState];
-        _isFadingIn = YES;
-        _fadeInCounter = 0;
-        [_ring follow];
+
+        if (isStopRampInProgress && !_isFadingOut){
+            _isScratchStarting = NO;
+            _isReturningToLive = YES;
+            _isFadingOut = YES;
+            _fadeOutCounter = FADE_SAMPLE_NUM;
+        }else if (!_isFadingOut){
+            // Fully stopped
+            _speedRate = 1.0;
+            [self resetScratchState];
+            _isFadingIn = YES;
+            _fadeInCounter = 0;
+            [_ring follow];
+        }
         [_btnStop setTitle:@"[S]top"];
     }else{
         if (_tableStopTimer){
@@ -513,7 +531,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         // Decelerate via _tableStopSpeed; leave the scratch fade state machine alone.
         // Scratch may still own audible _speedRate while this ramp continues underneath.
         _isScratchStarting = NO;
-        _isScratchEnding = NO;
+        _isReturningToLive = NO;
         _isFadingOut = NO;
         _isScratching = NO;
         _isFadingIn = NO;
@@ -536,7 +554,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     }
 
     // Scratch owns audible speed while the platter is held or mid fade handoff.
-    BOOL scratchOwnsSpeed = [_turnTableView isScratching] || _isScratching || _isScratchStarting || _isScratchEnding;
+    BOOL scratchOwnsSpeed = [_turnTableView isScratching] || _isScratching || _isScratchStarting || _isReturningToLive;
     if (!scratchOwnsSpeed){
         _speedRate = _tableStopSpeed;
     }

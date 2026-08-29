@@ -35,7 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 
     // Scratch processing state.
     Boolean _isScratchStarting;
-    Boolean _isScratchEnding;
+    Boolean _isReturningToLive;
     Boolean _isFadingOut;
     Boolean _isFadingIn;
     UInt32 _fadeOutCounter;
@@ -43,10 +43,10 @@ NS_ASSUME_NONNULL_BEGIN
     double _smoothedSpeed;
     double _subSamplePos;
     double _wetGain;
-    float _dcInL;
-    float _dcOutL;
-    float _dcInR;
-    float _dcOutR;
+    float _dcPrevInL;
+    float _dcPrevOutL;
+    float _dcPrevInR;
+    float _dcPrevOutR;
     Boolean _isScratching;
 }
 
