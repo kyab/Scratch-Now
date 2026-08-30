@@ -25,9 +25,9 @@
     }
 }
 
-- (void)applicationWillTerminate:(NSNotification *)aNotification {
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
     [_controller terminate];
-    // Insert code here to tear down your application
+    return NSTerminateLater;
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender

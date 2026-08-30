@@ -14,8 +14,19 @@
 #import <os/log.h>
 #import <stdio.h>
 #import <string.h>
+#import <unistd.h>
 
 #define ENABLE_OUTPUT_SWITCH_DIAGNOSTICS 0
+#define OUTPUT_VOLUME_FADE_STEPS 10
+#define OUTPUT_VOLUME_FADE_STEP_US 10000
+#define OUTPUT_VOLUME_SETTLE_US 100000
+#define OUTPUT_VOLUME_MAX_CHANNELS 8
+
+typedef struct {
+    UInt32 count;
+    AudioObjectPropertyElement elements[OUTPUT_VOLUME_MAX_CHANNELS];
+    Float32 values[OUTPUT_VOLUME_MAX_CHANNELS];
+} OutputVolumeSnapshot;
 
 static os_log_t OutputDiagnosticsLog(void){
     static os_log_t log;
@@ -99,6 +110,9 @@ static void TapSmokeCIAppendStatus(double ts, float peak, float rms,
 - (void)rebuildPipelineForOutputConfigurationChangeFromDevice:(AudioDeviceID)sourceDevice;
 - (void)teardownCapturePath;
 - (void)teardownOutput;
+- (BOOL)captureOutputVolume:(OutputVolumeSnapshot *)snapshot;
+- (void)applyOutputVolume:(const OutputVolumeSnapshot *)snapshot scale:(Float32)scale;
+- (void)fadeOutputVolume:(const OutputVolumeSnapshot *)snapshot fromScale:(Float32)fromScale toScale:(Float32)toScale;
 @end
 
 
@@ -923,6 +937,85 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 }
 
 
+-(BOOL)readOutputVolumeElement:(AudioObjectPropertyElement)element value:(Float32 *)value{
+    if (_outputDeviceID == kAudioObjectUnknown || !value){
+        return NO;
+    }
+
+    AudioObjectPropertyAddress address = {
+        kAudioDevicePropertyVolumeScalar,
+        kAudioObjectPropertyScopeOutput,
+        element,
+    };
+    if (!AudioObjectHasProperty(_outputDeviceID, &address)){
+        return NO;
+    }
+    Boolean settable = NO;
+    OSStatus ret = AudioObjectIsPropertySettable(_outputDeviceID, &address, &settable);
+    if (FAILED(ret) || !settable){
+        return NO;
+    }
+
+    UInt32 size = sizeof(Float32);
+    ret = AudioObjectGetPropertyData(_outputDeviceID, &address, 0, NULL, &size, value);
+    return !FAILED(ret);
+}
+
+-(BOOL)captureOutputVolume:(OutputVolumeSnapshot *)snapshot{
+    if (!snapshot){
+        return NO;
+    }
+    memset(snapshot, 0, sizeof(*snapshot));
+
+    Float32 master = 0.0f;
+    if ([self readOutputVolumeElement:kAudioObjectPropertyElementMain value:&master]){
+        snapshot->elements[0] = kAudioObjectPropertyElementMain;
+        snapshot->values[0] = master;
+        snapshot->count = 1;
+        return YES;
+    }
+
+    for (AudioObjectPropertyElement element = 1; element <= OUTPUT_VOLUME_MAX_CHANNELS; element++){
+        Float32 value = 0.0f;
+        if (![self readOutputVolumeElement:element value:&value]){
+            continue;
+        }
+        snapshot->elements[snapshot->count] = element;
+        snapshot->values[snapshot->count] = value;
+        snapshot->count++;
+    }
+    return snapshot->count > 0;
+}
+
+-(void)applyOutputVolume:(const OutputVolumeSnapshot *)snapshot scale:(Float32)scale{
+    if (!snapshot || snapshot->count == 0 || _outputDeviceID == kAudioObjectUnknown){
+        return;
+    }
+    if (scale < 0.0f) scale = 0.0f;
+    if (scale > 1.0f) scale = 1.0f;
+
+    for (UInt32 i = 0; i < snapshot->count; i++){
+        Float32 value = snapshot->values[i] * scale;
+        AudioObjectPropertyAddress address = {
+            kAudioDevicePropertyVolumeScalar,
+            kAudioObjectPropertyScopeOutput,
+            snapshot->elements[i],
+        };
+        AudioObjectSetPropertyData(_outputDeviceID, &address, 0, NULL, sizeof(Float32), &value);
+    }
+}
+
+-(void)fadeOutputVolume:(const OutputVolumeSnapshot *)snapshot fromScale:(Float32)fromScale toScale:(Float32)toScale{
+    if (!snapshot || snapshot->count == 0){
+        return;
+    }
+    for (UInt32 step = 1; step <= OUTPUT_VOLUME_FADE_STEPS; step++){
+        Float32 t = (Float32)step / (Float32)OUTPUT_VOLUME_FADE_STEPS;
+        [self applyOutputVolume:snapshot scale:(fromScale + (toScale - fromScale) * t)];
+        usleep(OUTPUT_VOLUME_FADE_STEP_US);
+    }
+}
+
 -(BOOL)startOutput{
     if (_bIsPlaying){
         return YES;
@@ -958,15 +1051,36 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 
 -(BOOL)startInput{
     //Note: this is the call that triggers the TCC dialog (System Audio Recording)
+    if (_bIsRecording){
+        return YES;
+    }
     if (_aggregateID == kAudioObjectUnknown || _ioProcID == NULL){
         NSLog(@"Cannot start input without a tap aggregate device");
         return NO;
     }
+
+    // Fade the hardware output to silence first so CATapMutedWhenTapped
+    // engages at zero instead of cutting mid-waveform.
+    OutputVolumeSnapshot volume = {0};
+    BOOL fadedVolume = [self captureOutputVolume:&volume];
+    if (fadedVolume){
+        [self fadeOutputVolume:&volume fromScale:1.0f toScale:0.0f];
+        usleep(OUTPUT_VOLUME_SETTLE_US);
+    }
+
     OSStatus ret = AudioDeviceStart(_aggregateID, _ioProcID);
     if (FAILED(ret)){
+        if (fadedVolume){
+            [self applyOutputVolume:&volume scale:1.0f];
+        }
         NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
         NSLog(@"Failed to start tap aggregate device. err=%d(%@)", ret, [err description]);
         return NO;
+    }
+
+    if (fadedVolume){
+        usleep(OUTPUT_VOLUME_SETTLE_US);
+        [self fadeOutputVolume:&volume fromScale:0.0f toScale:1.0f];
     }
     _bIsRecording = YES;
     NSLog(@"Tap aggregate device started");
@@ -974,16 +1088,35 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 }
 
 -(BOOL)stopInput{
+    BOOL wasRecording = _bIsRecording;
     _bIsRecording = NO;
-    if (_aggregateID != kAudioObjectUnknown && _ioProcID != NULL){
-        OSStatus ret = AudioDeviceStop(_aggregateID, _ioProcID);
-        if (FAILED(ret)){
-            NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
-            NSLog(@"Failed to stop tap aggregate device = %d(%@)", ret, [err description]);
-            return NO;
+    if (_aggregateID == kAudioObjectUnknown || _ioProcID == NULL){
+        return YES;
+    }
+
+    OutputVolumeSnapshot volume = {0};
+    BOOL fadedVolume = NO;
+    if (wasRecording){
+        fadedVolume = [self captureOutputVolume:&volume];
+        if (fadedVolume){
+            [self fadeOutputVolume:&volume fromScale:1.0f toScale:0.0f];
+            usleep(OUTPUT_VOLUME_SETTLE_US);
         }
     }
-    
+
+    OSStatus ret = AudioDeviceStop(_aggregateID, _ioProcID);
+    if (FAILED(ret)){
+        if (fadedVolume){
+            [self applyOutputVolume:&volume scale:1.0f];
+        }
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to stop tap aggregate device = %d(%@)", ret, [err description]);
+        return NO;
+    }
+
+    if (fadedVolume){
+        [self fadeOutputVolume:&volume fromScale:0.0f toScale:1.0f];
+    }
     return YES;
 }
 
