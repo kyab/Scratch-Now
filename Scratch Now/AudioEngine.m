@@ -852,7 +852,7 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     }
     
     
-    //set callback to first unit
+    //set callback to supply our audio data
     AURenderCallbackStruct callbackInfo;
     callbackInfo.inputProc = MyRender;
     callbackInfo.inputProcRefCon = (__bridge void * _Nullable)(self);

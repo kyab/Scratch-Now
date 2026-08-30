@@ -43,3 +43,9 @@
 
 ### Agentのチャット
 - 開発者がDSPの専門家と想定しないこと。DSP、音響における専門用語については適時解説を入れること。
+
+
+### Build/Run from command line
+```sh
+xcodebuild -project "Scratch Now.xcodeproj" -scheme "Scratch Now" -configuration Release -destination 'platform=macOS' build && OS_ACTIVITY_MODE=disable "$(xcodebuild -project "Scratch Now.xcodeproj" -scheme "Scratch Now" -configuration Release -destination 'platform=macOS' -showBuildSettings 2>/dev/null | awk -F' = ' '/BUILT_PRODUCTS_DIR/ {print $2; exit}')/Scratch Now.app/Contents/MacOS/Scratch Now" 2>&1
+```
