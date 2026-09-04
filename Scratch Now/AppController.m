@@ -138,7 +138,6 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     *consumed = integerBase;
 }
 
-// Variable-rate wet (Hermite) + 1x dry mix. Used for scratch, Stop ramp, and stopped platter.
 -(void)processVariableRateBlock:(float *)leftBuf right:(float *)rightBuf samples:(UInt32)numSamples applyExtraFade:(BOOL)applyExtraFade{
     if (numSamples == 0) return;
 
@@ -431,9 +430,14 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     }
 
     if (!_isScratching && !_isFadingOut && pressing){
-        _isScratchStarting = YES;
-        _isFadingOut = YES;
-        _fadeOutCounter = FADE_SAMPLE_NUM;
+        if (_tableStopped){
+            _isScratching = YES;
+            _smoothedSpeed = 0.0;
+        }else{
+            _isScratchStarting = YES;
+            _isFadingOut = YES;
+            _fadeOutCounter = FADE_SAMPLE_NUM;
+        }
         return;
     }
 
@@ -500,7 +504,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 }
 
 - (IBAction)startStopButtonClicked:(id)sender {
-    if (_btnStop.state == NSControlStateValueOn){
+    if (_btnStop.state == NSControlStateValueOn){ //"Start"
         BOOL isStopRampInProgress = (_tableStopTimer != nil);
         if (_tableStopTimer){
             [_tableStopTimer invalidate];
@@ -523,7 +527,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
             [_ring follow];
         }
         [_btnStop setTitle:@"[S]top"];
-    }else{
+    }else{      //"Stop"
         if (_tableStopTimer){
             [_tableStopTimer invalidate];
             _tableStopTimer = nil;

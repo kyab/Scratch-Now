@@ -100,9 +100,6 @@ double rad2deg(double rad){
     [lineRecord setLineWidth:1.0];
     [lineRecord stroke];
     
-    
-    
-    
     NSBezierPath *linePlay = [NSBezierPath bezierPath];
     [linePlay moveToPoint:NSMakePoint(centerX,centerY)];
     double thetaPlayRad = [_ring playFrame]/[_ring sampleRate] * (-33.3/60 * 2 * M_PI);
