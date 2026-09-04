@@ -44,7 +44,7 @@ double rad2deg(double rad){
 }
 
 -(void)onTimer:(NSTimer *)t{
-    if (_pressing) return;
+    if (_isPlatterTouching) return;
 
     _currentRad += [self baseRadS]*0.01;
     if (_currentRad > 2*M_PI){
@@ -68,7 +68,6 @@ double rad2deg(double rad){
     }else{
         r = r1;
     }
-    
     
     NSRect circleRect = NSMakeRect(
                                    self.bounds.size.width/2 - r,
@@ -104,16 +103,13 @@ double rad2deg(double rad){
     [linePlay moveToPoint:NSMakePoint(centerX,centerY)];
     double thetaPlayRad = [_ring playFrame]/[_ring sampleRate] * (-33.3/60 * 2 * M_PI);
     [linePlay lineToPoint:NSMakePoint(centerX + r*cos(thetaPlayRad), centerY + r*sin(thetaPlayRad))];
-    if (_pressing){
+    if (_isPlatterTouching){
         [[NSColor orangeColor] set ];
     }else{
         [[NSColor orangeColor] set];
     }
     [linePlay setLineWidth:5.0];
     [linePlay stroke];
-    
-    
-
     
 }
 
@@ -134,7 +130,7 @@ double rad2deg(double rad){
     CGFloat r = self.bounds.size.height/2 - 10;
     
     if (dist <= r){
-        _pressing = YES;
+        _isPlatterTouching = YES;
         double theta = x/sqrt(x*x + y*y);
         theta = acos(theta);
         if (y < 0) theta = 2*M_PI - theta;
@@ -153,7 +149,7 @@ double rad2deg(double rad){
         [_delegate turnTableSpeedRateChanged];
     
     }else{
-        _pressing = NO;
+        _isPlatterTouching = NO;
     }
     
     
@@ -203,7 +199,7 @@ double rad2deg(double rad){
 }
 
 -(void)mouseUp:(NSEvent *)theEvent{
-    _pressing = NO;
+    _isPlatterTouching = NO;
     
     _speedRate = 1.0;
     [_delegate turnTableSpeedRateChanged];
@@ -213,7 +209,7 @@ double rad2deg(double rad){
 }
 
 -(void)onTimerScratch:(NSTimer *)t{
-    if (!_pressing) return;
+    if (!_isPlatterTouching) return;
 
     // Same time base as NSEvent.timestamp (seconds since system startup).
     double currentSec = [NSProcessInfo processInfo].systemUptime;
@@ -299,9 +295,8 @@ double rad2deg(double rad){
 -(void)setRingBuffer:(RingBuffer *)ring{
     _ring = ring;
 }
--(Boolean)isScratching{
-    return _pressing;
+-(Boolean)isPlatterTouching {
+    return _isPlatterTouching;
 }
-
 
 @end

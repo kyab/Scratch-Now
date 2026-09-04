@@ -410,10 +410,10 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 -(void)turnTableSpeedRateChanged:(double)newSpeedRate{
     // Stop is not cancelled by platter input: scratch owns audible speed while held,
     // and the Stop ramp continues underneath via _tableStopSpeed.
-    BOOL pressing = [_turnTableView isScratching];
+    BOOL isPlatterTouching = [_turnTableView isPlatterTouching];
     _speedRate = newSpeedRate;
 
-    if (_isReturningToLive && pressing){
+    if (_isReturningToLive && isPlatterTouching){
         _isReturningToLive = NO;
         _isScratchStarting = YES;
         _isFadingOut = YES;
@@ -421,7 +421,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         return;
     }
 
-    if (_isScratchStarting && !pressing){
+    if (_isScratchStarting && !isPlatterTouching){
         _isScratchStarting = NO;
         _isReturningToLive = YES;
         _isFadingOut = YES;
@@ -429,7 +429,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         return;
     }
 
-    if (!_isScratching && !_isFadingOut && pressing){
+    if (!_isScratching && !_isFadingOut && isPlatterTouching){
         if (_tableStopped){
             _isScratching = YES;
             _smoothedSpeed = 0.0;
@@ -441,7 +441,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         return;
     }
 
-    if (_isScratching && !_isFadingOut && !pressing){
+    if (_isScratching && !_isFadingOut && !isPlatterTouching){
         _isReturningToLive = YES;
         _isFadingOut = YES;
         _fadeOutCounter = FADE_SAMPLE_NUM;
@@ -558,7 +558,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     }
 
     // Scratch owns audible speed while the platter is held or mid fade handoff.
-    BOOL scratchOwnsSpeed = [_turnTableView isScratching] || _isScratching || _isScratchStarting || _isReturningToLive;
+    BOOL scratchOwnsSpeed = [_turnTableView isPlatterTouching] || _isScratching || _isScratchStarting || _isReturningToLive;
     if (!scratchOwnsSpeed){
         _speedRate = _tableStopSpeed;
     }
@@ -566,7 +566,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 
 -(void)turnTableSpeedRateChanged{
     double newSpeedRate = [_turnTableView speedRate];
-    if (![_turnTableView isScratching]){
+    if (![_turnTableView isPlatterTouching]){
         if ([self isStopActive]){
             // Released into an active Stop: resume the underlying decelerated speed.
             newSpeedRate = _tableStopped ? 0.0 : _tableStopSpeed;

@@ -1,0 +1,8 @@
+{
+  "[objective-c]": {
+    "editor.formatOnSave": false
+  },
+  "[objective-cpp]": {
+    "editor.formatOnSave": false
+  }
+}

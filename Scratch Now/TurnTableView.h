@@ -16,7 +16,7 @@
 
 
 @interface TurnTableView : NSView{
-    BOOL _pressing;
+    BOOL _isPlatterTouching;
     double _currentRad;
     double _currentRadPlay;
     
@@ -47,5 +47,5 @@
 -(void)stop;
 -(double)speedRate;
 -(void)setSpeedRate:(float)speedRate;
--(Boolean)isScratching;
+-(Boolean)isPlatterTouching;
 @end

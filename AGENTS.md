@@ -47,8 +47,12 @@
 ### 質問と確認
 **「不明な点」「曖昧な要件」「複数の選択肢」がある状態での推測によるコード生成や実装を禁止します。**
 手戻りを防ぎ、正確な成果物を出すために、不確実な要素がある場合は必ず実装をストップし、ユーザーに質問・確認を行ってください。
+確認の質問の際には、あなたにおまかせするといった選択肢も用意して。その場合は適時適切な推測や仮説をたててすすめて。
 
 ### Build/Run from command line
 ```sh
 xcodebuild -project "Scratch Now.xcodeproj" -scheme "Scratch Now" -configuration Release -destination 'platform=macOS' build && OS_ACTIVITY_MODE=disable "$(xcodebuild -project "Scratch Now.xcodeproj" -scheme "Scratch Now" -configuration Release -destination 'platform=macOS' -showBuildSettings 2>/dev/null | awk -F' = ' '/BUILT_PRODUCTS_DIR/ {print $2; exit}')/Scratch Now.app/Contents/MacOS/Scratch Now" 2>&1
 ```
+
+### チャットやAgentによるビルドと実行
+サンドボックスでは動かないのでビルドや実行にサンドボックスは使わないこと。
