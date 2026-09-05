@@ -1,0 +1,62 @@
+name: UI scratch E2E CI
+
+# Thin wrapper around ui_scratch_ci/. All real logic lives in the scripts there
+# so the same test runs locally on a MacBook (see ui_scratch_ci/README.md).
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ui-scratch:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            experimental: false
+          # The macos-latest (macOS 26) runner's virtual audio stack degrades
+          # into a persistent ~20% duty stutter roughly 20-35 s into sustained
+          # capture+playback (regardless of tone player: sounddevice and
+          # afplay both hit it), which corrupts the capture-side reference.
+          # The assert script flags this via the INFRA tone-health check.
+          # Keep the job as a non-blocking signal until the runner image
+          # stabilizes; macos-15 has been reliable on every run.
+          - os: macos-latest
+            experimental: true
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r ui_scratch_ci/requirements.txt
+
+      # Needed for the evidence video (screen capture + audio mux). The
+      # arm64 macOS runner images no longer preinstall ffmpeg.
+      - name: Install ffmpeg
+        run: brew install ffmpeg
+
+      - name: Run UI scratch E2E test
+        run: bash ui_scratch_ci/run_ui_scratch_test.sh
+
+      - name: Upload UI scratch artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-scratch-ci-status-${{ matrix.os }}
+          path: /tmp/scratch-now-tap-smoke-ci/
+          if-no-files-found: warn

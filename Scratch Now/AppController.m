@@ -8,6 +8,32 @@
 #import "AppController.h"
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
+
+#if SCRATCH_NOW_TAP_SMOKE_CI
+// UI scratch E2E CI: the external harness needs the turntable position in
+// CGEvent global coordinates (top-left origin) to post synthetic mouse events,
+// and a low-rate scratch state stream to verify direction/state transitions.
+static NSString *UIScratchCIPath(NSString *fileName){
+    NSString *dir = @"/tmp/scratch-now-tap-smoke-ci";
+    [[NSFileManager defaultManager] createDirectoryAtPath:dir
+                              withIntermediateDirectories:YES
+                                               attributes:nil
+                                                    error:NULL];
+    return [dir stringByAppendingPathComponent:fileName];
+}
+
+static void UIScratchCIAppendLine(NSString *fileName, NSString *line){
+    const char *utf8 = [line UTF8String];
+    FILE *f = fopen([UIScratchCIPath(fileName) fileSystemRepresentation], "a");
+    if (f){
+        fwrite(utf8, 1, strlen(utf8), f);
+        fclose(f);
+    }
+}
+
+static NSTimer *sUIScratchCITimer = nil;
+#endif
 
 #define FADE_SAMPLE_NUM 500
 #define SPEED_SMOOTH_ALPHA (1.0 / 128.0)
@@ -66,7 +92,86 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 
     [_ae startOutput];
     [_ae startInput];
+
+#if SCRATCH_NOW_TAP_SMOKE_CI
+    [self startUIScratchCIReporting];
+#endif
 }
+
+#if SCRATCH_NOW_TAP_SMOKE_CI
+-(void)startUIScratchCIReporting{
+    // Log the turntable geometry after the window has settled on screen.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [self logUIScratchCIGeometry];
+    });
+
+    sUIScratchCITimer = [NSTimer scheduledTimerWithTimeInterval:0.1
+                                                         target:self
+                                                       selector:@selector(onUIScratchCITimer:)
+                                                       userInfo:nil
+                                                        repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:sUIScratchCITimer forMode:NSRunLoopCommonModes];
+}
+
+-(void)logUIScratchCIGeometry{
+    TurnTableView *view = _turnTableView;
+    NSWindow *window = view.window;
+    if (!view || !window){
+        UIScratchCIAppendLine(@"ui.jsonl", @"{\"error\":\"turntable window unavailable\"}\n");
+        return;
+    }
+
+    NSRect rectInWindow = [view convertRect:view.bounds toView:nil];
+    NSRect rectOnScreen = [window convertRectToScreen:rectInWindow];
+    // CGEvent global coordinates use a top-left origin on the primary screen.
+    CGFloat primaryHeight = NSScreen.screens.firstObject.frame.size.height;
+    double centerX = NSMidX(rectOnScreen);
+    double centerY = (double)primaryHeight - (double)NSMidY(rectOnScreen);
+    // Matches the platter hit test in TurnTableView mouseDown (height/2 - 10).
+    double radius = view.bounds.size.height / 2.0 - 10.0;
+
+    // Stop button center so the driver can exercise the table-stop cases.
+    double btnStopCenterX = 0.0;
+    double btnStopCenterY = 0.0;
+    NSButton *btnStop = _btnStop;
+    if (btnStop){
+        NSRect btnRectOnScreen = [window convertRectToScreen:
+                                  [btnStop convertRect:btnStop.bounds toView:nil]];
+        btnStopCenterX = NSMidX(btnRectOnScreen);
+        btnStopCenterY = (double)primaryHeight - (double)NSMidY(btnRectOnScreen);
+    }
+
+    NSString *line = [NSString stringWithFormat:
+                      @"{\"ts\":%.3f,\"centerX\":%.2f,\"centerY\":%.2f,\"radius\":%.2f,"
+                      @"\"screenHeight\":%.2f,\"viewWidth\":%.2f,\"viewHeight\":%.2f,"
+                      @"\"btnStopCenterX\":%.2f,\"btnStopCenterY\":%.2f}\n",
+                      [[NSDate date] timeIntervalSince1970],
+                      centerX, centerY, radius,
+                      (double)primaryHeight,
+                      (double)view.bounds.size.width,
+                      (double)view.bounds.size.height,
+                      btnStopCenterX, btnStopCenterY];
+    UIScratchCIAppendLine(@"ui.jsonl", line);
+}
+
+-(void)onUIScratchCITimer:(NSTimer *)t{
+    NSString *line = [NSString stringWithFormat:
+                      @"{\"ts\":%.3f,\"speedRate\":%.4f,\"smoothedSpeed\":%.4f,"
+                      @"\"pressing\":%d,\"scratching\":%d,"
+                      @"\"tableStopped\":%d,\"tableStopSpeed\":%.4f,\"stopTimerActive\":%d,"
+                      @"\"playFrame\":%u,\"recordFrame\":%u}\n",
+                      [[NSDate date] timeIntervalSince1970],
+                      _speedRate, _smoothedSpeed,
+                      [_turnTableView isScratching] ? 1 : 0,
+                      _isScratching ? 1 : 0,
+                      _tableStopped ? 1 : 0,
+                      _tableStopSpeed,
+                      (_tableStopTimer != nil) ? 1 : 0,
+                      [_ring playFrame], [_ring recordFrame]];
+    UIScratchCIAppendLine(@"scratch.jsonl", line);
+}
+#endif
 
 - (OSStatus) inCallback:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData{
     static BOOL printNumFrames = NO;

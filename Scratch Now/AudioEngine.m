@@ -71,18 +71,139 @@ static NSString *TapSmokeCIStatusPath(void){
     return path;
 }
 
-// Append a single JSON line. Opened/closed each second so a crash still leaves
-// a readable file for CI artifacts.
+// All CI logging I/O funnels through one serial background queue. The audio
+// render / tap IOProc threads must never touch the disk: a synchronous
+// fopen/fwrite under CI VM load can blow the render deadline, which drops
+// capture buffers and is audible as periodic clicks in the recorded output.
+static dispatch_queue_t TapSmokeCIQueue(void){
+    static dispatch_queue_t queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("scratch-now.tap-smoke-ci.io",
+                                      DISPATCH_QUEUE_SERIAL);
+    });
+    return queue;
+}
+
+// Append a single JSON line (asynchronously, off the calling thread). The file
+// is opened/closed per line so a crash still leaves a readable CI artifact.
+static void TapSmokeCIAppendLine(NSString *path, NSString *line){
+    dispatch_async(TapSmokeCIQueue(), ^{
+        const char *utf8 = [line UTF8String];
+        FILE *f = fopen([path fileSystemRepresentation], "a");
+        if (f){
+            fwrite(utf8, 1, strlen(utf8), f);
+            fclose(f);
+        }
+    });
+}
+
 static void TapSmokeCIAppendStatus(double ts, float peak, float rms,
                                    unsigned long long framesTotal, double estimatedHz){
     NSString *line = [NSString stringWithFormat:
                       @"{\"ts\":%.3f,\"peak\":%.6f,\"rms\":%.6f,\"framesTotal\":%llu,\"estimatedHz\":%.2f}\n",
                       ts, peak, rms, framesTotal, estimatedHz];
-    const char *utf8 = [line UTF8String];
-    FILE *f = fopen([TapSmokeCIStatusPath() fileSystemRepresentation], "a");
-    if (f){
-        fwrite(utf8, 1, strlen(utf8), f);
-        fclose(f);
+    TapSmokeCIAppendLine(TapSmokeCIStatusPath(), line);
+}
+
+// Output-side status file for the UI scratch E2E test: describes what the app
+// is actually sending to the speaker after the scratch DSP.
+static NSString *TapSmokeCIOutputStatusPath(void){
+    static NSString *path;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        path = [[TapSmokeCIStatusPath() stringByDeletingLastPathComponent]
+                stringByAppendingPathComponent:@"output.jsonl"];
+    });
+    return path;
+}
+
+// Raw PCM dump (mono float32 LE) of the rendered output plus a sidecar meta
+// file with the wall-clock start time, so the harness can mux the app's real
+// audio into the evidence screen recording. The render thread only copies the
+// samples (NSData) and hands them to the serial CI queue; the queue owns the
+// FILE and flushes every second so an abrupt app kill loses at most ~1 s.
+static void TapSmokeCIDumpOutputPCM(const float *left, UInt32 frames, double sampleRate){
+    static BOOL metaWritten = NO;
+    if (!metaWritten){
+        metaWritten = YES;
+        double ts = CFAbsoluteTimeGetCurrent() + kCFAbsoluteTimeIntervalSince1970;
+        NSString *dir = [TapSmokeCIStatusPath() stringByDeletingLastPathComponent];
+        NSString *meta = [NSString stringWithFormat:
+                          @"{\"startTs\":%.3f,\"sampleRate\":%.0f,\"channels\":1,\"format\":\"f32le\"}\n",
+                          ts, sampleRate];
+        TapSmokeCIAppendLine([dir stringByAppendingPathComponent:@"output_pcm_meta.json"],
+                             meta);
+    }
+    NSData *chunk = [NSData dataWithBytes:left length:frames * sizeof(float)];
+    dispatch_async(TapSmokeCIQueue(), ^{
+        static FILE *pcmFile = NULL;
+        static BOOL initFailed = NO;
+        static UInt32 framesSinceFlush = 0;
+        if (initFailed){
+            return;
+        }
+        if (!pcmFile){
+            NSString *dir = [TapSmokeCIStatusPath() stringByDeletingLastPathComponent];
+            NSString *pcmPath = [dir stringByAppendingPathComponent:@"output.pcm"];
+            pcmFile = fopen([pcmPath fileSystemRepresentation], "wb");
+            if (!pcmFile){
+                initFailed = YES;
+                return;
+            }
+        }
+        fwrite(chunk.bytes, 1, chunk.length, pcmFile);
+        framesSinceFlush += (UInt32)(chunk.length / sizeof(float));
+        if (sampleRate > 0 && framesSinceFlush >= (UInt32)sampleRate){
+            fflush(pcmFile);
+            framesSinceFlush = 0;
+        }
+    });
+}
+
+// Accumulate peak/rms and a zero-crossing pitch estimate on the rendered output
+// (left channel) and flush one JSON line per second. ts is unix epoch seconds so
+// the harness can correlate with its own phase timeline.
+static void TapSmokeCIObserveOutput(const float *left, UInt32 frames, double sampleRate){
+    static UInt32 frameCounter = 0;
+    static unsigned long long framesTotal = 0;
+    static float peak = 0.0f;
+    static double sumSquares = 0.0;
+    static UInt32 zeroCrossings = 0;
+    static int zcrState = 0;
+    const float kZcrHysteresis = 0.02f;
+
+    TapSmokeCIDumpOutputPCM(left, frames, sampleRate);
+
+    for (UInt32 i = 0; i < frames; i++){
+        float v = left[i];
+        float a = fabsf(v);
+        if (a > peak) peak = a;
+        sumSquares += (double)v * (double)v;
+        if (zcrState <= 0 && v >= kZcrHysteresis){
+            zcrState = 1;
+            zeroCrossings++;
+        } else if (zcrState >= 0 && v <= -kZcrHysteresis){
+            zcrState = -1;
+            zeroCrossings++;
+        }
+    }
+
+    frameCounter += frames;
+    framesTotal += frames;
+    if (sampleRate > 0 && frameCounter >= (UInt32)sampleRate){
+        double rms = sqrt(sumSquares / (double)frameCounter);
+        double estimatedHz = ((double)zeroCrossings / 2.0)
+            * (sampleRate / (double)frameCounter);
+        double ts = CFAbsoluteTimeGetCurrent() + kCFAbsoluteTimeIntervalSince1970;
+        NSString *line = [NSString stringWithFormat:
+                          @"{\"ts\":%.3f,\"peak\":%.6f,\"rms\":%.6f,\"framesTotal\":%llu,\"estimatedHz\":%.2f}\n",
+                          ts, peak, rms, framesTotal, estimatedHz];
+        TapSmokeCIAppendLine(TapSmokeCIOutputStatusPath(), line);
+        frameCounter = 0;
+        peak = 0.0f;
+        sumSquares = 0.0;
+        zeroCrossings = 0;
     }
 }
 #endif
@@ -139,7 +260,16 @@ OSStatus MyRender(void *inRefCon,
         }
         return noErr;
     }
-    return [_delegate outCallback:ioActionFlags inTimeStamp:inTimeStamp inBusNumber:inBusNumber inNumberFrames:inNumberFrames ioData:ioData];
+    OSStatus ret = [_delegate outCallback:ioActionFlags inTimeStamp:inTimeStamp inBusNumber:inBusNumber inNumberFrames:inNumberFrames ioData:ioData];
+#if SCRATCH_NOW_TAP_SMOKE_CI
+    // Observe whatever ended up in the output buffers (including zero-filled
+    // fallback paths) so the E2E harness sees a continuous 1 Hz status stream.
+    if (ret == noErr && ioData && ioData->mNumberBuffers > 0 && ioData->mBuffers[0].mData){
+        TapSmokeCIObserveOutput((const float *)ioData->mBuffers[0].mData,
+                                inNumberFrames, _engineSampleRate);
+    }
+#endif
+    return ret;
 }
 
 //IOProc attached to the private aggregate device. inInputData carries the tap capture.
@@ -748,7 +878,15 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 
 // Request a smaller IO period on the tap aggregate.
 -(BOOL)setupAggregateBufferFrameSize{
-    const UInt32 desiredFrameSize = 64;
+#if SCRATCH_NOW_TAP_SMOKE_CI
+    // CI VMs cannot sustain millisecond realtime deadlines: a 64-frame IO
+    // period (~1.3 ms at 48 kHz) drops capture buffers under load, audible
+    // as periodic clicks. Latency is irrelevant for the test, so relax the
+    // period to ~85 ms (clamped to the device's supported range below).
+    UInt32 desiredFrameSize = 4096;
+#else
+    UInt32 desiredFrameSize = 64;
+#endif
     
     AudioObjectPropertyAddress propAddress;
     propAddress.mSelector = kAudioDevicePropertyBufferFrameSizeRange;
@@ -766,6 +904,15 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     
     NSLog(@"Aggregate BufferFrameSizeRange: min=%.0f max=%.0f (desired=%u)",
           range.mMinimum, range.mMaximum, desiredFrameSize);
+    
+#if SCRATCH_NOW_TAP_SMOKE_CI
+    if ((Float64)desiredFrameSize > range.mMaximum){
+        desiredFrameSize = (UInt32)range.mMaximum;
+    }
+    if ((Float64)desiredFrameSize < range.mMinimum){
+        desiredFrameSize = (UInt32)range.mMinimum;
+    }
+#endif
     
     if ((Float64)desiredFrameSize < range.mMinimum ||
         (Float64)desiredFrameSize > range.mMaximum){
@@ -880,6 +1027,20 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         return NO;
     }
     
+#if SCRATCH_NOW_TAP_SMOKE_CI
+    // The CI build uses a large device buffer (see setupLowLatencyOutput);
+    // the AU must accept render slices bigger than the 1156-frame default.
+    // Must be set before AUGraphInitialize.
+    UInt32 ciMaxFrames = 4096;
+    ret = AudioUnitSetProperty(_outUnit, kAudioUnitProperty_MaximumFramesPerSlice,
+                               kAudioUnitScope_Global, 0,
+                               &ciMaxFrames, sizeof(ciMaxFrames));
+    if (FAILED(ret)){
+        NSLog(@"failed to set MaximumFramesPerSlice for CI = %d", ret);
+        return NO;
+    }
+#endif
+    
     ret = AUGraphInitialize(_graph);
     if (FAILED(ret)){
         NSLog(@"failed to AUGraphInitialize");
@@ -910,7 +1071,15 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     propAddress.mSelector = kAudioDevicePropertyBufferFrameSize;
     propAddress.mScope = kAudioObjectPropertyScopeGlobal;
     propAddress.mElement = kAudioObjectPropertyElementMaster;
+#if SCRATCH_NOW_TAP_SMOKE_CI
+    // Relax the render deadline like the capture side (see
+    // setupAggregateBufferFrameSize): 32 frames (~0.7 ms) is not sustainable
+    // on a CI VM. Capped at 1024 because AppController's variable-rate temp
+    // buffers (_tempLeftPtr/_tempRightPtr) hold 1024 frames per render call.
+    UInt32 frameSize = 1024;
+#else
     UInt32 frameSize = 32;
+#endif
     ret = AudioObjectSetPropertyData(builtInOutput,
                                      &propAddress,0, NULL, sizeof(UInt32), &frameSize);
     if(FAILED(ret)){
