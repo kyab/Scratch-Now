@@ -10,11 +10,23 @@
 #include <string.h>
 
 #define FADE_SAMPLE_NUM 500
+#define FADE_SAMPLE_NUM_GLOBAL 3000
 #define SPEED_SMOOTH_ALPHA (1.0 / 128.0)
 #define GAIN_SMOOTH_ALPHA (1.0 / 256.0)
 #define DC_BLOCKER_R (0.995f)
 #define GAIN_SLOPE (4.0)
 #define STOPPED_SPEED_EPSILON (1.0e-4)
+
+static BOOL sIsGlobalFadeIn = YES;
+static UInt32 sGlobalFadeInCounter = 0;
+static BOOL sIsGlobalFadeOut = NO;
+static UInt32 sGlobalFadeOutCounter = 0;
+static BOOL sDidScheduleTerminationFinish = NO;
+
+@interface AppController ()
+- (void)scheduleFinishAppTermination;
+- (void)finishAppTermination;
+@end
 
 static inline float cubicInterpolate(float y0, float y1, float y2, float y3, double mu) {
     double mu2 = mu * mu;
@@ -452,18 +464,8 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 - (OSStatus) outCallback:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData{
     static BOOL printedNumFrames = NO;
     if (!printedNumFrames){
-        NSLog(@"outCallback NumFrames = %d", inNumberFrames);
+        NSLog(@"[OUT CALLBACK] printedNumFrames = %d", printedNumFrames);
         printedNumFrames = YES;
-    }
-
-    if (![_ae isPlaying]){
-        UInt32 sampleNum = inNumberFrames;
-        float *pLeft = (float *)ioData->mBuffers[0].mData;
-        float *pRight = (float *)ioData->mBuffers[1].mData;
-        bzero(pLeft,sizeof(float)*sampleNum );
-        bzero(pRight,sizeof(float)*sampleNum );
-        NSLog(@"ae not playing");
-        return noErr;
     }
 
     if ([_ring isShortage]){
@@ -472,16 +474,29 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         float *pRight = (float *)ioData->mBuffers[1].mData;
         bzero(pLeft,sizeof(float)*sampleNum );
         bzero(pRight,sizeof(float)*sampleNum );
+        NSLog(@"[OUT CALLBACK] buffer shortage");
+        if (sIsGlobalFadeOut){
+            [self scheduleFinishAppTermination];
+        }else{
+            sIsGlobalFadeIn = YES;
+            sGlobalFadeInCounter = 0;
+        }
         return noErr;
     }
 
     if (![_ring readPtrLeft] || ![_ring readPtrRight]){
-        NSLog(@"no enough buffer on read");
+        NSLog(@"[OUT CALLBACK] no enough buffer on read");
         UInt32 sampleNum = inNumberFrames;
         float *pLeft = (float *)ioData->mBuffers[0].mData;
         float *pRight = (float *)ioData->mBuffers[1].mData;
-        bzero(pLeft, sizeof(float)*sampleNum );
-        bzero(pRight, sizeof(float)*sampleNum );
+        bzero(pLeft, sizeof(float) * sampleNum);
+        bzero(pRight, sizeof(float) * sampleNum);
+        if (sIsGlobalFadeOut){
+            [self scheduleFinishAppTermination];
+        }else{
+            sIsGlobalFadeIn = YES;
+            sGlobalFadeInCounter = 0;
+        }
         return noErr;
     }
 
@@ -489,6 +504,40 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     float *dstR = (float *)ioData->mBuffers[1].mData;
 
     [self processScratchOutput:dstL right:dstR samples:inNumberFrames];
+
+    if (sIsGlobalFadeIn){
+        for (UInt32 i = 0; i < inNumberFrames; i++){
+            if (sGlobalFadeInCounter >= FADE_SAMPLE_NUM_GLOBAL){
+                sIsGlobalFadeIn = NO;
+                sGlobalFadeInCounter = 0;
+                break;
+            }
+            float rate = sGlobalFadeInCounter / (float)FADE_SAMPLE_NUM_GLOBAL;
+            dstL[i] *= rate;
+            dstR[i] *= rate;
+            sGlobalFadeInCounter++;
+        }
+        if (sGlobalFadeInCounter >= FADE_SAMPLE_NUM_GLOBAL){
+            sIsGlobalFadeIn = NO;
+            sGlobalFadeInCounter = 0;
+        }
+        NSLog(@"[OUT CALLBACK] globalFadeInCounter = %d", sGlobalFadeInCounter);
+    }
+
+    if (sIsGlobalFadeOut){
+        for (UInt32 i = 0; i < inNumberFrames; i++){
+            if (sGlobalFadeOutCounter == 0){
+                break;
+            }
+            float rate = sGlobalFadeOutCounter / (float)FADE_SAMPLE_NUM_GLOBAL;
+            dstL[i] *= rate;
+            dstR[i] *= rate;
+            sGlobalFadeOutCounter--;
+        }
+        if (sGlobalFadeOutCounter == 0){
+            [self scheduleFinishAppTermination];
+        }
+    }
     return noErr;
 }
 
@@ -579,7 +628,40 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     [self turnTableSpeedRateChanged:newSpeedRate];
 }
 
--(void)terminate{
+-(void)scheduleFinishAppTermination{
+    if (sDidScheduleTerminationFinish){
+        return;
+    }
+    sDidScheduleTerminationFinish = YES;
+    sIsGlobalFadeOut = NO;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self finishAppTermination];
+    });
+}
+
+-(void)finishAppTermination{
     [_ae shutdown];
+    [NSApp replyToApplicationShouldTerminate:YES];
+}
+
+-(void)terminate{
+    if (sDidScheduleTerminationFinish || sIsGlobalFadeOut){
+        return;
+    }
+    if (!_ae || ![_ae isPlaying]){
+        [self finishAppTermination];
+        return;
+    }
+
+    sIsGlobalFadeOut = YES;
+    if (sIsGlobalFadeIn){
+        sGlobalFadeOutCounter = sGlobalFadeInCounter;
+        sIsGlobalFadeIn = NO;
+        if (sGlobalFadeOutCounter == 0){
+            [self scheduleFinishAppTermination];
+        }
+    }else{
+        sGlobalFadeOutCounter = FADE_SAMPLE_NUM_GLOBAL;
+    }
 }
 @end
