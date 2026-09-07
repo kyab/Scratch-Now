@@ -23,7 +23,7 @@
 
 - (void)start{
     if (!_timer){
-        _timer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(onTimer:) userInfo:nil repeats:YES];
+        _timer = [NSTimer scheduledTimerWithTimeInterval:0.002 target:self selector:@selector(onTimer:) userInfo:nil repeats:YES];
         [[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
     }
 }
@@ -46,7 +46,7 @@ double rad2deg(double rad){
 -(void)onTimer:(NSTimer *)t{
     if (_isPlatterTouching) return;
 
-    _currentRad += [self baseRadS]*0.01;
+    _currentRad += [self baseRadS]*0.002;
     if (_currentRad > 2*M_PI){
         _currentRad -= 2*M_PI;
     }else if (_currentRad < 0){

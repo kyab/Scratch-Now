@@ -7,7 +7,8 @@
 
 #import <Foundation/Foundation.h>
 
-#define RING_SIZE_SECONDS 30
+// around 200MB even in case of 600seconds. (44.1/48kHz stereo.)
+#define RING_SIZE_SECONDS 600   
 
 @interface RingBuffer : NSObject
 {

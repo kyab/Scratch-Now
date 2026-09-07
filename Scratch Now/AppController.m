@@ -49,6 +49,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     _tableStopSpeed = 1.0;
     _dryVolume = 0.0;
     _wetVolume = 1.0;
+    _autoFollow = (_chkAutoFollow.state == NSControlStateValueOn);
     [self resetScratchState];
 
     //Initialize the engine first: the device-specific tap decides the pipeline sample rate,
@@ -193,6 +194,8 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     }
     double dExtraFade = (extraFadeEnd - extraFade) / (double)numSamples;
 
+    // _dryVolume = (!_autoFollow && [_turnTableView isPlatterTouching]) ? 1.0f : 0.0f;
+
     for (UInt32 i = 0; i < numSamples; i++){
         float inL = _tempLeftPtr[i];
         float inR = _tempRightPtr[i];
@@ -247,8 +250,8 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 }
 
 -(void)processNormalState:(float *)leftBuf right:(float *)rightBuf samples:(UInt32)numSamples{
-    float *srcL = [_ring dryPtrLeft];
-    float *srcR = [_ring dryPtrRight];
+    float *srcL = [_ring readPtrLeft];
+    float *srcR = [_ring readPtrRight];
     if (srcL == NULL || srcR == NULL){
         memset(leftBuf, 0, sizeof(float) * numSamples);
         memset(rightBuf, 0, sizeof(float) * numSamples);
@@ -291,10 +294,9 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     return _tableStopTimer != nil || _tableStopped;
 }
 
-// Catch up to the live edge only when Stop is not holding a playhead.
 -(void)followLiveUnlessStopping{
-    if (![self isStopActive]){
-        [_ring follow];
+    if (_autoFollow && ![self isStopActive]){
+       [_ring follow];
     }
 }
 
@@ -323,6 +325,8 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         [self completeScratchStartFade];
         return n;
     }
+
+    // _dryVolume = (!_autoFollow && [_turnTableView isPlatterTouching]) ? 1.0f : 0.0f;
 
     for (UInt32 i = 0; i < n; i++){
         float dryL = (drySrcL ? drySrcL[i] : 0.0f) * _dryVolume;
@@ -503,6 +507,14 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     _dryVolume = _sliderDry.floatValue;
 }
 
+- (IBAction)autoFollowChanged:(id)sender {
+    _autoFollow = (_chkAutoFollow.state == NSControlStateValueOn);
+}
+
+- (IBAction)followButtonClicked:(id)sender {
+    [_ring follow];
+}
+
 - (IBAction)startStopButtonClicked:(id)sender {
     if (_btnStop.state == NSControlStateValueOn){ //"Start"
         BOOL isStopRampInProgress = (_tableStopTimer != nil);
@@ -524,7 +536,9 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
             [self resetScratchState];
             _isFadingIn = YES;
             _fadeInCounter = 0;
-            [_ring follow];
+            if (_autoFollow){
+                [_ring follow];
+            }
         }
         [_btnStop setTitle:@"[S]top"];
     }else{      //"Stop"
