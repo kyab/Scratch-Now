@@ -7,7 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
-#define RING_SIZE_SECONDS 30
+#define RING_SIZE_SECONDS 60
 
 @interface RingBuffer : NSObject
 {

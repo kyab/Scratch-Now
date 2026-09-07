@@ -22,7 +22,9 @@
         <customObject id="YLy-65-1bz" customClass="NSFontManager"/>
         <customObject id="DMP-Ru-wA4" customClass="AppController">
             <connections>
+                <outlet property="_btnFollow" destination="Fol-bt-Bx1" id="Fol-ot-Bx1"/>
                 <outlet property="_btnStop" destination="QLu-fr-Fr6" id="Nfs-C7-hcU"/>
+                <outlet property="_chkAutoFollow" destination="FoR-ck-Bx1" id="FoR-ot-Bx1"/>
                 <outlet property="_sliderDry" destination="dWT-uZ-bmy" id="zIL-1X-SE9"/>
                 <outlet property="_turnTableView" destination="qa3-JP-Ysp" id="uF7-iA-645"/>
             </connections>
@@ -717,7 +719,7 @@
                         </connections>
                     </button>
                     <slider hidden="YES" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dWT-uZ-bmy">
-                        <rect key="frame" x="418" y="290" width="41" height="28"/>
+                        <rect key="frame" x="421" y="164" width="41" height="28"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <sliderCell key="cell" continuous="YES" state="on" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="aZ1-eT-Nd6"/>
                         <connections>
@@ -725,7 +727,7 @@
                         </connections>
                     </slider>
                     <textField hidden="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Cf6-BH-Y3h">
-                        <rect key="frame" x="430" y="341" width="26" height="16"/>
+                        <rect key="frame" x="430" y="194" width="26" height="16"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" title="Dry" id="y0W-8c-US4">
                             <font key="font" metaFont="system"/>
@@ -737,9 +739,34 @@
                         <rect key="frame" x="10" y="12" width="400" height="400"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     </customView>
+                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Fol-bt-Bx1">
+                        <rect key="frame" x="406" y="336" width="75" height="44"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="square" title="Follow [Space]" bezelStyle="shadowlessSquare" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Fol-cl-Bx1">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent" base64-UTF8="YES">
+IA
+</string>
+                        </buttonCell>
+                        <connections>
+                            <action selector="followButtonClicked:" target="DMP-Ru-wA4" id="Fol-ac-Bx1"/>
+                        </connections>
+                    </button>
+                    <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FoR-ck-Bx1">
+                        <rect key="frame" x="406" y="378" width="90" height="34"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="check" title="Auto Follow" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="FoR-cl-Bx1">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system" size="10"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="autoFollowChanged:" target="DMP-Ru-wA4" id="FoR-ac-Bx1"/>
+                        </connections>
+                    </button>
                 </subviews>
             </view>
-            <point key="canvasLocation" x="203" y="431.5"/>
+            <point key="canvasLocation" x="203" y="431"/>
         </window>
     </objects>
 </document>
