@@ -1,0 +1,988 @@
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.298955+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.308882+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.318954+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.328895+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.339037+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.348940+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.358944+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.371387+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.378904+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.389001+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.398962+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.408987+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.419278+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.428919+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:21.438975+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.448946+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.458979+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.468977+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.478962+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.488963+09:00
+[LogTimer] _speedRateByMouseEvents = -0.005517, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.498996+09:00
+[LogTimer] _speedRateByMouseEvents = -0.018228, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.508961+09:00
+[LogTimer] _speedRateByMouseEvents = -0.033862, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.519565+09:00
+[LogTimer] _speedRateByMouseEvents = -0.102217, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.529920+09:00
+[LogTimer] _speedRateByMouseEvents = -0.102217, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.540960+09:00
+[LogTimer] _speedRateByMouseEvents = -0.251363, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.548938+09:00
+[LogTimer] _speedRateByMouseEvents = -0.321499, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.558918+09:00
+[LogTimer] _speedRateByMouseEvents = -0.397329, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.568909+09:00
+[LogTimer] _speedRateByMouseEvents = -0.584959, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.578877+09:00
+[LogTimer] _speedRateByMouseEvents = -0.584959, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.589777+09:00
+[LogTimer] _speedRateByMouseEvents = -0.840002, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.598973+09:00
+[LogTimer] _speedRateByMouseEvents = -0.962469, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.609037+09:00
+[LogTimer] _speedRateByMouseEvents = -1.093406, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.619464+09:00
+[LogTimer] _speedRateByMouseEvents = -1.336898, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.629422+09:00
+[LogTimer] _speedRateByMouseEvents = -1.470950, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.638939+09:00
+[LogTimer] _speedRateByMouseEvents = -1.608747, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.648951+09:00
+[LogTimer] _speedRateByMouseEvents = -1.538611, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.658926+09:00
+[LogTimer] _speedRateByMouseEvents = -1.724378, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.668940+09:00
+[LogTimer] _speedRateByMouseEvents = -1.602117, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.678905+09:00
+[LogTimer] _speedRateByMouseEvents = -1.696820, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.688995+09:00
+[LogTimer] _speedRateByMouseEvents = -1.627366, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.699024+09:00
+[LogTimer] _speedRateByMouseEvents = -1.570267, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.708966+09:00
+[LogTimer] _speedRateByMouseEvents = -1.492109, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.719750+09:00
+[LogTimer] _speedRateByMouseEvents = -1.261695, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.728840+09:00
+[LogTimer] _speedRateByMouseEvents = -1.233059, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.741794+09:00
+[LogTimer] _speedRateByMouseEvents = -1.028101, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.748920+09:00
+[LogTimer] _speedRateByMouseEvents = -1.079501, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.759035+09:00
+[LogTimer] _speedRateByMouseEvents = -0.862845, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.768986+09:00
+[LogTimer] _speedRateByMouseEvents = -0.845167, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.779597+09:00
+[LogTimer] _speedRateByMouseEvents = -0.827399, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.788988+09:00
+[LogTimer] _speedRateByMouseEvents = -0.660607, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.799024+09:00
+[LogTimer] _speedRateByMouseEvents = -0.610969, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.808956+09:00
+[LogTimer] _speedRateByMouseEvents = -0.576558, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.818937+09:00
+[LogTimer] _speedRateByMouseEvents = -0.532623, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.828900+09:00
+[LogTimer] _speedRateByMouseEvents = -0.502614, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.839031+09:00
+[LogTimer] _speedRateByMouseEvents = -0.453738, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.849045+09:00
+[LogTimer] _speedRateByMouseEvents = -0.432712, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.858959+09:00
+[LogTimer] _speedRateByMouseEvents = -0.410189, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.868892+09:00
+[LogTimer] _speedRateByMouseEvents = -0.405721, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.878830+09:00
+[LogTimer] _speedRateByMouseEvents = -0.344304, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.889203+09:00
+[LogTimer] _speedRateByMouseEvents = -0.331214, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.898967+09:00
+[LogTimer] _speedRateByMouseEvents = -0.311338, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.908960+09:00
+[LogTimer] _speedRateByMouseEvents = -0.281300, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.922139+09:00
+[LogTimer] _speedRateByMouseEvents = -0.243803, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.928823+09:00
+[LogTimer] _speedRateByMouseEvents = -0.168396, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.939481+09:00
+[LogTimer] _speedRateByMouseEvents = -0.135287, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.948835+09:00
+[LogTimer] _speedRateByMouseEvents = -0.104912, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.958909+09:00
+[LogTimer] _speedRateByMouseEvents = -0.082494, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.969010+09:00
+[LogTimer] _speedRateByMouseEvents = -0.039271, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.978965+09:00
+[LogTimer] _speedRateByMouseEvents = -0.023755, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.989035+09:00
+[LogTimer] _speedRateByMouseEvents = -0.012530, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:21.999040+09:00
+[LogTimer] _speedRateByMouseEvents = -0.003965, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.008994+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.018919+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.028967+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.039061+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.048881+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.058970+09:00
+[LogTimer] _speedRateByMouseEvents = 0.001930, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.068950+09:00
+[LogTimer] _speedRateByMouseEvents = 0.001930, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.078873+09:00
+[LogTimer] _speedRateByMouseEvents = 0.010940, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.088986+09:00
+[LogTimer] _speedRateByMouseEvents = 0.020928, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.099003+09:00
+[LogTimer] _speedRateByMouseEvents = 0.041887, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.108954+09:00
+[LogTimer] _speedRateByMouseEvents = 0.050286, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.118862+09:00
+[LogTimer] _speedRateByMouseEvents = 0.084739, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.128902+09:00
+[LogTimer] _speedRateByMouseEvents = 0.084739, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.138895+09:00
+[LogTimer] _speedRateByMouseEvents = 0.135264, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.148908+09:00
+[LogTimer] _speedRateByMouseEvents = 0.165533, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.158983+09:00
+[LogTimer] _speedRateByMouseEvents = 0.195213, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.169095+09:00
+[LogTimer] _speedRateByMouseEvents = 0.288043, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.178838+09:00
+[LogTimer] _speedRateByMouseEvents = 0.279033, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.189075+09:00
+[LogTimer] _speedRateByMouseEvents = 0.453530, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.198954+09:00
+[LogTimer] _speedRateByMouseEvents = 0.530556, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.208964+09:00
+[LogTimer] _speedRateByMouseEvents = 0.649595, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.218880+09:00
+[LogTimer] _speedRateByMouseEvents = 0.959373, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.228909+09:00
+[LogTimer] _speedRateByMouseEvents = 1.106420, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.241119+09:00
+[LogTimer] _speedRateByMouseEvents = 1.292891, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.248941+09:00
+[LogTimer] _speedRateByMouseEvents = 1.441041, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.258970+09:00
+[LogTimer] _speedRateByMouseEvents = 1.548573, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.271961+09:00
+[LogTimer] _speedRateByMouseEvents = 1.581570, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.279001+09:00
+[LogTimer] _speedRateByMouseEvents = 1.669314, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.289657+09:00
+[LogTimer] _speedRateByMouseEvents = 1.637049, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.299089+09:00
+[LogTimer] _speedRateByMouseEvents = 1.611522, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.309027+09:00
+[LogTimer] _speedRateByMouseEvents = 1.564590, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.318995+09:00
+[LogTimer] _speedRateByMouseEvents = 1.303129, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.328804+09:00
+[LogTimer] _speedRateByMouseEvents = 1.248159, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.338977+09:00
+[LogTimer] _speedRateByMouseEvents = 1.173184, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.348966+09:00
+[LogTimer] _speedRateByMouseEvents = 1.065970, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.358890+09:00
+[LogTimer] _speedRateByMouseEvents = 1.001452, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.369358+09:00
+[LogTimer] _speedRateByMouseEvents = 0.945756, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.378841+09:00
+[LogTimer] _speedRateByMouseEvents = 0.903147, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.389006+09:00
+[LogTimer] _speedRateByMouseEvents = 0.811165, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.398975+09:00
+[LogTimer] _speedRateByMouseEvents = 0.756563, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.408989+09:00
+[LogTimer] _speedRateByMouseEvents = 0.685655, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.418902+09:00
+[LogTimer] _speedRateByMouseEvents = 0.622969, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.428868+09:00
+[LogTimer] _speedRateByMouseEvents = 0.539915, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.438979+09:00
+[LogTimer] _speedRateByMouseEvents = 0.390732, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.448964+09:00
+[LogTimer] _speedRateByMouseEvents = 0.335667, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.459000+09:00
+[LogTimer] _speedRateByMouseEvents = 0.277706, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.468888+09:00
+[LogTimer] _speedRateByMouseEvents = 0.254618, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.478840+09:00
+[LogTimer] _speedRateByMouseEvents = 0.231062, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.489262+09:00
+[LogTimer] _speedRateByMouseEvents = 0.188478, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.498959+09:00
+[LogTimer] _speedRateByMouseEvents = 0.184851, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.508952+09:00
+[LogTimer] _speedRateByMouseEvents = 0.185847, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.518877+09:00
+[LogTimer] _speedRateByMouseEvents = 0.181584, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.528864+09:00
+[LogTimer] _speedRateByMouseEvents = 0.172561, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.539069+09:00
+[LogTimer] _speedRateByMouseEvents = 0.163145, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.548933+09:00
+[LogTimer] _speedRateByMouseEvents = 0.147003, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.558942+09:00
+[LogTimer] _speedRateByMouseEvents = 0.130341, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.568901+09:00
+[LogTimer] _speedRateByMouseEvents = 0.085523, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.578833+09:00
+[LogTimer] _speedRateByMouseEvents = 0.063944, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.588996+09:00
+[LogTimer] _speedRateByMouseEvents = 0.046291, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.599030+09:00
+[LogTimer] _speedRateByMouseEvents = 0.032059, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.608964+09:00
+[LogTimer] _speedRateByMouseEvents = 0.021467, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.619126+09:00
+[LogTimer] _speedRateByMouseEvents = 0.005645, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.629030+09:00
+[LogTimer] _speedRateByMouseEvents = 0.005645, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.638981+09:00
+[LogTimer] _speedRateByMouseEvents = 0.002224, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.648962+09:00
+[LogTimer] _speedRateByMouseEvents = 0.002224, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.658954+09:00
+[LogTimer] _speedRateByMouseEvents = 0.002224, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.669672+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.679038+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.688995+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.698934+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.708964+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.718933+09:00
+[LogTimer] _speedRateByMouseEvents = 0.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:22.728880+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:23.548916+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:23.558898+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:23.570208+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:23.578784+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:23.588932+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:23.598943+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:23.608871+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:23.620318+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:23.628792+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.083277 target=-0.083277
+Timestamp: 2026-09-14 18:15:23.639167+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.585215 target=-1.188191
+Timestamp: 2026-09-14 18:15:23.648960+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.724172 target=-0.877423
+Timestamp: 2026-09-14 18:15:23.659238+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.738188, _speedRateByTouchEvents = -0.815785 target=-0.955012
+Timestamp: 2026-09-14 18:15:23.669787+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.023717, _speedRateByTouchEvents = -0.902375 target=-1.012642
+Timestamp: 2026-09-14 18:15:23.678898+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.028350, _speedRateByTouchEvents = -0.986062 target=-1.083035
+Timestamp: 2026-09-14 18:15:23.689287+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.094301, _speedRateByTouchEvents = -1.059416 target=-1.146217
+Timestamp: 2026-09-14 18:15:23.698903+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.903651, _speedRateByTouchEvents = -1.156568 target=-1.275402
+Timestamp: 2026-09-14 18:15:23.708932+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.686036, _speedRateByTouchEvents = -1.278459 target=-1.368788
+Timestamp: 2026-09-14 18:15:23.720264+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.714440, _speedRateByTouchEvents = -1.342212 target=-1.426714
+Timestamp: 2026-09-14 18:15:23.728953+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.736407, _speedRateByTouchEvents = -1.414295 target=-1.497799
+Timestamp: 2026-09-14 18:15:23.739248+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.718367, _speedRateByTouchEvents = -1.527911 target=-1.648248
+Timestamp: 2026-09-14 18:15:23.748921+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.550589, _speedRateByTouchEvents = -1.561986 target=-1.648248
+Timestamp: 2026-09-14 18:15:23.758902+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.974968, _speedRateByTouchEvents = -1.640104 target=-1.662989
+Timestamp: 2026-09-14 18:15:23.771835+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.813584, _speedRateByTouchEvents = -1.655656 target=-1.676967
+Timestamp: 2026-09-14 18:15:23.779692+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.909393, _speedRateByTouchEvents = -1.636678 target=-1.612352
+Timestamp: 2026-09-14 18:15:23.788941+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.796111, _speedRateByTouchEvents = -1.580108 target=-1.505163
+Timestamp: 2026-09-14 18:15:23.798911+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.515813, _speedRateByTouchEvents = -1.514393 target=-1.436275
+Timestamp: 2026-09-14 18:15:23.808901+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.628744, _speedRateByTouchEvents = -1.310921 target=-1.199225
+Timestamp: 2026-09-14 18:15:23.826695+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.628744, _speedRateByTouchEvents = -1.302907 target=-1.199225
+Timestamp: 2026-09-14 18:15:23.828928+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.342895, _speedRateByTouchEvents = -1.108630 target=-0.960864
+Timestamp: 2026-09-14 18:15:23.840264+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.186881, _speedRateByTouchEvents = -1.071696 target=-0.960864
+Timestamp: 2026-09-14 18:15:23.848902+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.340217, _speedRateByTouchEvents = -0.908136 target=-0.761895
+Timestamp: 2026-09-14 18:15:23.858892+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.342161, _speedRateByTouchEvents = -0.704125 target=-0.571168
+Timestamp: 2026-09-14 18:15:23.869714+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.336904, _speedRateByTouchEvents = -0.618994 target=-0.512736
+Timestamp: 2026-09-14 18:15:23.878897+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.287368, _speedRateByTouchEvents = -0.522782 target=-0.420074
+Timestamp: 2026-09-14 18:15:23.888929+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.435936, _speedRateByTouchEvents = -0.465577 target=-0.388692
+Timestamp: 2026-09-14 18:15:23.898908+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.342898, _speedRateByTouchEvents = -0.420523 target=-0.345202
+Timestamp: 2026-09-14 18:15:23.908808+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.173800, _speedRateByTouchEvents = -0.319086 target=-0.252268
+Timestamp: 2026-09-14 18:15:23.919954+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.170614, _speedRateByTouchEvents = -0.277325 target=-0.229526
+Timestamp: 2026-09-14 18:15:23.930478+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.159308, _speedRateByTouchEvents = -0.240021 target=-0.192488
+Timestamp: 2026-09-14 18:15:23.938950+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.373458, _speedRateByTouchEvents = -0.221625 target=-0.189445
+Timestamp: 2026-09-14 18:15:23.948911+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.373458, _speedRateByTouchEvents = -0.212508 target=-0.189445
+Timestamp: 2026-09-14 18:15:23.958913+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.373458, _speedRateByTouchEvents = -0.205609 target=-0.189445
+Timestamp: 2026-09-14 18:15:23.969566+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.373458, _speedRateByTouchEvents = -0.201258 target=-0.189445
+Timestamp: 2026-09-14 18:15:23.978981+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.373458, _speedRateByTouchEvents = -0.197921 target=-0.189445
+Timestamp: 2026-09-14 18:15:23.988950+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.195520 target=-0.189445
+Timestamp: 2026-09-14 18:15:23.998945+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.193811 target=-0.189445
+Timestamp: 2026-09-14 18:15:24.008827+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.192547 target=-0.189445
+Timestamp: 2026-09-14 18:15:24.019079+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.191681 target=-0.189445
+Timestamp: 2026-09-14 18:15:24.028912+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.137318 target=0.000000
+Timestamp: 2026-09-14 18:15:24.038922+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.014692 target=-0.011918
+Timestamp: 2026-09-14 18:15:24.048912+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.013906 target=-0.011918
+Timestamp: 2026-09-14 18:15:24.058892+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.013314 target=-0.011918
+Timestamp: 2026-09-14 18:15:24.069504+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.012942 target=-0.011918
+Timestamp: 2026-09-14 18:15:24.078787+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.012628 target=-0.011918
+Timestamp: 2026-09-14 18:15:24.089758+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.012439 target=-0.011918
+Timestamp: 2026-09-14 18:15:24.099039+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.012295 target=-0.011918
+Timestamp: 2026-09-14 18:15:24.108795+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.012169 target=-0.011918
+Timestamp: 2026-09-14 18:15:24.120888+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.012111 target=-0.011918
+Timestamp: 2026-09-14 18:15:24.128752+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.012056 target=-0.011918
+Timestamp: 2026-09-14 18:15:24.138968+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.008658 target=0.000000
+Timestamp: 2026-09-14 18:15:24.148894+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.006202 target=0.000000
+Timestamp: 2026-09-14 18:15:24.158916+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.004243 target=0.000000
+Timestamp: 2026-09-14 18:15:24.170296+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.002875 target=0.000000
+Timestamp: 2026-09-14 18:15:24.181953+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.002281 target=0.000000
+Timestamp: 2026-09-14 18:15:24.188900+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.001633 target=0.000000
+Timestamp: 2026-09-14 18:15:24.198923+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.005353 target=0.005382
+Timestamp: 2026-09-14 18:15:24.209219+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.342559, _speedRateByTouchEvents = 0.056472 target=0.102159
+Timestamp: 2026-09-14 18:15:24.220334+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.170695, _speedRateByTouchEvents = 0.104488 target=0.143739
+Timestamp: 2026-09-14 18:15:24.231717+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.140978, _speedRateByTouchEvents = 0.138231 target=0.181362
+Timestamp: 2026-09-14 18:15:24.239075+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.444349, _speedRateByTouchEvents = 0.195500 target=0.273604
+Timestamp: 2026-09-14 18:15:24.248960+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.339095, _speedRateByTouchEvents = 0.257382 target=0.330660
+Timestamp: 2026-09-14 18:15:24.258912+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.857331, _speedRateByTouchEvents = 0.385742 target=0.500044
+Timestamp: 2026-09-14 18:15:24.270204+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.858061, _speedRateByTouchEvents = 0.473530 target=0.588307
+Timestamp: 2026-09-14 18:15:24.278899+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.198370, _speedRateByTouchEvents = 0.563079 target=0.668757
+Timestamp: 2026-09-14 18:15:24.288989+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.201309, _speedRateByTouchEvents = 0.647543 target=0.748474
+Timestamp: 2026-09-14 18:15:24.298915+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.370805, _speedRateByTouchEvents = 0.729625 target=0.826976
+Timestamp: 2026-09-14 18:15:24.308930+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.730710, _speedRateByTouchEvents = 1.011558 target=1.238069
+Timestamp: 2026-09-14 18:15:24.320614+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.712240, _speedRateByTouchEvents = 1.132091 target=1.295146
+Timestamp: 2026-09-14 18:15:24.328936+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.542934, _speedRateByTouchEvents = 1.278067 target=1.449678
+Timestamp: 2026-09-14 18:15:24.339072+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.539386, _speedRateByTouchEvents = 1.391223 target=1.527174
+Timestamp: 2026-09-14 18:15:24.348916+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.543173, _speedRateByTouchEvents = 1.499424 target=1.627587
+Timestamp: 2026-09-14 18:15:24.358921+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.859938, _speedRateByTouchEvents = 1.588004 target=1.632920
+Timestamp: 2026-09-14 18:15:24.370479+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.542564, _speedRateByTouchEvents = 1.658254 target=1.712963
+Timestamp: 2026-09-14 18:15:24.385642+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.546104, _speedRateByTouchEvents = 1.663878 target=1.712963
+Timestamp: 2026-09-14 18:15:24.388894+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.922808, _speedRateByTouchEvents = 1.610516 target=1.562684
+Timestamp: 2026-09-14 18:15:24.398884+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.571274, _speedRateByTouchEvents = 1.562135 target=1.504826
+Timestamp: 2026-09-14 18:15:24.408903+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.398775, _speedRateByTouchEvents = 1.397301 target=1.270935
+Timestamp: 2026-09-14 18:15:24.420792+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.374924, _speedRateByTouchEvents = 1.294774 target=1.153832
+Timestamp: 2026-09-14 18:15:24.428860+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.470645, _speedRateByTouchEvents = 1.144526 target=1.005002
+Timestamp: 2026-09-14 18:15:24.438949+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.344416, _speedRateByTouchEvents = 1.018090 target=0.867362
+Timestamp: 2026-09-14 18:15:24.448905+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.343070, _speedRateByTouchEvents = 0.886074 target=0.729311
+Timestamp: 2026-09-14 18:15:24.458902+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.343236, _speedRateByTouchEvents = 0.683154 target=0.530616
+Timestamp: 2026-09-14 18:15:24.470704+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.260054, _speedRateByTouchEvents = 0.640965 target=0.530616
+Timestamp: 2026-09-14 18:15:24.480495+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.613810 target=0.530616
+Timestamp: 2026-09-14 18:15:24.488893+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.405259 target=0.294654
+Timestamp: 2026-09-14 18:15:24.498911+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.373866 target=0.294654
+Timestamp: 2026-09-14 18:15:24.508928+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.348505 target=0.294654
+Timestamp: 2026-09-14 18:15:24.520493+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.335399 target=0.294654
+Timestamp: 2026-09-14 18:15:24.528866+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.323747 target=0.294654
+Timestamp: 2026-09-14 18:15:24.538976+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.051511, _speedRateByTouchEvents = 0.063194 target=0.027047
+Timestamp: 2026-09-14 18:15:24.548911+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.051511, _speedRateByTouchEvents = 0.052922 target=0.027047
+Timestamp: 2026-09-14 18:15:24.558945+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.051511, _speedRateByTouchEvents = 0.044167 target=0.027047
+Timestamp: 2026-09-14 18:15:24.571325+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.051511, _speedRateByTouchEvents = 0.040394 target=0.027047
+Timestamp: 2026-09-14 18:15:24.578778+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.051511, _speedRateByTouchEvents = 0.015889 target=0.009222
+Timestamp: 2026-09-14 18:15:24.588921+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.014001 target=0.009222
+Timestamp: 2026-09-14 18:15:24.598909+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.048935, _speedRateByTouchEvents = 0.017057 target=0.020538
+Timestamp: 2026-09-14 18:15:24.608900+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.048935, _speedRateByTouchEvents = 0.018044 target=0.020538
+Timestamp: 2026-09-14 18:15:24.618901+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.048935, _speedRateByTouchEvents = 0.018891 target=0.020538
+Timestamp: 2026-09-14 18:15:24.631356+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.019258 target=0.020538
+Timestamp: 2026-09-14 18:15:24.638909+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.019622 target=0.020538
+Timestamp: 2026-09-14 18:15:24.648992+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.019880 target=0.020538
+Timestamp: 2026-09-14 18:15:24.658900+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.020084 target=0.020538
+Timestamp: 2026-09-14 18:15:24.670042+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.020200 target=0.020538
+Timestamp: 2026-09-14 18:15:24.678881+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.020296 target=0.020538
+Timestamp: 2026-09-14 18:15:24.689024+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.024717, _speedRateByTouchEvents = 0.009537 target=0.009070
+Timestamp: 2026-09-14 18:15:24.698953+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.024717, _speedRateByTouchEvents = 0.009405 target=0.009070
+Timestamp: 2026-09-14 18:15:24.708916+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.024717, _speedRateByTouchEvents = 0.013289 target=0.014697
+Timestamp: 2026-09-14 18:15:24.720621+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.024717, _speedRateByTouchEvents = 0.013638 target=0.014697
+Timestamp: 2026-09-14 18:15:24.729128+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.024717, _speedRateByTouchEvents = 0.013933 target=0.014697
+Timestamp: 2026-09-14 18:15:24.738932+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.014149 target=0.014697
+Timestamp: 2026-09-14 18:15:24.748896+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.014305 target=0.014697
+Timestamp: 2026-09-14 18:15:24.758921+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.014434 target=0.014697
+Timestamp: 2026-09-14 18:15:24.770943+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.014495 target=0.014697
+Timestamp: 2026-09-14 18:15:24.778801+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.014552 target=0.014697
+Timestamp: 2026-09-14 18:15:24.788803+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.014594 target=0.014697
+Timestamp: 2026-09-14 18:15:24.798912+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.014623 target=0.014697
+Timestamp: 2026-09-14 18:15:24.808918+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.010120 target=0.000000
+Timestamp: 2026-09-14 18:15:24.819966+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.007497 target=0.000000
+Timestamp: 2026-09-14 18:15:24.828965+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.004809 target=0.000000
+Timestamp: 2026-09-14 18:15:24.842323+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.003851 target=0.000000
+Timestamp: 2026-09-14 18:15:24.848962+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.002761 target=0.000000
+Timestamp: 2026-09-14 18:15:24.858989+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.001800 target=0.000000
+Timestamp: 2026-09-14 18:15:24.871783+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.001397 target=0.000000
+Timestamp: 2026-09-14 18:15:24.879376+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.001015 target=0.000000
+Timestamp: 2026-09-14 18:15:24.888952+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000729 target=0.000000
+Timestamp: 2026-09-14 18:15:24.898879+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000522 target=0.000000
+Timestamp: 2026-09-14 18:15:24.908899+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000374 target=0.000000
+Timestamp: 2026-09-14 18:15:24.918888+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000268 target=0.000000
+Timestamp: 2026-09-14 18:15:24.928919+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000191 target=0.000000
+Timestamp: 2026-09-14 18:15:24.939148+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000138 target=0.000000
+Timestamp: 2026-09-14 18:15:24.948916+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000099 target=0.000000
+Timestamp: 2026-09-14 18:15:24.958922+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000066 target=0.000000
+Timestamp: 2026-09-14 18:15:24.970732+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000051 target=0.000000
+Timestamp: 2026-09-14 18:15:24.978780+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000036 target=0.000000
+Timestamp: 2026-09-14 18:15:24.988966+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000026 target=0.000000
+Timestamp: 2026-09-14 18:15:24.998947+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000019 target=0.000000
+Timestamp: 2026-09-14 18:15:25.008787+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000013 target=0.000000
+Timestamp: 2026-09-14 18:15:25.020323+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000010 target=0.000000
+Timestamp: 2026-09-14 18:15:25.028887+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000007 target=0.000000
+Timestamp: 2026-09-14 18:15:25.038845+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000005 target=0.000000
+Timestamp: 2026-09-14 18:15:25.048984+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:25.058924+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:25.070486+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:25.078801+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:25.089058+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:25.098951+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:25.108894+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:25.120598+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:25.129194+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:25.139276+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:25.149133+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:25.720672+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:25.732227+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:25.738934+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:25.749128+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:25.759245+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:25.769640+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:25.779662+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:25.788885+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:25.798910+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.097048 target=-0.097048
+Timestamp: 2026-09-14 18:15:25.809035+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.541038 target=-0.848385
+Timestamp: 2026-09-14 18:15:25.821260+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.852437, _speedRateByTouchEvents = -0.722231 target=-0.972481
+Timestamp: 2026-09-14 18:15:25.829217+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.351274, _speedRateByTouchEvents = -0.902281 target=-1.124392
+Timestamp: 2026-09-14 18:15:25.838764+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.778462, _speedRateByTouchEvents = -1.092445 target=-1.311685
+Timestamp: 2026-09-14 18:15:25.849211+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -2.397447, _speedRateByTouchEvents = -1.274828 target=-1.494778
+Timestamp: 2026-09-14 18:15:25.858943+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -2.056403, _speedRateByTouchEvents = -1.510501 target=-1.677334
+Timestamp: 2026-09-14 18:15:25.870193+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -2.198789, _speedRateByTouchEvents = -1.620982 target=-1.760050
+Timestamp: 2026-09-14 18:15:25.879397+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.626527, _speedRateByTouchEvents = -1.688940 target=-1.768453
+Timestamp: 2026-09-14 18:15:25.888950+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -4.153931, _speedRateByTouchEvents = -1.811833 target=-1.945973
+Timestamp: 2026-09-14 18:15:25.898916+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.349938, _speedRateByTouchEvents = -1.849868 target=-1.945973
+Timestamp: 2026-09-14 18:15:25.908918+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.764504, _speedRateByTouchEvents = -1.999064 target=-2.119109
+Timestamp: 2026-09-14 18:15:25.920913+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.040801, _speedRateByTouchEvents = -2.038161 target=-2.074284
+Timestamp: 2026-09-14 18:15:25.929972+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.687010, _speedRateByTouchEvents = -2.051366 target=-2.075810
+Timestamp: 2026-09-14 18:15:25.938925+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -1.031470, _speedRateByTouchEvents = -2.015383 target=-1.972574
+Timestamp: 2026-09-14 18:15:25.948907+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.855808, _speedRateByTouchEvents = -1.949995 target=-1.872481
+Timestamp: 2026-09-14 18:15:25.958913+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.856501, _speedRateByTouchEvents = -1.789448 target=-1.657082
+Timestamp: 2026-09-14 18:15:25.970019+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.857503, _speedRateByTouchEvents = -1.692736 target=-1.577372
+Timestamp: 2026-09-14 18:15:25.979854+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.684745, _speedRateByTouchEvents = -1.560805 target=-1.393375
+Timestamp: 2026-09-14 18:15:25.988937+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.674464, _speedRateByTouchEvents = -1.434085 target=-1.282631
+Timestamp: 2026-09-14 18:15:25.998757+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.331028, _speedRateByTouchEvents = -1.328603 target=-1.206832
+Timestamp: 2026-09-14 18:15:26.008910+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.516403, _speedRateByTouchEvents = -1.156903 target=-1.035450
+Timestamp: 2026-09-14 18:15:26.020419+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.342754, _speedRateByTouchEvents = -1.059070 target=-0.928151
+Timestamp: 2026-09-14 18:15:26.028835+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.343058, _speedRateByTouchEvents = -0.920515 target=-0.757444
+Timestamp: 2026-09-14 18:15:26.038956+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.343193, _speedRateByTouchEvents = -0.807156 target=-0.672035
+Timestamp: 2026-09-14 18:15:26.048912+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.342861, _speedRateByTouchEvents = -0.750158 target=-0.655743
+Timestamp: 2026-09-14 18:15:26.058919+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.171462, _speedRateByTouchEvents = -0.556291 target=-0.432905
+Timestamp: 2026-09-14 18:15:26.069928+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = -0.171503, _speedRateByTouchEvents = -0.472919 target=-0.365395
+Timestamp: 2026-09-14 18:15:26.078819+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.442157 target=-0.365395
+Timestamp: 2026-09-14 18:15:26.088931+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.420251 target=-0.365395
+Timestamp: 2026-09-14 18:15:26.099023+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.405014 target=-0.365395
+Timestamp: 2026-09-14 18:15:26.108771+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.393607 target=-0.365395
+Timestamp: 2026-09-14 18:15:26.118944+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.385643 target=-0.365395
+Timestamp: 2026-09-14 18:15:26.128892+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.379885 target=-0.365395
+Timestamp: 2026-09-14 18:15:26.138956+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.375790 target=-0.365395
+Timestamp: 2026-09-14 18:15:26.148917+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.372842 target=-0.365395
+Timestamp: 2026-09-14 18:15:26.158940+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.370570 target=-0.365395
+Timestamp: 2026-09-14 18:15:26.169833+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.274220 target=0.000000
+Timestamp: 2026-09-14 18:15:26.178867+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.196042 target=0.000000
+Timestamp: 2026-09-14 18:15:26.188939+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.140578 target=0.000000
+Timestamp: 2026-09-14 18:15:26.198927+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.100758 target=0.000000
+Timestamp: 2026-09-14 18:15:26.208907+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.068817 target=0.000000
+Timestamp: 2026-09-14 18:15:26.220342+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.051803 target=0.000000
+Timestamp: 2026-09-14 18:15:26.228866+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.037183 target=0.000000
+Timestamp: 2026-09-14 18:15:26.238815+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.026543 target=0.000000
+Timestamp: 2026-09-14 18:15:26.248946+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.019026 target=0.000000
+Timestamp: 2026-09-14 18:15:26.258914+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.013206 target=0.000000
+Timestamp: 2026-09-14 18:15:26.269863+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.009780 target=0.000000
+Timestamp: 2026-09-14 18:15:26.278872+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.007014 target=0.000000
+Timestamp: 2026-09-14 18:15:26.288857+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.005013 target=0.000000
+Timestamp: 2026-09-14 18:15:26.298937+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.006594, _speedRateByTouchEvents = 0.003659 target=0.003662
+Timestamp: 2026-09-14 18:15:26.308926+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.342984, _speedRateByTouchEvents = 0.073793 target=0.124569
+Timestamp: 2026-09-14 18:15:26.320183+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.342777, _speedRateByTouchEvents = 0.106376 target=0.149281
+Timestamp: 2026-09-14 18:15:26.328792+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.342811, _speedRateByTouchEvents = 0.132019 target=0.161394
+Timestamp: 2026-09-14 18:15:26.339289+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.282416, _speedRateByTouchEvents = 0.153071 target=0.178785
+Timestamp: 2026-09-14 18:15:26.348906+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.435087, _speedRateByTouchEvents = 0.170112 target=0.190287
+Timestamp: 2026-09-14 18:15:26.358928+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.170923, _speedRateByTouchEvents = 0.198693 target=0.217097
+Timestamp: 2026-09-14 18:15:26.369945+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.343544, _speedRateByTouchEvents = 0.220259 target=0.248105
+Timestamp: 2026-09-14 18:15:26.378819+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.341864, _speedRateByTouchEvents = 0.242230 target=0.267952
+Timestamp: 2026-09-14 18:15:26.389009+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.343996, _speedRateByTouchEvents = 0.265449 target=0.293220
+Timestamp: 2026-09-14 18:15:26.398903+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.514996, _speedRateByTouchEvents = 0.292038 target=0.336475
+Timestamp: 2026-09-14 18:15:26.408785+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.859170, _speedRateByTouchEvents = 0.379510 target=0.465657
+Timestamp: 2026-09-14 18:15:26.419024+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.854673, _speedRateByTouchEvents = 0.458514 target=0.547783
+Timestamp: 2026-09-14 18:15:26.429761+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.741560, _speedRateByTouchEvents = 0.530468 target=0.620836
+Timestamp: 2026-09-14 18:15:26.438958+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.220813, _speedRateByTouchEvents = 0.620850 target=0.728971
+Timestamp: 2026-09-14 18:15:26.448908+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.030674, _speedRateByTouchEvents = 0.717678 target=0.832643
+Timestamp: 2026-09-14 18:15:26.458909+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.712205, _speedRateByTouchEvents = 0.927977 target=1.100141
+Timestamp: 2026-09-14 18:15:26.470704+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.535404, _speedRateByTouchEvents = 1.049792 target=1.210424
+Timestamp: 2026-09-14 18:15:26.478811+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.942544, _speedRateByTouchEvents = 1.185335 target=1.349865
+Timestamp: 2026-09-14 18:15:26.488961+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.371689, _speedRateByTouchEvents = 1.303747 target=1.445174
+Timestamp: 2026-09-14 18:15:26.498920+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.712684, _speedRateByTouchEvents = 1.393928 target=1.501055
+Timestamp: 2026-09-14 18:15:26.508910+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.154584, _speedRateByTouchEvents = 1.573937 target=1.693185
+Timestamp: 2026-09-14 18:15:26.520169+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.610977, _speedRateByTouchEvents = 1.658988 target=1.768583
+Timestamp: 2026-09-14 18:15:26.529197+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.882909, _speedRateByTouchEvents = 1.738229 target=1.820565
+Timestamp: 2026-09-14 18:15:26.539101+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.709879, _speedRateByTouchEvents = 1.761325 target=1.820565
+Timestamp: 2026-09-14 18:15:26.548907+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 1.025521, _speedRateByTouchEvents = 1.757498 target=1.754076
+Timestamp: 2026-09-14 18:15:26.558903+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.854098, _speedRateByTouchEvents = 1.652608 target=1.587322
+Timestamp: 2026-09-14 18:15:26.570915+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.854098, _speedRateByTouchEvents = 1.635281 target=1.587322
+Timestamp: 2026-09-14 18:15:26.580164+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.598496, _speedRateByTouchEvents = 1.495856 target=1.384980
+Timestamp: 2026-09-14 18:15:26.591226+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.343037, _speedRateByTouchEvents = 1.394459 target=1.251150
+Timestamp: 2026-09-14 18:15:26.598954+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.342967, _speedRateByTouchEvents = 1.261939 target=1.104283
+Timestamp: 2026-09-14 18:15:26.608907+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.344004, _speedRateByTouchEvents = 1.031902 target=0.850047
+Timestamp: 2026-09-14 18:15:26.620030+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.342838, _speedRateByTouchEvents = 0.892957 target=0.712265
+Timestamp: 2026-09-14 18:15:26.628812+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.342657, _speedRateByTouchEvents = 0.727847 target=0.533977
+Timestamp: 2026-09-14 18:15:26.638962+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.343266, _speedRateByTouchEvents = 0.620173 target=0.491889
+Timestamp: 2026-09-14 18:15:26.648921+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.243258, _speedRateByTouchEvents = 0.583830 target=0.491889
+Timestamp: 2026-09-14 18:15:26.658913+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.250005, _speedRateByTouchEvents = 0.434976 target=0.336408
+Timestamp: 2026-09-14 18:15:26.669826+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.250005, _speedRateByTouchEvents = 0.409360 target=0.336408
+Timestamp: 2026-09-14 18:15:26.678866+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.250005, _speedRateByTouchEvents = 0.237453 target=0.142687
+Timestamp: 2026-09-14 18:15:26.689417+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.051728, _speedRateByTouchEvents = 0.155376 target=0.081148
+Timestamp: 2026-09-14 18:15:26.698925+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.171267, _speedRateByTouchEvents = 0.113256 target=0.063176
+Timestamp: 2026-09-14 18:15:26.708897+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.171729, _speedRateByTouchEvents = 0.075211 target=0.052580
+Timestamp: 2026-09-14 18:15:26.720407+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.171729, _speedRateByTouchEvents = 0.069651 target=0.052580
+Timestamp: 2026-09-14 18:15:26.728878+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.171341, _speedRateByTouchEvents = 0.058923 target=0.047451
+Timestamp: 2026-09-14 18:15:26.738970+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.343782, _speedRateByTouchEvents = 0.055647 target=0.051747
+Timestamp: 2026-09-14 18:15:26.748933+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.054540 target=0.051747
+Timestamp: 2026-09-14 18:15:26.758947+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.342619, _speedRateByTouchEvents = 0.052884 target=0.051762
+Timestamp: 2026-09-14 18:15:26.769477+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.053539 target=0.054014
+Timestamp: 2026-09-14 18:15:26.778806+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.342499, _speedRateByTouchEvents = 0.055790 target=0.057961
+Timestamp: 2026-09-14 18:15:26.788961+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.342499, _speedRateByTouchEvents = 0.056402 target=0.057961
+Timestamp: 2026-09-14 18:15:26.798906+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.342499, _speedRateByTouchEvents = 0.056846 target=0.057961
+Timestamp: 2026-09-14 18:15:26.808953+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.114297, _speedRateByTouchEvents = 0.052233 target=0.049611
+Timestamp: 2026-09-14 18:15:26.819690+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.171462, _speedRateByTouchEvents = 0.048119 target=0.045102
+Timestamp: 2026-09-14 18:15:26.828815+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.171462, _speedRateByTouchEvents = 0.043274 target=0.038914
+Timestamp: 2026-09-14 18:15:26.838926+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.171462, _speedRateByTouchEvents = 0.042038 target=0.038914
+Timestamp: 2026-09-14 18:15:26.848917+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.171462, _speedRateByTouchEvents = 0.041153 target=0.038914
+Timestamp: 2026-09-14 18:15:26.858928+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.171462, _speedRateByTouchEvents = 0.040459 target=0.038914
+Timestamp: 2026-09-14 18:15:26.870055+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.040066 target=0.038914
+Timestamp: 2026-09-14 18:15:26.878857+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.039738 target=0.038914
+Timestamp: 2026-09-14 18:15:26.888923+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.039504 target=0.038914
+Timestamp: 2026-09-14 18:15:26.898951+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.039337 target=0.038914
+Timestamp: 2026-09-14 18:15:26.908920+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.039210 target=0.038914
+Timestamp: 2026-09-14 18:15:26.919618+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.039126 target=0.038914
+Timestamp: 2026-09-14 18:15:26.929691+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.028795 target=0.000000
+Timestamp: 2026-09-14 18:15:26.938893+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.019576 target=0.000000
+Timestamp: 2026-09-14 18:15:26.950466+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.014776 target=0.000000
+Timestamp: 2026-09-14 18:15:26.958895+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.010587 target=0.000000
+Timestamp: 2026-09-14 18:15:26.968893+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.007617 target=0.000000
+Timestamp: 2026-09-14 18:15:26.978771+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.005427 target=0.000000
+Timestamp: 2026-09-14 18:15:26.988973+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.003893 target=0.000000
+Timestamp: 2026-09-14 18:15:26.998934+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.002789 target=0.000000
+Timestamp: 2026-09-14 18:15:27.008917+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.001994 target=0.000000
+Timestamp: 2026-09-14 18:15:27.018973+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.001432 target=0.000000
+Timestamp: 2026-09-14 18:15:27.028988+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.001025 target=0.000000
+Timestamp: 2026-09-14 18:15:27.038991+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000734 target=0.000000
+Timestamp: 2026-09-14 18:15:27.049002+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000527 target=0.000000
+Timestamp: 2026-09-14 18:15:27.058905+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000378 target=0.000000
+Timestamp: 2026-09-14 18:15:27.068890+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000270 target=0.000000
+Timestamp: 2026-09-14 18:15:27.078918+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000194 target=0.000000
+Timestamp: 2026-09-14 18:15:27.088903+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000139 target=0.000000
+Timestamp: 2026-09-14 18:15:27.098937+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000099 target=0.000000
+Timestamp: 2026-09-14 18:15:27.108936+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000069 target=0.000000
+Timestamp: 2026-09-14 18:15:27.119884+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000051 target=0.000000
+Timestamp: 2026-09-14 18:15:27.128873+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000035 target=0.000000
+Timestamp: 2026-09-14 18:15:27.139874+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000026 target=0.000000
+Timestamp: 2026-09-14 18:15:27.148914+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000019 target=0.000000
+Timestamp: 2026-09-14 18:15:27.158924+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000013 target=0.000000
+Timestamp: 2026-09-14 18:15:27.169899+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000010 target=0.000000
+Timestamp: 2026-09-14 18:15:27.178890+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000007 target=0.000000
+Timestamp: 2026-09-14 18:15:27.188938+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000005 target=0.000000
+Timestamp: 2026-09-14 18:15:27.198919+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000004 target=0.000000
+Timestamp: 2026-09-14 18:15:27.208921+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000002 target=0.000000
+Timestamp: 2026-09-14 18:15:27.221643+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000002 target=0.000000
+Timestamp: 2026-09-14 18:15:27.228829+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000001 target=0.000000
+Timestamp: 2026-09-14 18:15:27.238977+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000001 target=0.000000
+Timestamp: 2026-09-14 18:15:27.248921+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000001 target=0.000000
+Timestamp: 2026-09-14 18:15:27.258919+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.269727+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.278987+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.288942+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.298930+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.308910+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.319965+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.333822+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.338907+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.348896+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.358897+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.368926+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.378886+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.388947+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.398989+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.408962+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.420484+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.429878+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.438923+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.448931+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.458887+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.000000 target=0.000000
+Timestamp: 2026-09-14 18:15:27.469551+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 0.001950 target=0.001950
+Timestamp: 2026-09-14 18:15:27.480407+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.016553 target=-0.036237
+Timestamp: 2026-09-14 18:15:27.488924+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = -0.028355 target=-0.042850
+Timestamp: 2026-09-14 18:15:27.498946+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:27.508928+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:27.521725+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:27.528857+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:27.538960+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:27.548921+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:27.558912+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:27.569868+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:27.578844+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:27.589290+09:00
+[LogTimer] _speedRateByMouseEvents = 1.000000, _speedRateByScrollEvents = 0.000000, _speedRateByTouchEvents = 1.000000 target=1.000000
+Timestamp: 2026-09-14 18:15:27.598926+09:00

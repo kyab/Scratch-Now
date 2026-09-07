@@ -13,6 +13,7 @@
 #import <math.h>
 #import <os/log.h>
 #import <stdio.h>
+#import <stdlib.h>
 #import <string.h>
 
 #define ENABLE_OUTPUT_SWITCH_DIAGNOSTICS 0
@@ -641,8 +642,48 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         return NO;
     }
 
+    NSMutableArray<NSNumber *> *exclude = [NSMutableArray arrayWithObject:@(ownProcessObj)];
+
+    // Ad-hoc: exclude Spotify if it already has an audio process object at tap creation.
+    // Later launches are intentionally not tracked.
+    propAddress.mSelector = kAudioHardwarePropertyProcessObjectList;
+    UInt32 listSize = 0;
+    ret = AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &propAddress, 0, NULL, &listSize);
+    if (SUCCEEDED(ret) && listSize > 0){
+        UInt32 count = listSize / sizeof(AudioObjectID);
+        AudioObjectID *processIDs = (AudioObjectID *)calloc(count, sizeof(AudioObjectID));
+        if (processIDs){
+            ret = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propAddress,
+                                             0, NULL, &listSize, processIDs);
+            if (SUCCEEDED(ret)){
+                AudioObjectPropertyAddress bundleAddr = {
+                    kAudioProcessPropertyBundleID,
+                    kAudioObjectPropertyScopeGlobal,
+                    kAudioObjectPropertyElementMain
+                };
+                for (UInt32 i = 0; i < count; i++){
+                    CFStringRef bundleID = NULL;
+                    UInt32 bundleSize = sizeof(bundleID);
+                    OSStatus bundleRet = AudioObjectGetPropertyData(processIDs[i], &bundleAddr,
+                                                                    0, NULL, &bundleSize, &bundleID);
+                    if (FAILED(bundleRet) || bundleID == NULL){
+                        continue;
+                    }
+                    BOOL isSpotify = CFEqual(bundleID, CFSTR("com.spotify.client"));
+                    CFRelease(bundleID);
+                    if (isSpotify){
+                        [exclude addObject:@(processIDs[i])];
+                        NSLog(@"Excluding Spotify process object %u from tap", processIDs[i]);
+                        break;
+                    }
+                }
+            }
+            free(processIDs);
+        }
+    }
+
     CATapDescription *desc = [[CATapDescription alloc]
-                              initExcludingProcesses:@[ @(ownProcessObj) ]
+                              initExcludingProcesses:exclude
                               andDeviceUID:(__bridge NSString *)outputUID
                               withStream:0];
     CFRelease(outputUID);
@@ -657,7 +698,7 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
         return NO;
     }
     
-    NSLog(@"Process tap created. tapID=%u", _tapID);
+    NSLog(@"Process tap created. tapID=%u excludeCount=%lu", _tapID, (unsigned long)exclude.count);
     return YES;
 }
 
