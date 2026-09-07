@@ -194,6 +194,8 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     }
     double dExtraFade = (extraFadeEnd - extraFade) / (double)numSamples;
 
+    // _dryVolume = (!_autoFollow && [_turnTableView isPlatterTouching]) ? 1.0f : 0.0f;
+
     for (UInt32 i = 0; i < numSamples; i++){
         float inL = _tempLeftPtr[i];
         float inR = _tempRightPtr[i];
@@ -323,6 +325,8 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         [self completeScratchStartFade];
         return n;
     }
+
+    // _dryVolume = (!_autoFollow && [_turnTableView isPlatterTouching]) ? 1.0f : 0.0f;
 
     for (UInt32 i = 0; i < n; i++){
         float dryL = (drySrcL ? drySrcL[i] : 0.0f) * _dryVolume;
