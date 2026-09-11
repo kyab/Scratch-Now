@@ -38,6 +38,12 @@
     double _history[10];
     int _historyCount;
     
+    // Two-finger scroll scratch
+    BOOL _isScrollScratching;
+    BOOL _awaitingScrollMomentum;
+    NSTimeInterval _prevScrollEventSec;
+    BOOL _prevScrollEventSecValid;
+    
     id<TurnTableDelegate> _delegate;
 }
 

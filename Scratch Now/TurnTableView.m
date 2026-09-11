@@ -8,6 +8,12 @@
 
 #import "TurnTableView.h"
 
+// Two-finger scroll scratch tuning.
+// Finger speed (in scroll points/sec) that maps to 1.0x playback (33.3 RPM).
+#define SCROLL_POINTS_PER_SEC_FOR_1X 600.0
+// After fingers lift, wait this long for OS momentum events before releasing.
+#define SCROLL_END_GRACE_SEC 0.1
+
 @implementation TurnTableView
 
 
@@ -44,7 +50,13 @@ double rad2deg(double rad){
 }
 
 -(void)onTimer:(NSTimer *)t{
-    if (_isPlatterTouching) return;
+    if (_isPlatterTouching){
+        // Scroll scratch owns speed via scrollWheel:; keep redrawing playhead from the ring.
+        if (_isScrollScratching){
+            [self setNeedsDisplay:YES];
+        }
+        return;
+    }
 
     _currentRad += [self baseRadS]*0.002;
     if (_currentRad > 2*M_PI){
@@ -209,6 +221,7 @@ double rad2deg(double rad){
 }
 
 -(void)onTimerScratch:(NSTimer *)t{
+    if (_isScrollScratching) return;
     if (!_isPlatterTouching) return;
 
     // Same time base as NSEvent.timestamp (seconds since system startup).
@@ -297,6 +310,97 @@ double rad2deg(double rad){
 }
 -(Boolean)isPlatterTouching {
     return _isPlatterTouching;
+}
+
+-(void)cancelAwaitingScrollMomentum{
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                             selector:@selector(endScrollScratchIfStillAwaitingMomentum)
+                                               object:nil];
+    _awaitingScrollMomentum = NO;
+}
+
+-(void)endScrollScratchIfStillAwaitingMomentum{
+    if (_awaitingScrollMomentum){
+        [self endScrollScratch];
+    }
+}
+
+-(void)beginScrollScratch{
+    [self cancelAwaitingScrollMomentum];
+    _isScrollScratching = YES;
+    _prevScrollEventSecValid = NO;
+    _isPlatterTouching = YES;
+    
+    _speedRate = 0.0;
+    [_delegate turnTableSpeedRateChanged];
+    [self setNeedsDisplay:YES];
+}
+
+-(void)endScrollScratch{
+    [self cancelAwaitingScrollMomentum];
+    _isScrollScratching = NO;
+    _isPlatterTouching = NO;
+    
+    _speedRate = 1.0;
+    [_delegate turnTableSpeedRateChanged];
+    [self setNeedsDisplay:YES];
+}
+
+-(void)scrollWheel:(NSEvent *)event{
+    NSEventPhase phase = event.phase;
+    NSEventPhase momentumPhase = event.momentumPhase;
+    
+    if (phase == NSEventPhaseBegan){
+        if (!_isPlatterTouching && !_isScrollScratching){
+            [self beginScrollScratch];
+        }
+        if (_isScrollScratching){
+            [self cancelAwaitingScrollMomentum];
+            _prevScrollEventSecValid = NO;
+        }
+    }
+    
+    if (!_isScrollScratching) return;
+    
+    if (phase == NSEventPhaseEnded || phase == NSEventPhaseCancelled){
+        [self cancelAwaitingScrollMomentum];
+        _awaitingScrollMomentum = YES;
+        _prevScrollEventSecValid = NO;
+        [self performSelector:@selector(endScrollScratchIfStillAwaitingMomentum)
+                   withObject:nil
+                   afterDelay:SCROLL_END_GRACE_SEC];
+        return;
+    }
+    
+    if (momentumPhase == NSEventPhaseBegan){
+        [self cancelAwaitingScrollMomentum];
+        _prevScrollEventSecValid = NO;
+    }
+    if (momentumPhase == NSEventPhaseEnded || momentumPhase == NSEventPhaseCancelled){
+        [self endScrollScratch];
+        return;
+    }
+    
+    if (phase == NSEventPhaseBegan || phase == NSEventPhaseChanged ||
+        momentumPhase == NSEventPhaseBegan || momentumPhase == NSEventPhaseChanged){
+        // Normalize to physical finger motion (fingers up = forward),
+        // independent of the system "natural scrolling" preference.
+        double dy = event.scrollingDeltaY;
+        if (event.isDirectionInvertedFromDevice){
+            dy = -dy;
+        }
+        
+        NSTimeInterval ts = event.timestamp;
+        if (_prevScrollEventSecValid){
+            double dt = ts - _prevScrollEventSec;
+            if (dt > 0.0){
+                _speedRate = (dy / dt) / SCROLL_POINTS_PER_SEC_FOR_1X;
+                [_delegate turnTableSpeedRateChanged];
+            }
+        }
+        _prevScrollEventSec = ts;
+        _prevScrollEventSecValid = YES;
+    }
 }
 
 @end
