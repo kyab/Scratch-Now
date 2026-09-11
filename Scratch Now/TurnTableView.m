@@ -11,13 +11,8 @@
 // Two-finger scroll scratch tuning.
 // Finger speed (in scroll points/sec) that maps to 1.0x playback (33.3 RPM).
 #define SCROLL_POINTS_PER_SEC_FOR_1X 600.0
-// Per-event exponential smoothing of the instantaneous velocity.
-#define SCROLL_SPEED_EMA_ALPHA 0.4
-// No scroll delta for this long while touching = fingers resting -> hold the record.
-#define SCROLL_HOLD_SEC 0.05
 // After fingers lift, wait this long for OS momentum events before releasing.
 #define SCROLL_END_GRACE_SEC 0.1
-#define SCROLL_STOP_EPSILON 0.001
 
 @implementation TurnTableView
 
@@ -55,7 +50,13 @@ double rad2deg(double rad){
 }
 
 -(void)onTimer:(NSTimer *)t{
-    if (_isPlatterTouching) return;
+    if (_isPlatterTouching){
+        // Scroll scratch owns speed via scrollWheel:; keep redrawing playhead from the ring.
+        if (_isScrollScratching){
+            [self setNeedsDisplay:YES];
+        }
+        return;
+    }
 
     _currentRad += [self baseRadS]*0.002;
     if (_currentRad > 2*M_PI){
@@ -311,59 +312,36 @@ double rad2deg(double rad){
     return _isPlatterTouching;
 }
 
+-(void)cancelAwaitingScrollMomentum{
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                             selector:@selector(endScrollScratchIfStillAwaitingMomentum)
+                                               object:nil];
+    _awaitingScrollMomentum = NO;
+}
+
+-(void)endScrollScratchIfStillAwaitingMomentum{
+    if (_awaitingScrollMomentum){
+        [self endScrollScratch];
+    }
+}
+
 -(void)beginScrollScratch{
+    [self cancelAwaitingScrollMomentum];
     _isScrollScratching = YES;
-    _scrollEndPending = NO;
     _prevScrollEventSecValid = NO;
     _isPlatterTouching = YES;
     
     _speedRate = 0.0;
-    _lastScrollMoveSec = [NSProcessInfo processInfo].systemUptime;
     [_delegate turnTableSpeedRateChanged];
-    
-    if (!_scrollTimer){
-        _scrollTimer = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(onTimerScrollScratch:) userInfo:nil repeats:YES];
-        [[NSRunLoop currentRunLoop] addTimer:_scrollTimer forMode:NSRunLoopCommonModes];
-    }
     [self setNeedsDisplay:YES];
 }
 
 -(void)endScrollScratch{
-    [_scrollTimer invalidate];
-    _scrollTimer = nil;
+    [self cancelAwaitingScrollMomentum];
     _isScrollScratching = NO;
-    _scrollEndPending = NO;
     _isPlatterTouching = NO;
     
     _speedRate = 1.0;
-    [_delegate turnTableSpeedRateChanged];
-    [self setNeedsDisplay:YES];
-}
-
--(void)onTimerScrollScratch:(NSTimer *)t{
-    if (!_isScrollScratching) return;
-    
-    NSTimeInterval now = [NSProcessInfo processInfo].systemUptime;
-    
-    if (_scrollEndPending && (now - _scrollEndPendingSec) > SCROLL_END_GRACE_SEC){
-        [self endScrollScratch];
-        return;
-    }
-    
-    if ((now - _lastScrollMoveSec) > SCROLL_HOLD_SEC){
-        _speedRate *= 0.5;
-        if (fabs(_speedRate) < SCROLL_STOP_EPSILON){
-            _speedRate = 0.0;
-        }
-    }
-    
-    _currentRad += [self baseRadS] * _speedRate * 0.01;
-    if (_currentRad > 2*M_PI){
-        _currentRad -= 2*M_PI;
-    }else if (_currentRad < 0){
-        _currentRad += 2*M_PI;
-    }
-    
     [_delegate turnTableSpeedRateChanged];
     [self setNeedsDisplay:YES];
 }
@@ -377,7 +355,7 @@ double rad2deg(double rad){
             [self beginScrollScratch];
         }
         if (_isScrollScratching){
-            _scrollEndPending = NO;
+            [self cancelAwaitingScrollMomentum];
             _prevScrollEventSecValid = NO;
         }
     }
@@ -385,14 +363,17 @@ double rad2deg(double rad){
     if (!_isScrollScratching) return;
     
     if (phase == NSEventPhaseEnded || phase == NSEventPhaseCancelled){
-        _scrollEndPending = YES;
-        _scrollEndPendingSec = event.timestamp;
+        [self cancelAwaitingScrollMomentum];
+        _awaitingScrollMomentum = YES;
         _prevScrollEventSecValid = NO;
+        [self performSelector:@selector(endScrollScratchIfStillAwaitingMomentum)
+                   withObject:nil
+                   afterDelay:SCROLL_END_GRACE_SEC];
         return;
     }
     
     if (momentumPhase == NSEventPhaseBegan){
-        _scrollEndPending = NO;
+        [self cancelAwaitingScrollMomentum];
         _prevScrollEventSecValid = NO;
     }
     if (momentumPhase == NSEventPhaseEnded || momentumPhase == NSEventPhaseCancelled){
@@ -413,9 +394,8 @@ double rad2deg(double rad){
         if (_prevScrollEventSecValid){
             double dt = ts - _prevScrollEventSec;
             if (dt > 0.0){
-                double instRate = (dy / dt) / SCROLL_POINTS_PER_SEC_FOR_1X;
-                _speedRate += SCROLL_SPEED_EMA_ALPHA * (instRate - _speedRate);
-                _lastScrollMoveSec = ts;
+                _speedRate = (dy / dt) / SCROLL_POINTS_PER_SEC_FOR_1X;
+                [_delegate turnTableSpeedRateChanged];
             }
         }
         _prevScrollEventSec = ts;
