@@ -51,13 +51,23 @@
 
 ## 開発プロセス・基準
 
-## PR
+### PR
 - PRのタイトルと本文は英語で記載する。
 
-## コード中のコメントの指針。
+### コード中のコメントの指針。
 - 処理の内容や関数の役割を説明するコメントはわざわざ書かない。
 - 分岐や呼び出しのたびに「なぜこうするか」を書かない。残す価値のある理由は AGENTS.md か docs に一度だけ書く。
 - コードだけでは読めない DSP の式やアルゴリズムに限って、その場で意図を書いてよい。
+
+### Git branches
+When creating a new branch, use one of:
+
+- `feat/<short-name>` — new feature
+- `fix/<short-name>` — bug fix
+- `docs/<short-name>` — documentation
+- `chore/<short-name>` — other small updates
+
+If the prefix is unclear, ask before creating the branch.
 
 ## コマンドラインでのビルドと実行方法
 
