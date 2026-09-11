@@ -1,0 +1,4 @@
+CompileFlags:
+  Add:
+    - -fobjc-arc
+    - -fobjc-weak

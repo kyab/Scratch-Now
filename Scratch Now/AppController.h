@@ -19,12 +19,15 @@ NS_ASSUME_NONNULL_BEGIN
     __weak IBOutlet TurnTableView *_turnTableView;
     __weak IBOutlet NSSlider *_sliderDry;
     __weak IBOutlet NSButton *_btnStop;
+    __weak IBOutlet NSButton *_btnFollow;
+    __weak IBOutlet NSButton *_chkAutoFollow;
     
     NSTimer *_tableStopTimer;
     Boolean _tableStopped;
     // Stop deceleration target; continues even while scratch temporarily owns _speedRate.
     double _tableStopSpeed;
     double _speedRate;
+    Boolean _autoFollow;
     
     
     float _dryVolume;
