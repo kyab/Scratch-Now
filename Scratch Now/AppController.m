@@ -381,6 +381,9 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 }
 
 -(void)processScratchOutput:(float *)leftBuf right:(float *)rightBuf samples:(UInt32)numSamples{
+
+    [self turnTableSpeedRateChangedBySelf];
+
     if (_isFadingOut){
         UInt32 processed = 0;
         if (_isScratchStarting){
@@ -579,18 +582,42 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 }
 
 -(void)turnTableSpeedRateChanged{
+    // double newSpeedRate = [_turnTableView speedRate];
+    // // NSLog(@"turnTableSpeedRateChanged : newSpeed = %f", newSpeedRate);
+    // if (![_turnTableView isPlatterTouching]){
+    //     NSLog(@"condition 1");
+    //     if ([self isStopActive]){
+    //         NSLog(@"condition 2");
+    //         // Released into an active Stop: resume the underlying decelerated speed.
+    //         newSpeedRate = _tableStopped ? 0.0 : _tableStopSpeed;
+    //         [_turnTableView setSpeedRate:newSpeedRate];
+    //     }else if (newSpeedRate == 0.0){
+    //         NSLog(@"condition 3");
+    //         newSpeedRate = 1.0;
+    //         [_turnTableView setSpeedRate:newSpeedRate];
+    //     }
+    // }
+    // [self turnTableSpeedRateChanged:newSpeedRate];
+}
+
+-(void)turnTableSpeedRateChangedBySelf{
     double newSpeedRate = [_turnTableView speedRate];
+    // NSLog(@"turnTableSpeedRateChanged : newSpeed = %f", newSpeedRate);
     if (![_turnTableView isPlatterTouching]){
+        // NSLog(@"condition 1");
         if ([self isStopActive]){
+            // NSLog(@"condition 2");
             // Released into an active Stop: resume the underlying decelerated speed.
             newSpeedRate = _tableStopped ? 0.0 : _tableStopSpeed;
             [_turnTableView setSpeedRate:newSpeedRate];
         }else if (newSpeedRate == 0.0){
+            // NSLog(@"condition 3");
             newSpeedRate = 1.0;
             [_turnTableView setSpeedRate:newSpeedRate];
         }
     }
     [self turnTableSpeedRateChanged:newSpeedRate];
+
 }
 
 -(void)terminate{

@@ -10,26 +10,96 @@
 
 // Two-finger scroll scratch tuning.
 // Finger speed (in scroll points/sec) that maps to 1.0x playback (33.3 RPM).
-#define SCROLL_POINTS_PER_SEC_FOR_1X 600.0
+// Larger = slower platter
+#define SCROLL_POINTS_PER_SEC_FOR_1X 700.0
+#define SCROLL_MOMENTUM_POINTS_PER_SEC_FOR_1X 1000.0
+#define TOUCH_Y_PER_SEC_FOR_1X 1.0
+#define TOUCH_CENTROID_Y_EPSILON 0.000001
+#define TOUCH_SPEED_TAU_SEC 0.03
+#define TOUCH_TARGET_IDLE_SEC 0.1
+#define TOUCH_TARGET_WINDOW_SEC 0.1
+
+// No scroll delta for this long while fingers rest -> hold the record (speed 0).
+#define SCROLL_HOLD_SEC 0.05
 // After fingers lift, wait this long for OS momentum events before releasing.
 #define SCROLL_END_GRACE_SEC 0.1
+
+static NSString *NSEventPhaseDescription(NSEventPhase phase) {
+    switch (phase) {
+        case NSEventPhaseNone: return [NSString stringWithFormat:@"NSEventPhaseNone(%lu)", (unsigned long)phase];
+        case NSEventPhaseBegan: return [NSString stringWithFormat:@"NSEventPhaseBegan(%lu)", (unsigned long)phase];
+        case NSEventPhaseStationary: return [NSString stringWithFormat:@"NSEventPhaseStationary(%lu)", (unsigned long)phase];
+        case NSEventPhaseChanged: return [NSString stringWithFormat:@"NSEventPhaseChanged(%lu)", (unsigned long)phase];
+        case NSEventPhaseEnded: return [NSString stringWithFormat:@"NSEventPhaseEnded(%lu)", (unsigned long)phase];
+        case NSEventPhaseCancelled: return [NSString stringWithFormat:@"NSEventPhaseCancelled(%lu)", (unsigned long)phase];
+        case NSEventPhaseMayBegin: return [NSString stringWithFormat:@"NSEventPhaseMayBegin(%lu)", (unsigned long)phase];
+        default: return [NSString stringWithFormat:@"NSEventPhaseUnknownZZ(%lu)", (unsigned long)phase];
+    }
+}
+
+static NSString *NSTouchPhaseDescription(NSTouchPhase phase) {
+    switch (phase) {
+        case NSTouchPhaseBegan: return [NSString stringWithFormat:@"NSTouchPhaseBegan(%lu)", (unsigned long)phase];
+        case NSTouchPhaseMoved: return [NSString stringWithFormat:@"NSTouchPhaseMoved(%lu)", (unsigned long)phase];
+        case NSTouchPhaseStationary: return [NSString stringWithFormat:@"NSTouchPhaseStationary(%lu)", (unsigned long)phase];
+        case NSTouchPhaseEnded: return [NSString stringWithFormat:@"NSTouchPhaseEnded(%lu)", (unsigned long)phase];
+        case NSTouchPhaseCancelled: return [NSString stringWithFormat:@"NSTouchPhaseCancelled(%lu)", (unsigned long)phase];
+        default: return [NSString stringWithFormat:@"NSTouchPhase(%lu)", (unsigned long)phase];
+    }
+}
+
+static NSTimeInterval sPrevScrollWheelLogSec = 0;
+static NSTimeInterval sPrevTouchLogSec = 0;
+static NSMutableDictionary *sTouchSimpleIds = nil;
+static NSInteger sNextTouchSimpleId = 1;
+
+static NSInteger SimpleTouchId(id identity) {
+    if (!sTouchSimpleIds) {
+        sTouchSimpleIds = [NSMutableDictionary dictionary];
+    }
+    NSNumber *existing = sTouchSimpleIds[identity];
+    if (existing) {
+        return existing.integerValue;
+    }
+    NSInteger simpleId = sNextTouchSimpleId++;
+    sTouchSimpleIds[identity] = @(simpleId);
+    return simpleId;
+}
+
+static void ForgetSimpleTouchId(id identity) {
+    [sTouchSimpleIds removeObjectForKey:identity];
+    if (sTouchSimpleIds.count == 0) {
+        sNextTouchSimpleId = 1;
+    }
+}
 
 @implementation TurnTableView
 
 
 - (void)awakeFromNib{
     _currentRad = 28 * (M_PI / 180);
-    _speedRate = 1.0f;
+    _speedRateByMouseEvents = 1.0f;
+    _speedRateByScrollEvents = 1.0f;
+    _speedRateByTouchEvents = 1.0f;
     
-    _timer2 = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(onTimerScratch:) userInfo:nil repeats:YES];
-
+    [self setAllowedTouchTypes:NSTouchTypeMaskDirect | NSTouchTypeMaskIndirect];
+//    [self setWantsRestingTouches:YES];
+    
+    _timer2 = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(onMouseDragTimer:) userInfo:nil repeats:YES];
     [[NSRunLoop currentRunLoop] addTimer:_timer2 forMode:NSRunLoopCommonModes];
     
+    _timerLog = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(onLogTimer:) userInfo:nil repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:_timerLog forMode:NSRunLoopCommonModes];
 }
+
+//- (BOOL)wantsRestingTouches {
+//    NSLog(@"-------------------------- sdfsdfsf");
+//    return YES;
+//}
 
 - (void)start{
     if (!_timer){
-        _timer = [NSTimer scheduledTimerWithTimeInterval:0.002 target:self selector:@selector(onTimer:) userInfo:nil repeats:YES];
+        _timer = [NSTimer scheduledTimerWithTimeInterval:0.002 target:self selector:@selector(onUIUpdateTimer:) userInfo:nil repeats:YES];
         [[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
     }
 }
@@ -40,23 +110,84 @@
 }
 
 -(double) baseRadS{
-
     return -33.3/60 * M_PI*2;
-
 }
 
 double rad2deg(double rad){
     return rad / M_PI * 180;
 }
 
--(void)onTimer:(NSTimer *)t{
-    if (_isPlatterTouching){
-        // Scroll scratch owns speed via scrollWheel:; keep redrawing playhead from the ring.
-        if (_isScrollScratching){
-            [self setNeedsDisplay:YES];
+-(void)clearTouchTargetSamples{
+    _touchTargetSampleCount = 0;
+}
+
+-(double)pushTouchTargetSample:(double)vRaw at:(NSTimeInterval)ts{
+    while (_touchTargetSampleCount > 0 && (ts - _touchTargetSampleSec[0]) > TOUCH_TARGET_WINDOW_SEC){
+        for (int i = 1; i < _touchTargetSampleCount; i++){
+            _touchTargetSampleSec[i - 1] = _touchTargetSampleSec[i];
+            _touchTargetSampleV[i - 1] = _touchTargetSampleV[i];
         }
-        return;
+        _touchTargetSampleCount--;
     }
+    
+    if (_touchTargetSampleCount == TOUCH_TARGET_SAMPLE_CAP){
+        for (int i = 1; i < _touchTargetSampleCount; i++){
+            _touchTargetSampleSec[i - 1] = _touchTargetSampleSec[i];
+            _touchTargetSampleV[i - 1] = _touchTargetSampleV[i];
+        }
+        _touchTargetSampleCount--;
+    }
+    
+    _touchTargetSampleSec[_touchTargetSampleCount] = ts;
+    _touchTargetSampleV[_touchTargetSampleCount] = vRaw;
+    _touchTargetSampleCount++;
+    
+    if (_touchTargetSampleCount == 1){
+        return vRaw;
+    }
+    
+    double num = 0.0;
+    double den = 0.0;
+    for (int i = 1; i < _touchTargetSampleCount; i++){
+        double sampleDt = _touchTargetSampleSec[i] - _touchTargetSampleSec[i - 1];
+        if (sampleDt <= 0.0){
+            continue;
+        }
+        num += _touchTargetSampleV[i] * sampleDt;
+        den += sampleDt;
+    }
+    if (den <= 0.0){
+        return vRaw;
+    }
+    return num / den;
+}
+
+-(void)onLogTimer:(NSTimer *)t{
+    if (_isPlatterTouchingByTouchEvents && _touchSpeedSmoothedValid){
+        NSTimeInterval nowSec = [NSProcessInfo processInfo].systemUptime;
+        if (_prevTouchEventSecValid && (nowSec - _prevTouchEventSec) >= TOUCH_TARGET_IDLE_SEC){
+            _touchSpeedTarget = 0.0;
+            [self clearTouchTargetSamples];
+        }
+        if (_prevTouchTimerSecValid){
+            double dt = nowSec - _prevTouchTimerSec;
+            if (dt > 0.0){
+                double alpha = 1.0 - exp(-dt / TOUCH_SPEED_TAU_SEC);
+                _speedRateByTouchEvents = (1.0 - alpha) * _speedRateByTouchEvents + alpha * _touchSpeedTarget;
+            }
+        }
+        _prevTouchTimerSec = nowSec;
+        _prevTouchTimerSecValid = YES;
+    }
+    
+    if (_isPlatterTouchingByMouseEvents || _isPlatterTouchingByScrollEvents || _isPlatterTouchingByTouchEvents){
+        NSLog(@"[LogTimer] _speedRateByMouseEvents = %f, _speedRateByScrollEvents = %f, _speedRateByTouchEvents = %f target=%f",
+              _speedRateByMouseEvents, _speedRateByScrollEvents, _speedRateByTouchEvents, _touchSpeedTarget);
+    }
+}
+
+-(void)onUIUpdateTimer:(NSTimer *)t{
+    if (_isPlatterTouchingByMouseEvents) return;
 
     _currentRad += [self baseRadS]*0.002;
     if (_currentRad > 2*M_PI){
@@ -88,17 +219,13 @@ double rad2deg(double rad){
                                    2*r);
     
     NSBezierPath *circlePath = [NSBezierPath bezierPathWithOvalInRect:circleRect];
-    
 
     [[NSColor grayColor] set];
     [circlePath fill];
-    
-    
+        
     CGFloat centerX = self.bounds.size.width/2;
     CGFloat centerY = self.bounds.size.height/2;
 
-
-    
     if (!_ring || [_ring sampleRate] <= 0){
         return;
     }
@@ -115,7 +242,7 @@ double rad2deg(double rad){
     [linePlay moveToPoint:NSMakePoint(centerX,centerY)];
     double thetaPlayRad = [_ring playFrame]/[_ring sampleRate] * (-33.3/60 * 2 * M_PI);
     [linePlay lineToPoint:NSMakePoint(centerX + r*cos(thetaPlayRad), centerY + r*sin(thetaPlayRad))];
-    if (_isPlatterTouching){
+    if (_isPlatterTouchingByMouseEvents){
         [[NSColor orangeColor] set ];
     }else{
         [[NSColor orangeColor] set];
@@ -142,7 +269,7 @@ double rad2deg(double rad){
     CGFloat r = self.bounds.size.height/2 - 10;
     
     if (dist <= r){
-        _isPlatterTouching = YES;
+        _isPlatterTouchingByMouseEvents = YES;
         double theta = x/sqrt(x*x + y*y);
         theta = acos(theta);
         if (y < 0) theta = 2*M_PI - theta;
@@ -153,7 +280,7 @@ double rad2deg(double rad){
         _prevSec = theEvent.timestamp;
         _prevRad = _currentRad;
         _prevRadValid = YES;
-        _speedRate = 0.0;
+        _speedRateByMouseEvents = 0.0;
         _historyCount = 0;
         for (int i = 0; i < 10; i++){
             _history[i] = 0.0;
@@ -161,68 +288,25 @@ double rad2deg(double rad){
         [_delegate turnTableSpeedRateChanged];
     
     }else{
-        _isPlatterTouching = NO;
+        _isPlatterTouchingByMouseEvents = NO;
     }
     
     
 }
 
--(void)mouseDragged:(NSEvent *)theEvent{
-//    if (_pressing == NO) return;
-//    if (_pressing == YES) return;
-//
-//    CGFloat x1 = [self eventLocation:theEvent].x;
-//    CGFloat y1 = [self eventLocation:theEvent].y;
-//
-//    x1 = x1 - self.bounds.size.width/2;
-//    y1 = y1 - self.bounds.size.height/2;
-//    double theta = x1/sqrt(x1*x1 + y1*y1);
-//    theta = acos(theta);
-//    if (y1 <0 ) theta = 2*M_PI - theta;
-//    _currentRad  = theta - _startOffsetRad;
-//    if (_currentRad > 2*M_PI){
-//        _currentRad = _currentRad -  2*M_PI;
-//    }
-//    if (_currentRad < 0){
-//        _currentRad = 2*M_PI + _currentRad;
-//    }
-//
-//    double delta  = _currentRad - _prevRad;
-//    if (fabs(rad2deg(delta)) > 340){
-//        if (_currentRad > _prevRad){
-//            delta = -1.0*_prevRad - (2*M_PI - _currentRad);
-//        }else{
-//            delta = (2*M_PI-_prevRad) + _currentRad;
-//        }
-//    }
-//
-//    double speed = delta / ([theEvent timestamp] - _prevSec);
-//    _speedRate = speed / [self baseRadS];
-//
-//    [_delegate turnTableSpeedRateChanged];
-//
-//    _prevRad = _currentRad;
-//    _prevSec = [theEvent timestamp];
-//    _prevX = x1;
-//    _prevY = y1;
-//
-//    [self setNeedsDisplay:YES];
-//
-}
-
 -(void)mouseUp:(NSEvent *)theEvent{
-    _isPlatterTouching = NO;
+    _isPlatterTouchingByMouseEvents = NO;
     
-    _speedRate = 1.0;
+    _speedRateByMouseEvents = 1.0;
     [_delegate turnTableSpeedRateChanged];
     
     [[NSCursor arrowCursor] set];
     [self setNeedsDisplay:YES];
 }
 
--(void)onTimerScratch:(NSTimer *)t{
-    if (_isScrollScratching) return;
-    if (!_isPlatterTouching) return;
+-(void)onMouseDragTimer:(NSTimer *)t{
+    if (_isPlatterTouchingByScrollEvents) return;
+    if (!_isPlatterTouchingByMouseEvents) return;
 
     // Same time base as NSEvent.timestamp (seconds since system startup).
     double currentSec = [NSProcessInfo processInfo].systemUptime;
@@ -277,7 +361,7 @@ double rad2deg(double rad){
         for (int i = 10 - _historyCount; i < 10; i++){
             sum += _history[i];
         }
-        _speedRate = sum / (double)_historyCount;
+        _speedRateByMouseEvents = sum / (double)_historyCount;
 
         [_delegate turnTableSpeedRateChanged];
     }
@@ -294,11 +378,19 @@ double rad2deg(double rad){
 
 
 -(double)speedRate{
-    return _speedRate;
+    if (_isPlatterTouchingByMouseEvents){
+        return _speedRateByMouseEvents;
+    }else if (_isPlatterTouchingByTouchEvents){
+        return _speedRateByTouchEvents;
+    }else if (_isPlatterTouchingByScrollEvents){
+        return _speedRateByScrollEvents;
+    }else{
+        return 1.0f;
+    }
 }
 
 -(void)setSpeedRate:(float)speedRate{
-    _speedRate = speedRate;
+    _speedRateByMouseEvents = speedRate;
 }
 
 -(void)setDelegate:(id<TurnTableDelegate>)delegate{
@@ -309,61 +401,226 @@ double rad2deg(double rad){
     _ring = ring;
 }
 -(Boolean)isPlatterTouching {
-    return _isPlatterTouching;
+    return _isPlatterTouchingByMouseEvents || _isPlatterTouchingByScrollEvents;
 }
 
 -(void)cancelAwaitingScrollMomentum{
     [NSObject cancelPreviousPerformRequestsWithTarget:self
                                              selector:@selector(endScrollScratchIfStillAwaitingMomentum)
                                                object:nil];
+
     _awaitingScrollMomentum = NO;
+}
+
+-(void)cancelScrollHold{
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                             selector:@selector(holdZeroScrollSpeedIfStillScratching)
+                                               object:nil];
+}
+
+-(void)armScrollHold{
+    [self cancelScrollHold];
+    [self performSelector:@selector(holdZeroScrollSpeedIfStillScratching)
+               withObject:nil
+               afterDelay:SCROLL_HOLD_SEC];
+}
+
+-(void)holdZeroScrollSpeedIfStillScratching{
+    if (!_isPlatterTouchingByScrollEvents) return;
+    if (_awaitingScrollMomentum) return;
+    _speedRateByScrollEvents = 0.0;
+//    NSLog(@"holdZeroScrollSpeedIfStillScratching : _speedRateByScrollEvents = %f", _speedRateByScrollEvents);
+    [_delegate turnTableSpeedRateChanged];
 }
 
 -(void)endScrollScratchIfStillAwaitingMomentum{
     if (_awaitingScrollMomentum){
+//        NSLog(@"endScrollScratchIfStillAwaitingMomentum : _speedRateByScrollEvents = %f", _speedRateByScrollEvents);
         [self endScrollScratch];
     }
 }
 
 -(void)beginScrollScratch{
+//    NSLog(@"beginScrollScratch : _speedRateByScrollEvents = %f", _speedRateByScrollEvents);
     [self cancelAwaitingScrollMomentum];
-    _isScrollScratching = YES;
+    [self cancelScrollHold];
+    _isPlatterTouchingByScrollEvents = YES;
     _prevScrollEventSecValid = NO;
-    _isPlatterTouching = YES;
     
-    _speedRate = 0.0;
+    _speedRateByScrollEvents = 0.0;
     [_delegate turnTableSpeedRateChanged];
     [self setNeedsDisplay:YES];
 }
 
 -(void)endScrollScratch{
+//    NSLog(@"endScrollScratch : _speedRateByScrollEvents = %f", _speedRateByScrollEvents);
     [self cancelAwaitingScrollMomentum];
-    _isScrollScratching = NO;
-    _isPlatterTouching = NO;
+    [self cancelScrollHold];
+    _isPlatterTouchingByScrollEvents = NO;
     
-    _speedRate = 1.0;
+//    _speedRateByScrollEvents = 1.0;
     [_delegate turnTableSpeedRateChanged];
     [self setNeedsDisplay:YES];
+}
+
+- (void)logTouchesForEventType:(NSString *)eventType event:(NSEvent *)event {
+    NSTimeInterval nowSec = event.timestamp;
+    double dtMs = (sPrevTouchLogSec > 0) ? (nowSec - sPrevTouchLogSec) * 1000.0 : 0.0;
+    sPrevTouchLogSec = nowSec;
+    
+    NSSet<NSTouch *> *touches = [event touchesMatchingPhase:NSTouchPhaseAny inView:self];
+    NSMutableArray<NSString *> *parts = [NSMutableArray arrayWithCapacity:touches.count];
+    for (NSTouch *touch in touches) {
+        NSInteger simpleId = SimpleTouchId(touch.identity);
+        [parts addObject:[NSString stringWithFormat:@"id=%ld y=%f phase=%@ isResting=%d",
+                          (long)simpleId,
+                          touch.normalizedPosition.y,
+                          NSTouchPhaseDescription(touch.phase),
+                          touch.isResting]];
+        if (touch.phase == NSTouchPhaseEnded || touch.phase == NSTouchPhaseCancelled) {
+//            ForgetSimpleTouchId(touch.identity);
+        }
+    }
+    
+//    NSLog(@"%@ +%.1fms fingers=%lu touches=[%@]",
+//          eventType,
+//          dtMs,
+//          (unsigned long)touches.count,
+//          [parts componentsJoinedByString:@"; "]);
+}
+
+- (void)handle2FingerTouchForEventType:(NSString *)eventType event:(NSEvent *)event {
+    NSSet<NSTouch *> *touches = [event touchesMatchingPhase:NSTouchPhaseAny inView:self];
+    if (touches.count != 2){
+        return;
+    }
+    
+    double sumY = 0.0;
+    for (NSTouch *touch in touches) {
+        sumY += touch.normalizedPosition.y;
+    }
+    double centroidY = sumY / 2.0;
+    
+    if ([eventType isEqualToString:@"touchesEnded"] || [eventType isEqualToString:@"touchesCancelled"]){
+        _speedRateByTouchEvents = 1.0;
+        _touchSpeedTarget = 1.0;
+        _isPlatterTouchingByTouchEvents = NO;
+        _prevTouchEventSecValid = NO;
+        _touchSpeedSmoothedValid = NO;
+        _prevTouchTimerSecValid = NO;
+        [self clearTouchTargetSamples];
+        [_delegate turnTableSpeedRateChanged];
+        return;
+    }
+    
+    if ([eventType isEqualToString:@"touchesBegan"] || !_prevTouchEventSecValid){
+        _prevTouchCentroidY = centroidY;
+        _prevTouchEventSec = event.timestamp;
+        _prevTouchEventSecValid = YES;
+        _touchSpeedSmoothedValid = NO;
+        _prevTouchTimerSecValid = NO;
+        _touchSpeedTarget = 0.0;
+        [self clearTouchTargetSamples];
+        return;
+    }
+    
+    double dy = centroidY - _prevTouchCentroidY;
+    if (fabs(dy) < TOUCH_CENTROID_Y_EPSILON){
+        return;
+    }
+    
+    double dt = event.timestamp - _prevTouchEventSec;
+    if (dt > 0.0){
+        double vRaw = (dy / dt) / TOUCH_Y_PER_SEC_FOR_1X;
+        _touchSpeedTarget = [self pushTouchTargetSample:vRaw at:event.timestamp];
+        
+        if (!_touchSpeedSmoothedValid){
+            _speedRateByTouchEvents = _touchSpeedTarget;
+            _touchSpeedSmoothedValid = YES;
+        }else{
+            double alpha = 1.0 - exp(-dt / TOUCH_SPEED_TAU_SEC);
+            _speedRateByTouchEvents = (1.0 - alpha) * _speedRateByTouchEvents + alpha * _touchSpeedTarget;
+        }
+        
+        [_delegate turnTableSpeedRateChanged];
+    }
+    
+    _prevTouchCentroidY = centroidY;
+    _prevTouchEventSec = event.timestamp;
+    _prevTouchEventSecValid = YES;
+}
+
+- (void)touchesBeganWithEvent:(NSEvent *)event {
+    NSSet<NSTouch *> *touches = [event touchesMatchingPhase:NSTouchPhaseAny inView:self];
+    if (touches.count == 2){
+        [self logTouchesForEventType:@"touchesBegan" event:event];
+        _isPlatterTouchingByTouchEvents = YES;
+        [self handle2FingerTouchForEventType:@"touchesBegan" event:event];
+    }
+}
+
+- (void)touchesMovedWithEvent:(NSEvent *)event {
+    NSSet<NSTouch *> *touches = [event touchesMatchingPhase:NSTouchPhaseAny inView:self];
+    if (touches.count == 2){
+        [self logTouchesForEventType:@"touchesMoved" event:event];
+        [self handle2FingerTouchForEventType:@"touchesMoved" event:event];
+    }
+}
+
+- (void)touchesEndedWithEvent:(NSEvent *)event {
+    NSSet<NSTouch *> *touches = [event touchesMatchingPhase:NSTouchPhaseAny inView:self];
+    if (touches.count == 2){
+        [self logTouchesForEventType:@"touchesEnded" event:event];
+        [self handle2FingerTouchForEventType:@"touchesEnded" event:event];
+    }
+}
+
+- (void)touchesCancelledWithEvent:(NSEvent *)event {
+    NSSet<NSTouch *> *touches = [event touchesMatchingPhase:NSTouchPhaseAny inView:self];
+    if (touches.count == 2){
+        [self logTouchesForEventType:@"touchesCancelled" event:event];
+        [self handle2FingerTouchForEventType:@"touchesCancelled" event:event];
+    }
 }
 
 -(void)scrollWheel:(NSEvent *)event{
     NSEventPhase phase = event.phase;
     NSEventPhase momentumPhase = event.momentumPhase;
     
-    if (phase == NSEventPhaseBegan){
-        if (!_isPlatterTouching && !_isScrollScratching){
+    NSTimeInterval nowSec = event.timestamp;
+    double dtMs = (sPrevScrollWheelLogSec > 0) ? (nowSec - sPrevScrollWheelLogSec) * 1000.0 : 0.0;
+    sPrevScrollWheelLogSec = nowSec;
+    
+//    NSLog(@"[[ $$$$$]]] scrollWheel +%.1fms phase=%@ momentumPhase=%@ scrollingDeltaY=%f deltaY=%f hasPreciseScrollingDeltas=%d",
+//          dtMs,
+//          NSEventPhaseDescription(phase),
+//          NSEventPhaseDescription(momentumPhase),
+//          event.scrollingDeltaY,
+//          event.deltaY,
+//          event.hasPreciseScrollingDeltas);
+    
+    
+    // Fingers landed (or gesture officially began): grab the record at speed 0.
+    if (phase == NSEventPhaseMayBegin || phase == NSEventPhaseBegan){
+        if (!_isPlatterTouchingByScrollEvents){
             [self beginScrollScratch];
-        }
-        if (_isScrollScratching){
+        }else if (_isPlatterTouchingByScrollEvents){
             [self cancelAwaitingScrollMomentum];
+            [self cancelScrollHold];
             _prevScrollEventSecValid = NO;
+            _speedRateByScrollEvents = 0.0;
+            
+//            NSLog(@"scrollWheel event AAA : _speedRateByScrollEvents = %f", _speedRateByScrollEvents);
+            [_delegate turnTableSpeedRateChanged];
         }
+        return;
     }
     
-    if (!_isScrollScratching) return;
+    if (!_isPlatterTouchingByScrollEvents) return;
     
     if (phase == NSEventPhaseEnded || phase == NSEventPhaseCancelled){
         [self cancelAwaitingScrollMomentum];
+        [self cancelScrollHold];
         _awaitingScrollMomentum = YES;
         _prevScrollEventSecValid = NO;
         [self performSelector:@selector(endScrollScratchIfStillAwaitingMomentum)
@@ -374,14 +631,21 @@ double rad2deg(double rad){
     
     if (momentumPhase == NSEventPhaseBegan){
         [self cancelAwaitingScrollMomentum];
+        [self cancelScrollHold];
         _prevScrollEventSecValid = NO;
     }
-    if (momentumPhase == NSEventPhaseEnded || momentumPhase == NSEventPhaseCancelled){
+    if (momentumPhase == NSEventPhaseEnded){
+//        NSLog(@"End of Momentum Phase. phase = %lu", (unsigned long)phase);
+        [self endScrollScratch];
+        return;
+    }
+    if (momentumPhase == NSEventPhaseCancelled){
+//        NSLog(@"Cancelled momentum phase. phase = %lu", (unsigned long)phase);
         [self endScrollScratch];
         return;
     }
     
-    if (phase == NSEventPhaseBegan || phase == NSEventPhaseChanged ||
+    if (phase == NSEventPhaseChanged ||
         momentumPhase == NSEventPhaseBegan || momentumPhase == NSEventPhaseChanged){
         // Normalize to physical finger motion (fingers up = forward),
         // independent of the system "natural scrolling" preference.
@@ -394,8 +658,21 @@ double rad2deg(double rad){
         if (_prevScrollEventSecValid){
             double dt = ts - _prevScrollEventSec;
             if (dt > 0.0){
-                _speedRate = (dy / dt) / SCROLL_POINTS_PER_SEC_FOR_1X;
+                double pointsPerSecFor1x = (momentumPhase != NSEventPhaseNone)
+                    ? SCROLL_MOMENTUM_POINTS_PER_SEC_FOR_1X
+                    : SCROLL_POINTS_PER_SEC_FOR_1X;
+                _speedRateByScrollEvents = (dy / dt) / pointsPerSecFor1x;
+                if (momentumPhase == NSEventPhaseNone){
+//                    NSLog(@"scrollWheel event : _speedRateByScrollEvents = %f. deltaT = %f", _speedRateByScrollEvents, dt);
+                }else{
+//                    NSLog(@"scrollWheel event(momentum) : _speedRateByScrollEvents = %f. deltaT = %f", _speedRateByScrollEvents, dt);
+                }
+
                 [_delegate turnTableSpeedRateChanged];
+                // Only while fingers are still down: stop the record if motion pauses.
+                if (phase == NSEventPhaseChanged){
+                    [self armScrollHold];
+                }
             }
         }
         _prevScrollEventSec = ts;

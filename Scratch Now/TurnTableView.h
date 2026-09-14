@@ -9,6 +9,8 @@
 #import <Cocoa/Cocoa.h>
 #import "RingBuffer.h"
 
+#define TOUCH_TARGET_SAMPLE_CAP 128
+
 @protocol TurnTableDelegate <NSObject>
 @optional
 -(void)turnTableSpeedRateChanged;
@@ -16,7 +18,7 @@
 
 
 @interface TurnTableView : NSView{
-    BOOL _isPlatterTouching;
+    BOOL _isPlatterTouchingByMouseEvents;
     double _currentRad;
     double _currentRadPlay;
     
@@ -26,6 +28,7 @@
     
     NSTimer *_timer;
     NSTimer *_timer2;   //scratch monitor
+    NSTimer *_timerLog;
     
     NSTimeInterval _prevSec;
     double _prevRad;
@@ -34,15 +37,29 @@
     CGFloat _prevX;
     CGFloat _prevY;
     
-    double _speedRate;
+    double _speedRateByMouseEvents;
     double _history[10];
     int _historyCount;
     
     // Two-finger scroll scratch
-    BOOL _isScrollScratching;
+    double _speedRateByScrollEvents;
+    BOOL _isPlatterTouchingByScrollEvents;
     BOOL _awaitingScrollMomentum;
     NSTimeInterval _prevScrollEventSec;
     BOOL _prevScrollEventSecValid;
+
+    double _speedRateByTouchEvents;
+    double _touchSpeedTarget;
+    BOOL _isPlatterTouchingByTouchEvents;
+    NSTimeInterval _prevTouchEventSec;
+    BOOL _prevTouchEventSecValid;
+    double _prevTouchCentroidY;
+    BOOL _touchSpeedSmoothedValid;
+    NSTimeInterval _prevTouchTimerSec;
+    BOOL _prevTouchTimerSecValid;
+    NSTimeInterval _touchTargetSampleSec[TOUCH_TARGET_SAMPLE_CAP];
+    double _touchTargetSampleV[TOUCH_TARGET_SAMPLE_CAP];
+    int _touchTargetSampleCount;
     
     id<TurnTableDelegate> _delegate;
 }
