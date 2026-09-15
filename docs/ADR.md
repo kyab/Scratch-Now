@@ -25,8 +25,13 @@ _speedRateByTouchEventのデータ参照
 イベントが来ない間も約10ms周期で、同じEMAにより _speedRateByTouchEvents を target へ寄せ続ける。
 低速域でイベントが疎なときの速度の段差を埋め、100ms無更新なら target を0にして減速する。
 
-## 未実装
-タッチ終了後の加速度による減速処理。トルク、加減速を取り入れたダイナミクスに基づくプラッターモデルに変更？
+## タッチ離し後の惰性（coast）
+離した瞬間の `_speedRateByTouchEvents` を維持し、target=0 へ `TOUCH_COAST_TAU_SEC`（接触中の `TOUCH_SPEED_TAU_SEC` とは別）で EMA 減速する。
+Stop ボタンの 1.0x→停止（約 0.5s）に合わせて tau を決め、|v| < `TOUCH_COAST_END_EPSILON` で handoff（1.0x）。
+離し時 |v| < `TOUCH_COAST_SKIP_EPSILON` なら惰性なしで即 handoff。
+coast 中は `_isCoastingForTouchEvent` により `isUnderManualControl` を維持する。
+
+（将来案）トルク・加減速を取り入れたダイナミクスに基づくプラッターモデル。
 Cursor Request ID : 71874cb8-3042-4512-9279-0fd771162878
 
 ## 検証のヒント

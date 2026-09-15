@@ -41,16 +41,17 @@
     double _history[10];
     int _historyCount;
     
-    // Two-finger scroll scratch
-    double _speedRateByScrollEvents;
-    BOOL _isPlatterTouchingByScrollEvents;
-    BOOL _awaitingScrollMomentum;
-    NSTimeInterval _prevScrollEventSec;
-    BOOL _prevScrollEventSecValid;
+    // Two-finger scroll scratch (disabled; NSTouch path preferred)
+//    double _speedRateByScrollEvents;
+//    BOOL _isPlatterTouchingByScrollEvents;
+//    BOOL _awaitingScrollMomentum;
+//    NSTimeInterval _prevScrollEventSec;
+//    BOOL _prevScrollEventSecValid;
 
     double _speedRateByTouchEvents;
     double _touchSpeedTarget;
     BOOL _isPlatterTouchingByTouchEvents;
+    BOOL _isCoastingForTouchEvent;
     NSTimeInterval _prevTouchEventSec;
     BOOL _prevTouchEventSecValid;
     double _prevTouchCentroidY;
@@ -70,5 +71,5 @@
 -(void)stop;
 -(double)speedRate;
 -(void)setSpeedRate:(float)speedRate;
--(Boolean)isPlatterTouching;
+-(Boolean)isUnderManualControl;
 @end
