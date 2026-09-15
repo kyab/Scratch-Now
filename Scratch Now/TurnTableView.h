@@ -40,13 +40,6 @@
     double _speedRateByMouseEvents;
     double _history[10];
     int _historyCount;
-    
-    // Two-finger scroll scratch (disabled; NSTouch path preferred)
-//    double _speedRateByScrollEvents;
-//    BOOL _isPlatterTouchingByScrollEvents;
-//    BOOL _awaitingScrollMomentum;
-//    NSTimeInterval _prevScrollEventSec;
-//    BOOL _prevScrollEventSecValid;
 
     double _speedRateByTouchEvents;
     double _touchSpeedTarget;

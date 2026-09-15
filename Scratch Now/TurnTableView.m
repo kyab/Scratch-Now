@@ -8,11 +8,6 @@
 
 #import "TurnTableView.h"
 
-// Two-finger scroll scratch tuning (disabled; NSTouch path preferred).
-// Finger speed (in scroll points/sec) that maps to 1.0x playback (33.3 RPM).
-// Larger = slower platter
-//#define SCROLL_POINTS_PER_SEC_FOR_1X 700.0
-//#define SCROLL_MOMENTUM_POINTS_PER_SEC_FOR_1X 1000.0
 #define TOUCH_Y_PER_SEC_FOR_1X 1.0
 #define TOUCH_CENTROID_Y_EPSILON 0.000001
 #define TOUCH_SPEED_TAU_SEC 0.03
@@ -26,24 +21,6 @@
 #define TOUCH_COAST_END_EPSILON 0.01
 #define TOUCH_COAST_SKIP_EPSILON 0.05
 
-// No scroll delta for this long while fingers rest -> hold the record (speed 0).
-//#define SCROLL_HOLD_SEC 0.05
-// After fingers lift, wait this long for OS momentum events before releasing.
-//#define SCROLL_END_GRACE_SEC 0.1
-
-//static NSString *NSEventPhaseDescription(NSEventPhase phase) {
-//    switch (phase) {
-//        case NSEventPhaseNone: return [NSString stringWithFormat:@"NSEventPhaseNone(%lu)", (unsigned long)phase];
-//        case NSEventPhaseBegan: return [NSString stringWithFormat:@"NSEventPhaseBegan(%lu)", (unsigned long)phase];
-//        case NSEventPhaseStationary: return [NSString stringWithFormat:@"NSEventPhaseStationary(%lu)", (unsigned long)phase];
-//        case NSEventPhaseChanged: return [NSString stringWithFormat:@"NSEventPhaseChanged(%lu)", (unsigned long)phase];
-//        case NSEventPhaseEnded: return [NSString stringWithFormat:@"NSEventPhaseEnded(%lu)", (unsigned long)phase];
-//        case NSEventPhaseCancelled: return [NSString stringWithFormat:@"NSEventPhaseCancelled(%lu)", (unsigned long)phase];
-//        case NSEventPhaseMayBegin: return [NSString stringWithFormat:@"NSEventPhaseMayBegin(%lu)", (unsigned long)phase];
-//        default: return [NSString stringWithFormat:@"NSEventPhaseUnknownZZ(%lu)", (unsigned long)phase];
-//    }
-//}
-
 static NSString *NSTouchPhaseDescription(NSTouchPhase phase) {
     switch (phase) {
         case NSTouchPhaseBegan: return [NSString stringWithFormat:@"NSTouchPhaseBegan(%lu)", (unsigned long)phase];
@@ -55,7 +32,6 @@ static NSString *NSTouchPhaseDescription(NSTouchPhase phase) {
     }
 }
 
-//static NSTimeInterval sPrevScrollWheelLogSec = 0;
 static NSTimeInterval sPrevTouchLogSec = 0;
 static NSMutableDictionary *sTouchSimpleIds = nil;
 static NSInteger sNextTouchSimpleId = 1;
@@ -86,7 +62,6 @@ static void ForgetSimpleTouchId(id identity) {
 - (void)awakeFromNib{
     _currentRad = 28 * (M_PI / 180);
     _speedRateByMouseEvents = 1.0f;
-//    _speedRateByScrollEvents = 1.0f;
     _speedRateByTouchEvents = 1.0f;
     _isCoastingForTouchEvent = NO;
     
@@ -354,7 +329,6 @@ double rad2deg(double rad){
 }
 
 -(void)onMouseDragTimer:(NSTimer *)t{
-//    if (_isPlatterTouchingByScrollEvents) return;
     if (!_isPlatterTouchingByMouseEvents) return;
 
     // Same time base as NSEvent.timestamp (seconds since system startup).
@@ -431,8 +405,6 @@ double rad2deg(double rad){
         return _speedRateByMouseEvents;
     }else if (_isPlatterTouchingByTouchEvents || _isCoastingForTouchEvent){
         return _speedRateByTouchEvents;
-//    }else if (_isPlatterTouchingByScrollEvents){
-//        return _speedRateByScrollEvents;
     }else{
         return 1.0f;
     }
@@ -452,65 +424,6 @@ double rad2deg(double rad){
 -(Boolean)isUnderManualControl {
     return _isPlatterTouchingByMouseEvents || _isPlatterTouchingByTouchEvents || _isCoastingForTouchEvent;
 }
-
-//-(void)cancelAwaitingScrollMomentum{
-//    [NSObject cancelPreviousPerformRequestsWithTarget:self
-//                                             selector:@selector(endScrollScratchIfStillAwaitingMomentum)
-//                                               object:nil];
-//
-//    _awaitingScrollMomentum = NO;
-//}
-//
-//-(void)cancelScrollHold{
-//    [NSObject cancelPreviousPerformRequestsWithTarget:self
-//                                             selector:@selector(holdZeroScrollSpeedIfStillScratching)
-//                                               object:nil];
-//}
-//
-//-(void)armScrollHold{
-//    [self cancelScrollHold];
-//    [self performSelector:@selector(holdZeroScrollSpeedIfStillScratching)
-//               withObject:nil
-//               afterDelay:SCROLL_HOLD_SEC];
-//}
-//
-//-(void)holdZeroScrollSpeedIfStillScratching{
-//    if (!_isPlatterTouchingByScrollEvents) return;
-//    if (_awaitingScrollMomentum) return;
-//    _speedRateByScrollEvents = 0.0;
-////    NSLog(@"holdZeroScrollSpeedIfStillScratching : _speedRateByScrollEvents = %f", _speedRateByScrollEvents);
-//    [_delegate turnTableSpeedRateChanged];
-//}
-//
-//-(void)endScrollScratchIfStillAwaitingMomentum{
-//    if (_awaitingScrollMomentum){
-////        NSLog(@"endScrollScratchIfStillAwaitingMomentum : _speedRateByScrollEvents = %f", _speedRateByScrollEvents);
-//        [self endScrollScratch];
-//    }
-//}
-//
-//-(void)beginScrollScratch{
-////    NSLog(@"beginScrollScratch : _speedRateByScrollEvents = %f", _speedRateByScrollEvents);
-//    [self cancelAwaitingScrollMomentum];
-//    [self cancelScrollHold];
-//    _isPlatterTouchingByScrollEvents = YES;
-//    _prevScrollEventSecValid = NO;
-//    
-//    _speedRateByScrollEvents = 0.0;
-//    [_delegate turnTableSpeedRateChanged];
-//    [self setNeedsDisplay:YES];
-//}
-//
-//-(void)endScrollScratch{
-////    NSLog(@"endScrollScratch : _speedRateByScrollEvents = %f", _speedRateByScrollEvents);
-//    [self cancelAwaitingScrollMomentum];
-//    [self cancelScrollHold];
-//    _isPlatterTouchingByScrollEvents = NO;
-//    
-////    _speedRateByScrollEvents = 1.0;
-//    [_delegate turnTableSpeedRateChanged];
-//    [self setNeedsDisplay:YES];
-//}
 
 - (void)logTouchesForEventType:(NSString *)eventType event:(NSEvent *)event {
     NSTimeInterval nowSec = event.timestamp;
@@ -631,102 +544,5 @@ double rad2deg(double rad){
         [self handle2FingerTouchForEventType:@"touchesCancelled" event:event];
     }
 }
-
-//-(void)scrollWheel:(NSEvent *)event{
-//    NSEventPhase phase = event.phase;
-//    NSEventPhase momentumPhase = event.momentumPhase;
-//    
-//    NSTimeInterval nowSec = event.timestamp;
-//    double dtMs = (sPrevScrollWheelLogSec > 0) ? (nowSec - sPrevScrollWheelLogSec) * 1000.0 : 0.0;
-//    sPrevScrollWheelLogSec = nowSec;
-//    
-////    NSLog(@"[[ $$$$$]]] scrollWheel +%.1fms phase=%@ momentumPhase=%@ scrollingDeltaY=%f deltaY=%f hasPreciseScrollingDeltas=%d",
-////          dtMs,
-////          NSEventPhaseDescription(phase),
-////          NSEventPhaseDescription(momentumPhase),
-////          event.scrollingDeltaY,
-////          event.deltaY,
-////          event.hasPreciseScrollingDeltas);
-//    
-//    
-//    // Fingers landed (or gesture officially began): grab the record at speed 0.
-//    if (phase == NSEventPhaseMayBegin || phase == NSEventPhaseBegan){
-//        if (!_isPlatterTouchingByScrollEvents){
-//            [self beginScrollScratch];
-//        }else if (_isPlatterTouchingByScrollEvents){
-//            [self cancelAwaitingScrollMomentum];
-//            [self cancelScrollHold];
-//            _prevScrollEventSecValid = NO;
-//            _speedRateByScrollEvents = 0.0;
-//            
-////            NSLog(@"scrollWheel event AAA : _speedRateByScrollEvents = %f", _speedRateByScrollEvents);
-//            [_delegate turnTableSpeedRateChanged];
-//        }
-//        return;
-//    }
-//    
-//    if (!_isPlatterTouchingByScrollEvents) return;
-//    
-//    if (phase == NSEventPhaseEnded || phase == NSEventPhaseCancelled){
-//        [self cancelAwaitingScrollMomentum];
-//        [self cancelScrollHold];
-//        _awaitingScrollMomentum = YES;
-//        _prevScrollEventSecValid = NO;
-//        [self performSelector:@selector(endScrollScratchIfStillAwaitingMomentum)
-//                   withObject:nil
-//                   afterDelay:SCROLL_END_GRACE_SEC];
-//        return;
-//    }
-//    
-//    if (momentumPhase == NSEventPhaseBegan){
-//        [self cancelAwaitingScrollMomentum];
-//        [self cancelScrollHold];
-//        _prevScrollEventSecValid = NO;
-//    }
-//    if (momentumPhase == NSEventPhaseEnded){
-////        NSLog(@"End of Momentum Phase. phase = %lu", (unsigned long)phase);
-//        [self endScrollScratch];
-//        return;
-//    }
-//    if (momentumPhase == NSEventPhaseCancelled){
-////        NSLog(@"Cancelled momentum phase. phase = %lu", (unsigned long)phase);
-//        [self endScrollScratch];
-//        return;
-//    }
-//    
-//    if (phase == NSEventPhaseChanged ||
-//        momentumPhase == NSEventPhaseBegan || momentumPhase == NSEventPhaseChanged){
-//        // Normalize to physical finger motion (fingers up = forward),
-//        // independent of the system "natural scrolling" preference.
-//        double dy = event.scrollingDeltaY;
-//        if (event.isDirectionInvertedFromDevice){
-//            dy = -dy;
-//        }
-//        
-//        NSTimeInterval ts = event.timestamp;
-//        if (_prevScrollEventSecValid){
-//            double dt = ts - _prevScrollEventSec;
-//            if (dt > 0.0){
-//                double pointsPerSecFor1x = (momentumPhase != NSEventPhaseNone)
-//                    ? SCROLL_MOMENTUM_POINTS_PER_SEC_FOR_1X
-//                    : SCROLL_POINTS_PER_SEC_FOR_1X;
-//                _speedRateByScrollEvents = (dy / dt) / pointsPerSecFor1x;
-//                if (momentumPhase == NSEventPhaseNone){
-////                    NSLog(@"scrollWheel event : _speedRateByScrollEvents = %f. deltaT = %f", _speedRateByScrollEvents, dt);
-//                }else{
-////                    NSLog(@"scrollWheel event(momentum) : _speedRateByScrollEvents = %f. deltaT = %f", _speedRateByScrollEvents, dt);
-//                }
-//
-//                [_delegate turnTableSpeedRateChanged];
-//                // Only while fingers are still down: stop the record if motion pauses.
-//                if (phase == NSEventPhaseChanged){
-//                    [self armScrollHold];
-//                }
-//            }
-//        }
-//        _prevScrollEventSec = ts;
-//        _prevScrollEventSecValid = YES;
-//    }
-//}
 
 @end
