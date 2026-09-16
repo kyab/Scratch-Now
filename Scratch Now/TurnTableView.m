@@ -19,7 +19,7 @@
 #define TOUCH_COAST_TAU_SEC 0.1086
 
 #define TOUCH_COAST_END_EPSILON 0.01
-#define TOUCH_COAST_SKIP_EPSILON 0.05
+#define TOUCH_COAST_SKIP_EPSILON 0.55
 
 static NSString *NSTouchPhaseDescription(NSTouchPhase phase) {
     switch (phase) {
@@ -296,7 +296,6 @@ double rad2deg(double rad){
     
     x = x - self.bounds.size.width/2;
     y = y - self.bounds.size.height/2;
-    
     
     CGFloat dist = sqrt(x*x + y*y);
     CGFloat r = self.bounds.size.height/2 - 10;
