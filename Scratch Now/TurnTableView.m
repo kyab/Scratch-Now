@@ -66,7 +66,6 @@ static void ForgetSimpleTouchId(id identity) {
     _isCoastingForTouchEvent = NO;
     
     [self setAllowedTouchTypes:NSTouchTypeMaskDirect | NSTouchTypeMaskIndirect];
-//    [self setWantsRestingTouches:YES];
     
     _timer2 = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(onMouseDragTimer:) userInfo:nil repeats:YES];
     [[NSRunLoop currentRunLoop] addTimer:_timer2 forMode:NSRunLoopCommonModes];
@@ -74,11 +73,6 @@ static void ForgetSimpleTouchId(id identity) {
     _timerLog = [NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(onLogTimer:) userInfo:nil repeats:YES];
     [[NSRunLoop currentRunLoop] addTimer:_timerLog forMode:NSRunLoopCommonModes];
 }
-
-//- (BOOL)wantsRestingTouches {
-//    NSLog(@"-------------------------- sdfsdfsf");
-//    return YES;
-//}
 
 - (void)start{
     if (!_timer){
@@ -243,34 +237,50 @@ double rad2deg(double rad){
     
     NSBezierPath *circlePath = [NSBezierPath bezierPathWithOvalInRect:circleRect];
 
-    [[NSColor grayColor] set];
+    [[NSColor blackColor] set];
     [circlePath fill];
-        
+
     CGFloat centerX = self.bounds.size.width/2;
     CGFloat centerY = self.bounds.size.height/2;
+
+    CGFloat hubR = r * 2.5 / 10;
+    NSRect hubRect = NSMakeRect(centerX - hubR, centerY - hubR, 2 * hubR, 2 * hubR);
+    NSBezierPath *hubCircle = [NSBezierPath bezierPathWithOvalInRect:hubRect];
+    [[NSColor whiteColor] set];
+    [hubCircle fill];
+
+    CGFloat tickInnerR = hubR;
+    CGFloat tickOuterR = r * 3.0 / 10;
+    NSBezierPath *ticks = [NSBezierPath bezierPath];
+    [ticks setLineWidth:2.0];
+    [[NSColor grayColor] set];
+    UInt32 tickNum = 60;
+    for (int i = 0; i < tickNum; i++) {
+        double a = i * (2*M_PI / tickNum);
+        [ticks moveToPoint:NSMakePoint(centerX + tickInnerR * cos(a), centerY + tickInnerR * sin(a))];
+        [ticks lineToPoint:NSMakePoint(centerX + tickOuterR * cos(a), centerY + tickOuterR * sin(a))];
+    }
+    [ticks stroke];
 
     if (!_ring || [_ring sampleRate] <= 0){
         return;
     }
+
+    // NSBezierPath *lineRecord = [NSBezierPath bezierPath];
+    // [lineRecord moveToPoint:NSMakePoint(centerX,centerY)];
+    // double thetaRecordRad = [_ring recordFrame]/[_ring sampleRate] * (-33.3/60 * 2 * M_PI);
+    // [lineRecord lineToPoint:NSMakePoint(centerX + r*cos(thetaRecordRad)/3, centerY + r*sin(thetaRecordRad)/3)];
+    // [[NSColor lightGrayColor] set];
+    // [lineRecord setLineWidth:1.0];
+    // [lineRecord stroke];
     
-    NSBezierPath *lineRecord = [NSBezierPath bezierPath];
-    [lineRecord moveToPoint:NSMakePoint(centerX,centerY)];
-    double thetaRecordRad = [_ring recordFrame]/[_ring sampleRate] * (-33.3/60 * 2 * M_PI);
-    [lineRecord lineToPoint:NSMakePoint(centerX + r*cos(thetaRecordRad)/3, centerY + r*sin(thetaRecordRad)/3)];
-    [[NSColor lightGrayColor] set];
-    [lineRecord setLineWidth:1.0];
-    [lineRecord stroke];
-    
+    CGFloat lineR = r * 5.0 / 10;
     NSBezierPath *linePlay = [NSBezierPath bezierPath];
     [linePlay moveToPoint:NSMakePoint(centerX,centerY)];
     double thetaPlayRad = [_ring playFrame]/[_ring sampleRate] * (-33.3/60 * 2 * M_PI);
-    [linePlay lineToPoint:NSMakePoint(centerX + r*cos(thetaPlayRad), centerY + r*sin(thetaPlayRad))];
-    if (_isPlatterTouchingByMouseEvents){
-        [[NSColor orangeColor] set ];
-    }else{
-        [[NSColor orangeColor] set];
-    }
-    [linePlay setLineWidth:5.0];
+    [linePlay lineToPoint:NSMakePoint(centerX + lineR*cos(thetaPlayRad), centerY + lineR*sin(thetaPlayRad))];
+    [[NSColor orangeColor] set];
+    [linePlay setLineWidth:3.0];
     [linePlay stroke];
     
 }
