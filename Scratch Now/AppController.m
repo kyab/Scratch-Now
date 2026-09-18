@@ -10,7 +10,7 @@
 #include <string.h>
 
 #define FADE_SAMPLE_NUM 500
-#define SPEED_SMOOTH_ALPHA (1.0 / 128.0)
+#define SPEED_SMOOTH_ALPHA (64.0 / 128.0)
 #define GAIN_SMOOTH_ALPHA (1.0 / 256.0)
 #define DC_BLOCKER_R (0.995f)
 #define GAIN_SLOPE (4.0)

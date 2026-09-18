@@ -12,14 +12,16 @@
 #define TOUCH_CENTROID_Y_EPSILON 0.000001
 #define TOUCH_SPEED_TAU_SEC 0.01
 #define TOUCH_TARGET_IDLE_SEC 0.1
-#define TOUCH_TARGET_WINDOW_SEC 0.1
+#define TOUCH_TARGET_WINDOW_SEC 0.05
 
 // Match AppController Stop ramp from 1.0x: -0.02 / 10ms until < 0.01 (~0.5s).
 // EMA |v|=1 -> 0.01 in 0.5s => tau = 0.5 / -ln(0.01). = 0.1086
 #define TOUCH_COAST_TAU_SEC 0.1086
+#define TOUCH_COAST_FORWARD_TAU_SEC 0.1086
 
-#define TOUCH_COAST_END_EPSILON 0.01
-#define TOUCH_COAST_SKIP_EPSILON 0.55
+#define TOUCH_COAST_END_EPSILON 0.05
+#define TOUCH_COAST_SKIP_EPSILON 0.80
+#define TOUCH_COAST_FORWARD_SKIP_EPSILON 0.40
 
 static NSString *NSTouchPhaseDescription(NSTouchPhase phase) {
     switch (phase) {
@@ -154,7 +156,11 @@ double rad2deg(double rad){
 -(void)beginCoastForTouchEvent{
     _isPlatterTouchingByTouchEvents = NO;
     _isCoastingForTouchEvent = YES;
-    _touchSpeedTarget = 0.0;
+    if (_speedRateByTouchEvents > 0.0){
+        _touchSpeedTarget = 1.0;
+    }else{
+        _touchSpeedTarget = 0.0;
+    }
     _prevTouchEventSecValid = NO;
     [self clearTouchTargetSamples];
     [_delegate turnTableSpeedRateChanged];
@@ -167,14 +173,27 @@ double rad2deg(double rad){
         if (_prevTouchTimerSecValid){
             double dt = nowSec - _prevTouchTimerSec;
             if (dt > 0.0){
-                double alpha = 1.0 - exp(-dt / TOUCH_COAST_TAU_SEC);
-                _speedRateByTouchEvents = (1.0 - alpha) * _speedRateByTouchEvents;
-                if (fabs(_speedRateByTouchEvents) < TOUCH_COAST_END_EPSILON){
-                    [self endTouchEventScratch];
+                if (_touchSpeedTarget == 1.0){
+                    BOOL wasBelow = (_speedRateByTouchEvents < 1.0);
+                    double alpha = 1.0 - exp(-dt / TOUCH_COAST_FORWARD_TAU_SEC);
+                    _speedRateByTouchEvents = (1.0 - alpha) * _speedRateByTouchEvents + alpha * 1.0;
+                    if (wasBelow ? (_speedRateByTouchEvents >= 1.0) : (_speedRateByTouchEvents <= 1.0)){
+                        [self endTouchEventScratch];
+                    }else{
+                        [_delegate turnTableSpeedRateChanged];
+                        _prevTouchTimerSec = nowSec;
+                        _prevTouchTimerSecValid = YES;
+                    }
                 }else{
-                    [_delegate turnTableSpeedRateChanged];
-                    _prevTouchTimerSec = nowSec;
-                    _prevTouchTimerSecValid = YES;
+                    double alpha = 1.0 - exp(-dt / TOUCH_COAST_TAU_SEC);
+                    _speedRateByTouchEvents = (1.0 - alpha) * _speedRateByTouchEvents;
+                    if (fabs(_speedRateByTouchEvents) < TOUCH_COAST_END_EPSILON){
+                        [self endTouchEventScratch];
+                    }else{
+                        [_delegate turnTableSpeedRateChanged];
+                        _prevTouchTimerSec = nowSec;
+                        _prevTouchTimerSecValid = YES;
+                    }
                 }
             }
         }else{
@@ -473,7 +492,11 @@ double rad2deg(double rad){
     double centroidY = sumY / 2.0;
     
     if ([eventType isEqualToString:@"touchesEnded"] || [eventType isEqualToString:@"touchesCancelled"]){
-        if (!_touchSpeedSmoothedValid || fabs(_speedRateByTouchEvents) < TOUCH_COAST_SKIP_EPSILON){
+        if (!_touchSpeedSmoothedValid
+            || _speedRateByTouchEvents == 0.0
+            || _speedRateByTouchEvents == 1.0
+            || (_speedRateByTouchEvents > 0.0 && _speedRateByTouchEvents <= TOUCH_COAST_FORWARD_SKIP_EPSILON)
+            || (_speedRateByTouchEvents < 0.0 && _speedRateByTouchEvents > -TOUCH_COAST_SKIP_EPSILON)){
             [self endTouchEventScratch];
         }else{
             [self beginCoastForTouchEvent];
