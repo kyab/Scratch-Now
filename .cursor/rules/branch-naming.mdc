@@ -11,5 +11,6 @@ When creating a branch, use **`AGENTS.md` → Git branches**:
 - `fix/<name>` — bug fix
 - `docs/<name>` — documentation
 - `chore/<name>` — other small updates
+- `refactor/<name>` - refactoring
 
 If the prefix is unclear, ask before creating the branch.

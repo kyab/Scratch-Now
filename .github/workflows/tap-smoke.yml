@@ -1,7 +1,7 @@
 name: Tap smoke CI
 
-# Thin wrapper around tap_smoke_ci/. All real logic lives in the scripts there
-# so the same test runs locally on a MacBook (see tap_smoke_ci/README.md).
+# Thin wrapper around scripts/tap_smoke_ci/. All real logic lives in the scripts
+# there so the same test runs locally on a MacBook (see scripts/tap_smoke_ci/README.md).
 
 on:
   push:
@@ -33,10 +33,10 @@ jobs:
           python-version: "3.12"
 
       - name: Install Python dependencies
-        run: pip install -r tap_smoke_ci/requirements.txt
+        run: pip install -r scripts/tap_smoke_ci/requirements.txt
 
       - name: Run tap smoke test
-        run: bash tap_smoke_ci/run_tap_smoke_test.sh
+        run: bash scripts/tap_smoke_ci/run_tap_smoke_test.sh
 
       - name: Upload tap smoke artifacts
         if: always()

@@ -1,6 +1,6 @@
 # Tap smoke CI
 
-CATap（Core Audio Process Tap）が別プロセスのシステム音声を継続的にキャプチャできていることを確認する、最小限のスモークテストです。GitHub Actions と手元の MacBook の両方で同じスクリプトを実行できます（実体は `tap_smoke_ci/` にあり、CI の YAML は薄いラッパーです）。
+CATap（Core Audio Process Tap）が別プロセスのシステム音声を継続的にキャプチャできていることを確認する、最小限のスモークテストです。GitHub Actions と手元の MacBook の両方で同じスクリプトを実行できます（実体は `scripts/tap_smoke_ci/` にあり、CI の YAML は薄いラッパーです）。
 
 ## 動作説明
 
@@ -16,6 +16,6 @@ macOS 14.4+ / Xcode / Python 3 が必要です。初回のシステムオーデ�
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install -r ./tap_smoke_ci/requirements.txt
-./tap_smoke_ci/run_tap_smoke_test.sh
+pip install -r ./scripts/tap_smoke_ci/requirements.txt
+./scripts/tap_smoke_ci/run_tap_smoke_test.sh
 ```

@@ -13,7 +13,7 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 BUNDLE_ID="com.kyab.Scratch-Now"
 SCHEME="Scratch Now"
@@ -21,7 +21,7 @@ STATUS_DIR="/tmp/scratch-now-tap-smoke-ci"
 STATUS_FILE="${STATUS_DIR}/tap.jsonl"
 DERIVED_DIR="${DERIVED_DIR:-${REPO_ROOT}/build/tap-smoke-ci}"
 
-# Timing matches tap_smoke_ci/play_pleasant_tone.py fixed constants.
+# Timing matches scripts/tap_smoke_ci/play_pleasant_tone.py fixed constants.
 # Phase A is long enough that app startup still leaves base-band samples for the assert.
 PHASE_A_SECONDS=8.0
 GLIDE_SECONDS=1.5
