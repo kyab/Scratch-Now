@@ -1,0 +1,15 @@
+---
+description: Git branch naming for this repository
+alwaysApply: true
+---
+
+# Branch naming
+
+When creating a branch, use **`AGENTS.md` → Git branches**:
+
+- `feat/<name>` — new feature
+- `fix/<name>` — bug fix
+- `docs/<name>` — documentation
+- `chore/<name>` — other small updates
+
+If the prefix is unclear, ask before creating the branch.
