@@ -15,8 +15,12 @@
 確認の質問の際には、あなたにおまかせするといった選択肢も用意して。その場合は適時適切な推測や仮説をたててすすめて。
 
 ### 回答の規約
-**回答の最後に必ず使用したモデルを次の形式で明記して**
-回答 by : <モデル名>
+**回答の最後に必ず使用したモデルを次の形式で明記して。またモデルの使い方の設定についてもわかる場合は明記して。不明な場合は推測せずに不明と書いて**
+回答 by : <モデル名> (Effort=<Effortの設定>, Thinking = <Thinkingかどうか>, Fast = <Fastかどうか>, Context=<Contextサイズ>)
+
+例：
+回答 by : Claude Opus 5 (Effort=Extra High, Thinking = Yes, Fast = No, Context=300K)
+
 
 ## 2. 開発プロセス・基準
 
@@ -49,15 +53,17 @@ If the prefix is unclear, ask before creating the branch.
   `CATapMutedWhenTapped` によりタップ中は元のシステム出力が自動でミュートされる。
   またタップからは自プロセスは除外して本アプリの出力のループバックを防止する。
 - デバイス固有タップの実フォーマット（`kAudioTapPropertyFormat`）を 1 回だけ読み、
-  そのサンプルレートにパイプライン全体（出力 ASBD / RingBuffer / TurnTableView）を追従させる。
+  そのサンプルレートにパイプライン全体（出力 ASBD / RingBuffer / TurnTable）を追従させる。
   44.1 kHz・48 kHzの両方でタップASBDと実コールバック周期の一致を確認済み。
 - タップ単体では I/O できないため、Aggregate Device を作成して包む。
   無音バッファ回避のため、起動時のデフォルト出力デバイスをメインサブデバイス
   （`kAudioAggregateDeviceMainSubDeviceKey` + サブデバイスリスト）として必ず含める。
 - `AudioDeviceCreateIOProcID` + `AudioDeviceStart` でキャプチャ開始。
   初回の `AudioDeviceStart` が TCC ダイアログ（システムオーディオ録音の許可）を出す。
-- 取り込んだ音声は RingBuffer（vm_remap ミラーリング、60 秒分）に書き込まれ、
+- 取り込んだ音声は RingBuffer（vm_remap ミラーリング、600 秒分）に書き込まれ、
   出力側は HALOutput AU（フレームサイズ 32 の低レイテンシ設定）で再生する。
+- スクラッチの音声処理と RingBuffer の所有は TurnTable（Model, NSObject）が担う。
+  AppController は AudioEngine の所有と、入出力バッファの TurnTable への受け渡しだけを行う。
 
 ### デフォルト出力デバイス変更の追従
 

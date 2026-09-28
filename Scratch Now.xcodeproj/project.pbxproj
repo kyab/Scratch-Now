@@ -17,9 +17,12 @@
 		EBB7EF5B267DE82D0094DDB2 /* RingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF5A267DE82D0094DDB2 /* RingBuffer.m */; };
 		EBB7EF60267E0AB10094DDB2 /* AudioEngine.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF5D267E0AB00094DDB2 /* AudioEngine.m */; };
 		EBB7EF61267E0AB10094DDB2 /* RingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF5E267E0AB10094DDB2 /* RingBuffer.m */; };
-		EBB7EF64267E0C7C0094DDB2 /* TurnTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF63267E0C7B0094DDB2 /* TurnTableView.m */; };
+		EBB7EF64267E0C7C0094DDB2 /* PlatterView.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF63267E0C7B0094DDB2 /* PlatterView.m */; };
 		EBB7EF67267E0D5D0094DDB2 /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = EBB7EF66267E0D5D0094DDB2 /* AppController.m */; };
 		EBC5C546268524BE00CDA6DF /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = EBC5C545268524BE00CDA6DF /* README.md */; };
+		EBD23C87306A45B200B7D41D /* TurnTable.m in Sources */ = {isa = PBXBuildFile; fileRef = EBD23C86306A45B200B7D41D /* TurnTable.m */; };
+		EBD23C8A306A49B300B7D41D /* TurnTableController.m in Sources */ = {isa = PBXBuildFile; fileRef = EBD23C89306A49B300B7D41D /* TurnTableController.m */; };
+		EBD23C8C306A49B300B7D41D /* TurnTableController.xib in Resources */ = {isa = PBXBuildFile; fileRef = EBD23C8B306A49B300B7D41D /* TurnTableController.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,11 +47,16 @@
 		EBB7EF5D267E0AB00094DDB2 /* AudioEngine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AudioEngine.m; sourceTree = "<group>"; };
 		EBB7EF5E267E0AB10094DDB2 /* RingBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RingBuffer.m; sourceTree = "<group>"; };
 		EBB7EF5F267E0AB10094DDB2 /* RingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
-		EBB7EF62267E0C7B0094DDB2 /* TurnTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TurnTableView.h; sourceTree = "<group>"; };
-		EBB7EF63267E0C7B0094DDB2 /* TurnTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TurnTableView.m; sourceTree = "<group>"; };
+		EBB7EF62267E0C7B0094DDB2 /* PlatterView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatterView.h; sourceTree = "<group>"; };
+		EBB7EF63267E0C7B0094DDB2 /* PlatterView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlatterView.m; sourceTree = "<group>"; };
 		EBB7EF65267E0D5D0094DDB2 /* AppController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppController.h; sourceTree = "<group>"; };
 		EBB7EF66267E0D5D0094DDB2 /* AppController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppController.m; sourceTree = "<group>"; };
 		EBC5C545268524BE00CDA6DF /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		EBD23C85306A456400B7D41D /* TurnTable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TurnTable.h; sourceTree = "<group>"; };
+		EBD23C86306A45B200B7D41D /* TurnTable.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TurnTable.m; sourceTree = "<group>"; };
+		EBD23C88306A49B300B7D41D /* TurnTableController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TurnTableController.h; sourceTree = "<group>"; };
+		EBD23C89306A49B300B7D41D /* TurnTableController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TurnTableController.m; sourceTree = "<group>"; };
+		EBD23C8B306A49B300B7D41D /* TurnTableController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = TurnTableController.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,15 +107,20 @@
 				EBB7EF5E267E0AB10094DDB2 /* RingBuffer.m */,
 				EB681286267F079000C475FF /* MiniFader.h */,
 				EB681285267F079000C475FF /* MiniFader.m */,
-				EBB7EF62267E0C7B0094DDB2 /* TurnTableView.h */,
-				EBB7EF63267E0C7B0094DDB2 /* TurnTableView.m */,
+				EBB7EF62267E0C7B0094DDB2 /* PlatterView.h */,
+				EBB7EF63267E0C7B0094DDB2 /* PlatterView.m */,
 				EBB7EF3A267DE6B40094DDB2 /* AppDelegate.h */,
 				EBB7EF3B267DE6B40094DDB2 /* AppDelegate.m */,
-				EBB7EF3D267DE6B70094DDB2 /* Assets.xcassets */,
-				EBB7EF3F267DE6B70094DDB2 /* MainMenu.xib */,
-				EBB7EF42267DE6B70094DDB2 /* Info.plist */,
-				EC92550170E649A5B8D3B6A5 /* ja */,
 				EBB7EF43267DE6B70094DDB2 /* main.m */,
+				EBB7EF3F267DE6B70094DDB2 /* MainMenu.xib */,
+				EBD23C85306A456400B7D41D /* TurnTable.h */,
+				EBD23C86306A45B200B7D41D /* TurnTable.m */,
+				EBD23C88306A49B300B7D41D /* TurnTableController.h */,
+				EBD23C89306A49B300B7D41D /* TurnTableController.m */,
+				EBD23C8B306A49B300B7D41D /* TurnTableController.xib */,
+				EC92550170E649A5B8D3B6A5 /* ja */,
+				EBB7EF3D267DE6B70094DDB2 /* Assets.xcassets */,
+				EBB7EF42267DE6B70094DDB2 /* Info.plist */,
 				EBB7EF45267DE6B70094DDB2 /* Scratch_Now.entitlements */,
 			);
 			path = "Scratch Now";
@@ -215,6 +228,7 @@
 				EBC5C546268524BE00CDA6DF /* README.md in Resources */,
 				EBB7EF3E267DE6B70094DDB2 /* Assets.xcassets in Resources */,
 				EBB7EF41267DE6B70094DDB2 /* MainMenu.xib in Resources */,
+				EBD23C8C306A49B300B7D41D /* TurnTableController.xib in Resources */,
 				87A693E4EA084D89AEAF2CA2 /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -239,7 +253,9 @@
 				EBB7EF61267E0AB10094DDB2 /* RingBuffer.m in Sources */,
 				EBB7EF44267DE6B70094DDB2 /* main.m in Sources */,
 				EBB7EF3C267DE6B40094DDB2 /* AppDelegate.m in Sources */,
-				EBB7EF64267E0C7C0094DDB2 /* TurnTableView.m in Sources */,
+				EBD23C8A306A49B300B7D41D /* TurnTableController.m in Sources */,
+				EBB7EF64267E0C7C0094DDB2 /* PlatterView.m in Sources */,
+				EBD23C87306A45B200B7D41D /* TurnTable.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
