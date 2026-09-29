@@ -5,11 +5,19 @@
 
 #import "TurnTableController.h"
 
+static NSString * const kAutoFollowDefaultsKey = @"autoFollow";
+
 @implementation TurnTableController
 
 -(void)viewDidLoad{
     [super viewDidLoad];
     [_platterView setDelegate:self];
+
+    [[NSUserDefaults standardUserDefaults] registerDefaults:@{
+        kAutoFollowDefaultsKey: @YES
+    }];
+    BOOL autoFollow = [[NSUserDefaults standardUserDefaults] boolForKey:kAutoFollowDefaultsKey];
+    [_chkAutoFollow setState:autoFollow ? NSControlStateValueOn : NSControlStateValueOff];
 }
 
 -(void)setTurnTable:(TurnTable *)turnTable{
@@ -40,7 +48,9 @@
 }
 
 - (IBAction)autoFollowChanged:(id)sender {
-    [_turnTable setAutoFollow:(_chkAutoFollow.state == NSControlStateValueOn)];
+    BOOL autoFollow = (_chkAutoFollow.state == NSControlStateValueOn);
+    [_turnTable setAutoFollow:autoFollow];
+    [[NSUserDefaults standardUserDefaults] setBool:autoFollow forKey:kAutoFollowDefaultsKey];
 }
 
 - (IBAction)followButtonClicked:(id)sender {
