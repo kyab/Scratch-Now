@@ -59,3 +59,33 @@ Comparison in reverse x0.5..x2.0 (01: 5,192 calls, 02: 6,495 calls):
 - The staircase is gone; speed is a continuous curve (see zoom).
 - Listening impression (user): the "jobo-jobo" change is marginal, so speed steps are
   probably not the main cause.
+
+## 03 aliasing check: tau = 20 ms, trackpad touch, test tone
+
+- Files: `03-tau20ms-trackpad-tone.txt`, `03-spectrogram-full.png`,
+  `03-spectrogram-zoom-62.5-63.8s.png` (expected lines overlaid), `...-no-overlay.png`.
+  The output WAV (`03-tau20ms-trackpad-tone-output.wav`, 83 s, 29 MB) is kept locally, not committed.
+- Recorded: 2026-09-29 19:04:01 (JST), 26,397 calls, 0 dropped records, 0 dropped capture frames
+- Code: `feat/tuning-scratch` @ `dae5258` (parameters as 02)
+- Source: `make_test_tone.py` default, 1 kHz (amp 0.10) + 15 kHz (0.20) + 18 kHz (0.20), played by `afplay`
+- Scratching happens at ~52-80 s of the output time axis.
+
+Findings:
+
+- Clear aliasing whenever |speed| x f0 > 22.05 kHz: the 15 kHz and 18 kHz tones fold back
+  down (V shapes to ~8 kHz and ~1 kHz at |speed| ~ 2.4) exactly on the predicted
+  `fs - |speed| x f0` lines.
+- Alias level, per-frame peak normalized to source amplitude and relative to the 1 kHz line
+  (frames with near-constant speed only):
+
+  | abs speed | 18 kHz | 15 kHz | 18 kHz image | 15 kHz image |
+  | --- | --- | --- | --- | --- |
+  | 0.5-1.0 | -9.9 (direct) | -7.5 (direct) | -21.4 | -25.6 |
+  | 1.25-1.47 | -7.4 (aliased) | -6.0 (direct) | -20.3 | -27.2 |
+  | 1.5-2.0 | -8.0 (aliased) | -5.8 (aliased) | -16.1 | -25.1 |
+  | 2.0-2.6 | -6.0 (aliased) | -5.7 (aliased) | -17.8 | -27.6 |
+
+  Aliased components are as strong as non-aliased ones: nothing band-limits the signal
+  before the resampler. Cubic interpolation images stay ~16-28 dB below.
+- For music, content above fs / (2 x |speed|) (above 11 kHz at x2) folds down. This cannot
+  explain artefacts at |speed| <= 1, where only the weaker interpolation images exist.
