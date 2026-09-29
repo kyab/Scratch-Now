@@ -49,6 +49,7 @@ typedef struct {
     UInt32 _fadeOutCounter;
     UInt32 _fadeInCounter;
     double _smoothedSpeed;
+    double _speedSmoothAlpha;
     double _subSamplePos;
     double _wetGain;
     float _dcPrevInL;

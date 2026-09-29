@@ -11,7 +11,8 @@
 #include <mach/mach_time.h>
 
 #define FADE_SAMPLE_NUM 500
-#define SPEED_SMOOTH_ALPHA (64.0 / 128.0)
+// Longer than the ~6-10 ms platter update interval so its steps are not heard as pitch steps.
+#define SPEED_SMOOTH_TAU_SEC 0.020
 #define GAIN_SMOOTH_ALPHA (1.0 / 256.0)
 #define DC_BLOCKER_R (0.995f)
 #define GAIN_SLOPE (4.0)
@@ -47,6 +48,8 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     self = [super init];
     if (self){
         _ring = [[RingBuffer alloc] initWithSampleRate:sampleRate];
+        [self setUpSpeedLogIfEnabled];
+        [self updateSpeedSmoothAlphaForSampleRate:sampleRate];
         _speedRate = 1.0;
         _tableStopSpeed = 1.0;
         _dryVolume = 0.0;
@@ -54,7 +57,6 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         _autoFollow = YES;
         _platterSpeedRate = 1.0;
         [self resetScratchState];
-        [self setUpSpeedLogIfEnabled];
     }
     return self;
 }
@@ -139,7 +141,17 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 
 -(void)rebuildWithSampleRate:(double)sampleRate{
     _ring = [[RingBuffer alloc] initWithSampleRate:sampleRate];
+    [self updateSpeedSmoothAlphaForSampleRate:sampleRate];
     [self resetScratchState];
+}
+
+-(void)updateSpeedSmoothAlphaForSampleRate:(double)sampleRate{
+    // Per-sample one-pole EMA coefficient for time constant tau: 1 - exp(-1 / (tau * fs)).
+    _speedSmoothAlpha = 1.0 - exp(-1.0 / (SPEED_SMOOTH_TAU_SEC * sampleRate));
+    if (_speedLog != NULL){
+        NSLog(@"[SpeedLog] params SPEED_SMOOTH_TAU_SEC = %f, speedSmoothAlpha = %.8f, sampleRate = %f",
+              SPEED_SMOOTH_TAU_SEC, _speedSmoothAlpha, sampleRate);
+    }
 }
 
 -(RingBuffer *)ring{
@@ -220,7 +232,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     double speedStart = _smoothedSpeed;
     double speedEnd = speedStart;
     for (UInt32 i = 0; i < numSamples; i++){
-        speedEnd += (targetSpeed - speedEnd) * SPEED_SMOOTH_ALPHA;
+        speedEnd += (targetSpeed - speedEnd) * _speedSmoothAlpha;
     }
     [self recordSpeedLogStart:speedStart end:speedEnd samples:numSamples];
 
