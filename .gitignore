@@ -55,3 +55,6 @@ fastlane/test_output
 # Python
 __pycache__/
 *.py[cod]
+
+# Local Python virtual environments
+.venv/

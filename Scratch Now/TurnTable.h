@@ -5,8 +5,16 @@
 
 #import <Foundation/Foundation.h>
 #import "RingBuffer.h"
+#include <stdatomic.h>
 
 NS_ASSUME_NONNULL_BEGIN
+
+typedef struct {
+    uint64_t hostTime;
+    double speedStart;
+    double speedEnd;
+    UInt32 numSamples;
+} SpeedLogRecord;
 
 @interface TurnTable : NSObject{
     RingBuffer *_ring;
@@ -48,6 +56,19 @@ NS_ASSUME_NONNULL_BEGIN
     float _dcPrevInR;
     float _dcPrevOutR;
     Boolean _isScratching;
+
+    // Tuning log (enabled by SCRATCH_SPEED_LOG=1): single-producer (audio thread),
+    // single-consumer (main thread) ring of preallocated records.
+    SpeedLogRecord *_speedLog;
+    UInt32 _speedLogCapacity;
+    _Atomic uint64_t _speedLogWriteCount;
+    _Atomic uint64_t _speedLogReadCount;
+    _Atomic uint64_t _speedLogDroppedCount;
+    uint64_t _speedLogReportedDroppedCount;
+    uint64_t _speedLogBaseHostTime;
+    NSTimeInterval _speedLogBaseEpochSec;
+    double _speedLogSecPerHostTick;
+    NSTimer *_speedLogTimer;
 }
 
 -(instancetype)initWithSampleRate:(double)sampleRate;

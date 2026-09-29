@@ -6,6 +6,9 @@
 #import "TurnTable.h"
 #include <math.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <mach/mach_time.h>
 
 #define FADE_SAMPLE_NUM 500
 #define SPEED_SMOOTH_ALPHA (64.0 / 128.0)
@@ -25,6 +28,9 @@
 #define COAST_END_EPSILON 0.05
 #define COAST_SKIP_EPSILON 0.80
 #define COAST_FORWARD_SKIP_EPSILON 0.40
+
+#define SPEED_LOG_CAPACITY (1 << 16)
+#define SPEED_LOG_DRAIN_TIMER_SEC 0.02
 
 static inline float cubicInterpolate(float y0, float y1, float y2, float y3, double mu) {
     double mu2 = mu * mu;
@@ -48,8 +54,87 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
         _autoFollow = YES;
         _platterSpeedRate = 1.0;
         [self resetScratchState];
+        [self setUpSpeedLogIfEnabled];
     }
     return self;
+}
+
+-(void)dealloc{
+    [_speedLogTimer invalidate];
+    free(_speedLog);
+}
+
+#pragma mark - Speed log
+
+-(void)setUpSpeedLogIfEnabled{
+    const char *env = getenv("SCRATCH_SPEED_LOG");
+    if (env == NULL || strcmp(env, "1") != 0){
+        return;
+    }
+    _speedLogCapacity = SPEED_LOG_CAPACITY;
+    _speedLog = calloc(_speedLogCapacity, sizeof(SpeedLogRecord));
+    atomic_init(&_speedLogWriteCount, 0);
+    atomic_init(&_speedLogReadCount, 0);
+    atomic_init(&_speedLogDroppedCount, 0);
+    _speedLogReportedDroppedCount = 0;
+
+    mach_timebase_info_data_t timebase;
+    mach_timebase_info(&timebase);
+    _speedLogSecPerHostTick = (double)timebase.numer / (double)timebase.denom * 1.0e-9;
+    _speedLogBaseHostTime = mach_absolute_time();
+    _speedLogBaseEpochSec = [[NSDate date] timeIntervalSince1970];
+
+    _speedLogTimer = [NSTimer timerWithTimeInterval:SPEED_LOG_DRAIN_TIMER_SEC target:self selector:@selector(onSpeedLogTimer:) userInfo:nil repeats:YES];
+    [[NSRunLoop mainRunLoop] addTimer:_speedLogTimer forMode:NSRunLoopCommonModes];
+    NSLog(@"[SpeedLog] enabled (capacity = %u records)", _speedLogCapacity);
+}
+
+-(void)recordSpeedLogStart:(double)speedStart end:(double)speedEnd samples:(UInt32)numSamples{
+    if (_speedLog == NULL) return;
+    uint64_t w = atomic_load_explicit(&_speedLogWriteCount, memory_order_relaxed);
+    uint64_t r = atomic_load_explicit(&_speedLogReadCount, memory_order_acquire);
+    if (w - r >= _speedLogCapacity){
+        atomic_fetch_add_explicit(&_speedLogDroppedCount, 1, memory_order_relaxed);
+        return;
+    }
+    SpeedLogRecord *rec = &_speedLog[w % _speedLogCapacity];
+    rec->hostTime = mach_absolute_time();
+    rec->speedStart = speedStart;
+    rec->speedEnd = speedEnd;
+    rec->numSamples = numSamples;
+    atomic_store_explicit(&_speedLogWriteCount, w + 1, memory_order_release);
+}
+
+-(NSString *)speedLogTimestampForHostTime:(uint64_t)hostTime{
+    double epochSec = _speedLogBaseEpochSec + (double)(int64_t)(hostTime - _speedLogBaseHostTime) * _speedLogSecPerHostTick;
+    time_t whole = (time_t)floor(epochSec);
+    int micros = (int)((epochSec - (double)whole) * 1.0e6);
+    if (micros > 999999) micros = 999999;
+    struct tm local;
+    localtime_r(&whole, &local);
+    char dateBuf[32];
+    strftime(dateBuf, sizeof(dateBuf), "%Y-%m-%d %H:%M:%S", &local);
+    long offsetMin = local.tm_gmtoff / 60;
+    char sign = (offsetMin < 0) ? '-' : '+';
+    if (offsetMin < 0) offsetMin = -offsetMin;
+    return [NSString stringWithFormat:@"%s.%06d%c%02ld:%02ld", dateBuf, micros, sign, offsetMin / 60, offsetMin % 60];
+}
+
+-(void)onSpeedLogTimer:(NSTimer *)t{
+    uint64_t r = atomic_load_explicit(&_speedLogReadCount, memory_order_relaxed);
+    uint64_t w = atomic_load_explicit(&_speedLogWriteCount, memory_order_acquire);
+    for (; r < w; r++){
+        SpeedLogRecord rec = _speedLog[r % _speedLogCapacity];
+        NSLog(@"[SpeedLog] speedStart = %f, speedEnd = %f, samples = %u\nTimestamp: %@",
+              rec.speedStart, rec.speedEnd, rec.numSamples, [self speedLogTimestampForHostTime:rec.hostTime]);
+    }
+    atomic_store_explicit(&_speedLogReadCount, r, memory_order_release);
+
+    uint64_t dropped = atomic_load_explicit(&_speedLogDroppedCount, memory_order_relaxed);
+    if (dropped != _speedLogReportedDroppedCount){
+        NSLog(@"[SpeedLog] WARNING dropped records total = %llu", dropped);
+        _speedLogReportedDroppedCount = dropped;
+    }
 }
 
 -(void)rebuildWithSampleRate:(double)sampleRate{
@@ -137,6 +222,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     for (UInt32 i = 0; i < numSamples; i++){
         speedEnd += (targetSpeed - speedEnd) * SPEED_SMOOTH_ALPHA;
     }
+    [self recordSpeedLogStart:speedStart end:speedEnd samples:numSamples];
 
     double absMean = 0.5 * (fabs(speedStart) + fabs(speedEnd));
     double targetGain = absMean * GAIN_SLOPE;
