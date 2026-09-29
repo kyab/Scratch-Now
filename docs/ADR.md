@@ -1,6 +1,6 @@
 
 # NSTouchイベントによる２本指でのスクラッチ処理について
-(TurnTableViewクラス)
+(PlatterViewクラス)
 
 ## NSTouchイベントの前提
 イベントハンドラ内でしかタッチの場所が取得できない。mouseの場合のようにタイマーから任意の時点でのカーソルの位置取得は不可であり、
@@ -19,15 +19,15 @@ _speedRateByTouchEventのデータ参照
 2. target(_touchSpeedTarget) → _speedRateByTouchEvents（イベント時EMA）
 タッチイベントのたびに、target を時定数付きEMAで _speedRateByTouchEvents へ反映する。出力段の第一段で、target 更新時の段差を抑えつつ指の動きへ追従する。
 
-3. _speedRateByTouchEvents の継続更新（onLogTimer補間）
+3. _speedRateByTouchEvents の継続更新（onTouchTimer補間）
 イベントが来ない間も約10ms周期で、同じEMAにより _speedRateByTouchEvents を target へ寄せ続ける。
 低速域でイベントが疎なときの速度の段差を埋め、100ms無更新なら target を0にして減速する。
 
-## タッチ離し後の惰性（coast）
-離した瞬間の `_speedRateByTouchEvents` を維持し、target=0 へ `TOUCH_COAST_TAU_SEC`（接触中の `TOUCH_SPEED_TAU_SEC` とは別）で EMA 減速する。
-Stop ボタンの 1.0x→停止（約 0.5s）に合わせて tau を決め、|v| < `TOUCH_COAST_END_EPSILON` で handoff（1.0x）。
-離し時 |v| < `TOUCH_COAST_SKIP_EPSILON` なら惰性なしで即 handoff。
-coast 中は `_isCoastingForTouchEvent` により `isUnderManualControl` を維持する。
+4. _speedRate → _smoothedSpeed（オーディオブロック内のEMA、TurnTable）
+processVariableRateBlock は _speedRate を目標に _smoothedSpeed をサンプルごとの一次EMAで進める。
+
+## 離し後の惰性（coast）
+PlatterView は離した瞬間の速度を TurnTable に渡すだけで、惰性の判定と計算は TurnTable が行う。マウスとタッチで同じ処理を通る。
 
 （将来案）トルク・加減速を取り入れたダイナミクスに基づくプラッターモデル。
 Cursor Request ID : 71874cb8-3042-4512-9279-0fd771162878
