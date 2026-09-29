@@ -58,3 +58,6 @@ __pycache__/
 
 # Local Python virtual environments
 .venv/
+
+# Large captured audio from tuning runs
+experiment_log/**/*.wav
