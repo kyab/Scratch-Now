@@ -129,7 +129,13 @@ static double rad2deg(double rad){
     [linePlay moveToPoint:NSMakePoint(centerX,centerY)];
     double thetaPlayRad = [ring playFrame]/[ring sampleRate] * (-33.3/60 * 2 * M_PI);
     [linePlay lineToPoint:NSMakePoint(centerX + lineR*cos(thetaPlayRad), centerY + lineR*sin(thetaPlayRad))];
-    [[NSColor orangeColor] set];
+    if ([ring readWriteOffset] > 128){
+        //skyblue for unsync state.
+        [[NSColor colorWithCalibratedRed:0.28 green:0.65 blue:0.92 alpha:1.0] set];
+    }else{
+        [[NSColor orangeColor] set];
+    }
+
     [linePlay setLineWidth:3.0];
     [linePlay stroke];
 }
