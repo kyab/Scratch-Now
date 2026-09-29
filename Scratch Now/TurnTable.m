@@ -32,6 +32,7 @@
 
 #define SPEED_LOG_CAPACITY (1 << 16)
 #define SPEED_LOG_DRAIN_TIMER_SEC 0.02
+#define CAPTURE_CAPACITY_FRAMES (1 << 18)
 
 static inline float cubicInterpolate(float y0, float y1, float y2, float y3, double mu) {
     double mu2 = mu * mu;
@@ -42,13 +43,42 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     return (float)((mu * mu2 * a0) + (mu2 * a1) + (mu * a2) + a3);
 }
 
+static void writeFloatWavHeader(FILE *f, double sampleRate, uint64_t frames){
+    const uint16_t channels = 2;
+    const uint16_t bitsPerSample = 32;
+    const uint16_t formatIEEEFloat = 3;
+    uint32_t rate = (uint32_t)sampleRate;
+    uint32_t blockAlign = channels * bitsPerSample / 8;
+    uint32_t byteRate = rate * blockAlign;
+    uint32_t dataBytes = (uint32_t)(frames * blockAlign);
+    uint32_t riffBytes = 36 + dataBytes;
+    uint32_t fmtBytes = 16;
+    uint8_t h[44];
+    memcpy(h + 0, "RIFF", 4);
+    memcpy(h + 4, &riffBytes, 4);
+    memcpy(h + 8, "WAVEfmt ", 8);
+    memcpy(h + 16, &fmtBytes, 4);
+    memcpy(h + 20, &formatIEEEFloat, 2);
+    memcpy(h + 22, &channels, 2);
+    memcpy(h + 24, &rate, 4);
+    memcpy(h + 28, &byteRate, 4);
+    uint16_t blockAlign16 = (uint16_t)blockAlign;
+    memcpy(h + 32, &blockAlign16, 2);
+    memcpy(h + 34, &bitsPerSample, 2);
+    memcpy(h + 36, "data", 4);
+    memcpy(h + 40, &dataBytes, 4);
+    fseek(f, 0, SEEK_SET);
+    fwrite(h, 1, sizeof(h), f);
+    fseek(f, 0, SEEK_END);
+}
+
 @implementation TurnTable
 
 -(instancetype)initWithSampleRate:(double)sampleRate{
     self = [super init];
     if (self){
         _ring = [[RingBuffer alloc] initWithSampleRate:sampleRate];
-        [self setUpSpeedLogIfEnabled];
+        [self setUpSpeedLogIfEnabledWithSampleRate:sampleRate];
         [self updateSpeedSmoothAlphaForSampleRate:sampleRate];
         _speedRate = 1.0;
         _tableStopSpeed = 1.0;
@@ -64,11 +94,13 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 -(void)dealloc{
     [_speedLogTimer invalidate];
     free(_speedLog);
+    if (_captureFile != NULL) fclose(_captureFile);
+    free(_captureBuf);
 }
 
 #pragma mark - Speed log
 
--(void)setUpSpeedLogIfEnabled{
+-(void)setUpSpeedLogIfEnabledWithSampleRate:(double)sampleRate{
     const char *env = getenv("SCRATCH_SPEED_LOG");
     if (env == NULL || strcmp(env, "1") != 0){
         return;
@@ -89,6 +121,70 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     _speedLogTimer = [NSTimer timerWithTimeInterval:SPEED_LOG_DRAIN_TIMER_SEC target:self selector:@selector(onSpeedLogTimer:) userInfo:nil repeats:YES];
     [[NSRunLoop mainRunLoop] addTimer:_speedLogTimer forMode:NSRunLoopCommonModes];
     NSLog(@"[SpeedLog] enabled (capacity = %u records)", _speedLogCapacity);
+    [self setUpOutputCaptureWithSampleRate:sampleRate];
+}
+
+-(void)setUpOutputCaptureWithSampleRate:(double)sampleRate{
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.dateFormat = @"yyyyMMdd-HHmmss";
+    NSString *name = [NSString stringWithFormat:@"scratch_output_%@.wav", [formatter stringFromDate:[NSDate date]]];
+    NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:name];
+    _captureFile = fopen(path.fileSystemRepresentation, "wb");
+    if (_captureFile == NULL){
+        NSLog(@"[SpeedLog] WARNING could not open output capture file %@", path);
+        return;
+    }
+    _captureSampleRate = sampleRate;
+    _captureFileFrames = 0;
+    writeFloatWavHeader(_captureFile, _captureSampleRate, 0);
+
+    _captureCapacityFrames = CAPTURE_CAPACITY_FRAMES;
+    _captureBuf = calloc((size_t)_captureCapacityFrames * 2, sizeof(float));
+    atomic_init(&_captureWriteFrames, 0);
+    atomic_init(&_captureReadFrames, 0);
+    atomic_init(&_captureDroppedFrames, 0);
+    _captureReportedDroppedFrames = 0;
+    NSLog(@"[SpeedLog] output capture: path = %@, sampleRate = %f", path, sampleRate);
+}
+
+-(void)captureOutputLeft:(const float *)leftBuf right:(const float *)rightBuf frames:(UInt32)numFrames{
+    if (_captureBuf == NULL) return;
+    uint64_t w = atomic_load_explicit(&_captureWriteFrames, memory_order_relaxed);
+    uint64_t r = atomic_load_explicit(&_captureReadFrames, memory_order_acquire);
+    if (w - r + numFrames > _captureCapacityFrames){
+        atomic_fetch_add_explicit(&_captureDroppedFrames, numFrames, memory_order_relaxed);
+        return;
+    }
+    for (UInt32 i = 0; i < numFrames; i++){
+        size_t idx = (size_t)((w + i) % _captureCapacityFrames) * 2;
+        _captureBuf[idx] = leftBuf[i];
+        _captureBuf[idx + 1] = rightBuf[i];
+    }
+    atomic_store_explicit(&_captureWriteFrames, w + numFrames, memory_order_release);
+}
+
+-(void)drainOutputCapture{
+    if (_captureBuf == NULL) return;
+    uint64_t r = atomic_load_explicit(&_captureReadFrames, memory_order_relaxed);
+    uint64_t w = atomic_load_explicit(&_captureWriteFrames, memory_order_acquire);
+    if (w == r) return;
+    while (r < w){
+        uint64_t start = r % _captureCapacityFrames;
+        uint64_t n = w - r;
+        if (start + n > _captureCapacityFrames) n = _captureCapacityFrames - start;
+        fwrite(&_captureBuf[start * 2], sizeof(float) * 2, (size_t)n, _captureFile);
+        r += n;
+        _captureFileFrames += n;
+    }
+    atomic_store_explicit(&_captureReadFrames, r, memory_order_release);
+    writeFloatWavHeader(_captureFile, _captureSampleRate, _captureFileFrames);
+    fflush(_captureFile);
+
+    uint64_t dropped = atomic_load_explicit(&_captureDroppedFrames, memory_order_relaxed);
+    if (dropped != _captureReportedDroppedFrames){
+        NSLog(@"[SpeedLog] WARNING dropped output capture frames total = %llu", dropped);
+        _captureReportedDroppedFrames = dropped;
+    }
 }
 
 -(void)recordSpeedLogStart:(double)speedStart end:(double)speedEnd samples:(UInt32)numSamples{
@@ -104,6 +200,7 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     rec->speedStart = speedStart;
     rec->speedEnd = speedEnd;
     rec->numSamples = numSamples;
+    rec->outputFrame = _outputFrameCount;
     atomic_store_explicit(&_speedLogWriteCount, w + 1, memory_order_release);
 }
 
@@ -127,10 +224,11 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
     uint64_t w = atomic_load_explicit(&_speedLogWriteCount, memory_order_acquire);
     for (; r < w; r++){
         SpeedLogRecord rec = _speedLog[r % _speedLogCapacity];
-        NSLog(@"[SpeedLog] speedStart = %f, speedEnd = %f, samples = %u\nTimestamp: %@",
-              rec.speedStart, rec.speedEnd, rec.numSamples, [self speedLogTimestampForHostTime:rec.hostTime]);
+        NSLog(@"[SpeedLog] speedStart = %f, speedEnd = %f, samples = %u, outputFrame = %llu\nTimestamp: %@",
+              rec.speedStart, rec.speedEnd, rec.numSamples, rec.outputFrame, [self speedLogTimestampForHostTime:rec.hostTime]);
     }
     atomic_store_explicit(&_speedLogReadCount, r, memory_order_release);
+    [self drainOutputCapture];
 
     uint64_t dropped = atomic_load_explicit(&_speedLogDroppedCount, memory_order_relaxed);
     if (dropped != _speedLogReportedDroppedCount){
@@ -523,6 +621,12 @@ static inline float cubicInterpolate(float y0, float y1, float y2, float y3, dou
 }
 
 -(void)processOutputLeft:(float *)leftBuf right:(float *)rightBuf frames:(UInt32)numFrames{
+    [self renderOutputLeft:leftBuf right:rightBuf frames:numFrames];
+    [self captureOutputLeft:leftBuf right:rightBuf frames:numFrames];
+    _outputFrameCount += numFrames;
+}
+
+-(void)renderOutputLeft:(float *)leftBuf right:(float *)rightBuf frames:(UInt32)numFrames{
     if ([_ring isShortage]){
         bzero(leftBuf, sizeof(float) * numFrames);
         bzero(rightBuf, sizeof(float) * numFrames);

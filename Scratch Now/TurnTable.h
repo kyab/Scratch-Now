@@ -14,6 +14,7 @@ typedef struct {
     double speedStart;
     double speedEnd;
     UInt32 numSamples;
+    uint64_t outputFrame;
 } SpeedLogRecord;
 
 @interface TurnTable : NSObject{
@@ -70,6 +71,19 @@ typedef struct {
     NSTimeInterval _speedLogBaseEpochSec;
     double _speedLogSecPerHostTick;
     NSTimer *_speedLogTimer;
+
+    // Output capture for the tuning log: interleaved stereo float ring (audio thread -> main thread),
+    // written by the main thread to a float WAV in the app container's tmp directory.
+    uint64_t _outputFrameCount;
+    float *_captureBuf;
+    UInt32 _captureCapacityFrames;
+    _Atomic uint64_t _captureWriteFrames;
+    _Atomic uint64_t _captureReadFrames;
+    _Atomic uint64_t _captureDroppedFrames;
+    uint64_t _captureReportedDroppedFrames;
+    FILE *_captureFile;
+    uint64_t _captureFileFrames;
+    double _captureSampleRate;
 }
 
 -(instancetype)initWithSampleRate:(double)sampleRate;
