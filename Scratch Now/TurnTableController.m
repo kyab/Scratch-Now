@@ -60,10 +60,10 @@ static NSString * const kAutoFollowDefaultsKey = @"autoFollow";
 - (IBAction)startStopButtonClicked:(id)sender {
     if (_btnStop.state == NSControlStateValueOn){ //"Start"
         [_turnTable start];
-        [_btnStop setTitle:@"[S]top"];
+        [_btnStop setTitle:@"Stop\n[Space]"];
     }else{      //"Stop"
         [_turnTable stop];
-        [_btnStop setTitle:@"[S]tart"];
+        [_btnStop setTitle:@"Start\n[Space]"];
     }
 }
 
