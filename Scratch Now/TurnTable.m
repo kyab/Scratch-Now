@@ -24,10 +24,10 @@
 // Match the Stop ramp from 1.0x: -0.02 / 10ms until < 0.01 (~0.5s).
 // EMA |v|=1 -> 0.01 in 0.5s => tau = 0.5 / -ln(0.01). = 0.1086
 //#define COAST_TAU_SEC 0.1086
-#define COAST_TAU_SEC 0.1
+#define COAST_TAU_SEC 0.4
 #define COAST_FORWARD_TAU_SEC 0.1086
 
-#define COAST_END_EPSILON 0.05
+#define COAST_END_EPSILON 0.20
 #define COAST_SKIP_EPSILON 0.80
 #define COAST_FORWARD_SKIP_EPSILON 0.40
 
