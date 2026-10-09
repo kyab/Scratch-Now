@@ -35,6 +35,4 @@ scripts/scratch_speed_plot/.venv/bin/python scripts/scratch_speed_plot/plot_scra
 `--width` sets the figure width in inches.
 
 ## Dependencies
-
-`requirements.txt` lists only what `plot_scratch_speed_log.py` needs beyond the
-Python standard library: `matplotlib>=3.8`.
+`requirements.txt`.
