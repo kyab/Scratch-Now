@@ -644,6 +644,7 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
 
     NSMutableArray<NSNumber *> *exclude = [NSMutableArray arrayWithObject:@(ownProcessObj)];
 
+#if 0
     // Ad-hoc: exclude Spotify if it already has an audio process object at tap creation.
     // Later launches are intentionally not tracked.
     propAddress.mSelector = kAudioHardwarePropertyProcessObjectList;
@@ -681,6 +682,7 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
             free(processIDs);
         }
     }
+#endif // FALSE
 
     CATapDescription *desc = [[CATapDescription alloc]
                               initExcludingProcesses:exclude
