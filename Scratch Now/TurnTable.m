@@ -12,7 +12,7 @@
 
 #define FADE_SAMPLE_NUM 500
 // Longer than the ~6-10 ms platter update interval so its steps are not heard as pitch steps.
-#define SPEED_SMOOTH_TAU_SEC 0.020
+#define SPEED_SMOOTH_TAU_SEC 0.010
 #define GAIN_SMOOTH_ALPHA (1.0 / 256.0)
 #define DC_BLOCKER_R (0.995f)
 #define GAIN_SLOPE (4.0)
@@ -23,7 +23,8 @@
 
 // Match the Stop ramp from 1.0x: -0.02 / 10ms until < 0.01 (~0.5s).
 // EMA |v|=1 -> 0.01 in 0.5s => tau = 0.5 / -ln(0.01). = 0.1086
-#define COAST_TAU_SEC 0.1086
+//#define COAST_TAU_SEC 0.1086
+#define COAST_TAU_SEC 0.1
 #define COAST_FORWARD_TAU_SEC 0.1086
 
 #define COAST_END_EPSILON 0.05

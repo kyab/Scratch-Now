@@ -12,11 +12,11 @@
 #define MOUSE_DRAG_TIMER_SEC 0.01
 #define TOUCH_TIMER_SEC 0.01
 
-#define TOUCH_Y_PER_SEC_FOR_1X 1.0
+#define TOUCH_Y_PER_SEC_FOR_1X 0.6
 #define TOUCH_CENTROID_Y_EPSILON 0.000001
 #define TOUCH_SPEED_TAU_SEC 0.01
 #define TOUCH_TARGET_IDLE_SEC 0.1
-#define TOUCH_TARGET_WINDOW_SEC 0.05
+#define TOUCH_TARGET_WINDOW_SEC 0.03
 
 typedef NS_ENUM(NSInteger, PlatterTouchPhase) {
     PlatterTouchPhaseBegan,

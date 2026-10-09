@@ -1,30 +1,28 @@
 
 # NSTouchイベントによる２本指でのスクラッチ処理について
-(PlatterViewクラス)
 
 ## NSTouchイベントの前提
-イベントハンドラ内でしかタッチの場所が取得できない。mouseの場合のようにタイマーから任意の時点でのカーソルの位置取得は不可であり、
-不等時間間隔でのタッチ座標履歴をベースに速度検出する必要がある。タッチは早く動かすとイベントが頻繁(最速4ms程度)となり、低速だと疎になる(100ms程度)。また指を置いたままの停止時はイベントが来ないため停止検出も別途行う必要がある。
+- タッチの座標はイベントハンドラ内でしか取得できない。mouseの場合の様にタイマーや任意時点でのカーソルの位置取得は不可のため、不等時間間隔でのタッチ座標履歴を使って速度検出する必要がある。
+- タッチ中は指を早く動かすとイベントが頻繁(最速4ms程度)となり、低速だと疎になる(100ms程度)。
+- タッチ中に指を置いたまま停止しているとイベントが何も来ないため、停止検出は別途タイマー等で行う必要がある。
 
 ## ノイズ対策、平滑化の階層
-1. 生の瞬間速度 → target（時間窓平均）
-二本指の重心移動から求めた生の瞬間速度を、直近100msの時間幅重み付き平均で平滑し target(_touchSpeedTarget) とする。
-これの導入前は、中〜高速の測定ノイズや大ジャンプが見受けられた。その原因として、中〜高速域ではTouchイベントのOSによる合成、Touchデバイスの量子化ノイズ、２本指によるばらつき、さらにTouchイベントの配信頻度自体が高くなることが推察される。
-不等時間間隔時な速度データとなるため、時間窓での（時間幅重み付き）平均を取る。なおTouchの動きが低速だとイベントは少なくなり、平均化につかわれるデータ数は少なくなる。
+### 1. 窓平均（PlatterView）: 生の瞬間速度 → target
+中〜高速域でのTouchイベントのOS内での合成、Touchデバイスの量子化ノイズ、２本指のばらつき、イベント配信が速くなること、、による中〜高速の測定ノイズと大ジャンプを抑えるために導入。
 
-before例 : scratch_log.txt
-after例 :  scratch_log2.txt
-_speedRateByTouchEventのデータ参照
+二本指の重心移動から求めた生の瞬間速度を、直近30ms（`TOUCH_TARGET_WINDOW_SEC`）の時間幅重み付き平均で平滑し target（`_touchSpeedTarget`）とする。各サンプルは、直前サンプルとの時間差で重み付ける。
+瞬間速度データは不等時間間隔で得られるため、時間窓での（時間幅重み付き）平均を取る。Touchの動きが低速だとイベントは少なくなり、平均に使われるデータ数は少なくなる。
 
-2. target(_touchSpeedTarget) → _speedRateByTouchEvents（イベント時EMA）
-タッチイベントのたびに、target を時定数付きEMAで _speedRateByTouchEvents へ反映する。出力段の第一段で、target 更新時の段差を抑えつつ指の動きへ追従する。
+### 2. 追従EMA（PlatterView）: target（`_touchSpeedTarget`）→ `_speedRateByTouchEvents`
+低速でイベントが疎なときの段差を埋めるために導入。
 
-3. _speedRateByTouchEvents の継続更新（onTouchTimer補間）
-イベントが来ない間も約10ms周期で、同じEMAにより _speedRateByTouchEvents を target へ寄せ続ける。
-低速域でイベントが疎なときの速度の段差を埋め、100ms無更新なら target を0にして減速する。
+時定数10ms（`TOUCH_SPEED_TAU_SEC`）のEMAで、target を `_speedRateByTouchEvents` へ反映する。更新はタッチイベントのたびと、イベントが来ない間の約10ms周期（`TOUCH_TIMER_SEC`）の両方で行う。最初の有効サンプルだけはEMAを通さず、target をそのまま入れる。
+最後のタッチから100ms（`TOUCH_TARGET_IDLE_SEC`）更新がなければ停止としてtarget を0にし、窓平均のサンプルも捨てて減速する。
 
-4. _speedRate → _smoothedSpeed（オーディオブロック内のEMA、TurnTable）
-processVariableRateBlock は _speedRate を目標に _smoothedSpeed をサンプルごとの一次EMAで進める。
+### 3. ブロックEMA（TurnTable）: `_speedRate` → `_smoothedSpeed`
+プラッターから来る速度を（マウス、Touchによらず)平滑するために導入。
+
+`processVariableRateBlock` で `_speedRate` を目標に、`_smoothedSpeed` をサンプルごとの一次EMAで進める。時定数は10ms（`SPEED_SMOOTH_TAU_SEC`）。
 
 ## 離し後の惰性（coast）
 PlatterView は離した瞬間の速度を TurnTable に渡すだけで、惰性の判定と計算は TurnTable が行う。マウスとタッチで同じ処理を通る。
