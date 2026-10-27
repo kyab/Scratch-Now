@@ -249,7 +249,6 @@ static void writeFloatWavHeader(FILE *f, double sampleRate, uint64_t frames){
         return;
     }
     [_ring setMinOffset:frames];
-    NSLog(@"Ring minOffset set to %u", frames);
 }
 
 -(void)updateSpeedSmoothAlphaForSampleRate:(double)sampleRate{
@@ -636,10 +635,6 @@ static void writeFloatWavHeader(FILE *f, double sampleRate, uint64_t frames){
 }
 
 -(void)renderOutputLeft:(float *)leftBuf right:(float *)rightBuf frames:(UInt32)numFrames{
-    if (numFrames > [_ring minOffset]){
-        NSLog(@"Ring minOffset raised from %u to output block %u", [_ring minOffset], numFrames);
-        [_ring setMinOffset:numFrames];
-    }
     if ([_ring isShortage]){
         bzero(leftBuf, sizeof(float) * numFrames);
         bzero(rightBuf, sizeof(float) * numFrames);
