@@ -244,6 +244,14 @@ static void writeFloatWavHeader(FILE *f, double sampleRate, uint64_t frames){
     [self resetScratchState];
 }
 
+-(void)setMinimumOffsetFrames:(UInt32)frames{
+    if (frames == 0){
+        return;
+    }
+    [_ring setMinOffset:frames];
+    NSLog(@"Ring minOffset set to %u", frames);
+}
+
 -(void)updateSpeedSmoothAlphaForSampleRate:(double)sampleRate{
     // Per-sample one-pole EMA coefficient for time constant tau: 1 - exp(-1 / (tau * fs)).
     _speedSmoothAlpha = 1.0 - exp(-1.0 / (SPEED_SMOOTH_TAU_SEC * sampleRate));
@@ -628,6 +636,10 @@ static void writeFloatWavHeader(FILE *f, double sampleRate, uint64_t frames){
 }
 
 -(void)renderOutputLeft:(float *)leftBuf right:(float *)rightBuf frames:(UInt32)numFrames{
+    if (numFrames > [_ring minOffset]){
+        NSLog(@"Ring minOffset raised from %u to output block %u", [_ring minOffset], numFrames);
+        [_ring setMinOffset:numFrames];
+    }
     if ([_ring isShortage]){
         bzero(leftBuf, sizeof(float) * numFrames);
         bzero(rightBuf, sizeof(float) * numFrames);

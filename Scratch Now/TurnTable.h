@@ -87,6 +87,7 @@ typedef struct {
 }
 
 -(instancetype)initWithSampleRate:(double)sampleRate;
+-(void)setMinimumOffsetFrames:(UInt32)frames;
 // Called after the audio engine has stopped its callbacks.
 -(void)rebuildWithSampleRate:(double)sampleRate;
 -(RingBuffer *)ring;

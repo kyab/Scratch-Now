@@ -97,6 +97,7 @@ static void TapSmokeCIAppendStatus(double ts, float peak, float rms,
 - (void)logOutputDevice:(AudioDeviceID)deviceID context:(NSString *)context;
 - (BOOL)buildPipeline;
 - (BOOL)setupAggregateBufferFrameSize;
+- (void)readOutputBufferFrameSize;
 - (void)rebuildPipelineForOutputConfigurationChangeFromDevice:(AudioDeviceID)sourceDevice;
 - (void)teardownCapturePath;
 - (void)teardownOutput;
@@ -371,12 +372,18 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     if (![self createIOProc]){
         return NO;
     }
+
+    [self readOutputBufferFrameSize];
     
     return YES;
 }
 
 -(double)sampleRate{
     return _engineSampleRate;
+}
+
+-(UInt32)outputBufferFrameSize{
+    return _outputBufferFrameSize;
 }
 
 // The listener forwards work to the main thread and never rebuilds on a Core Audio queue.
@@ -968,6 +975,25 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     }
     
     return YES;
+}
+
+-(void)readOutputBufferFrameSize{
+    AudioObjectPropertyAddress propAddress;
+    propAddress.mSelector = kAudioDevicePropertyBufferFrameSize;
+    propAddress.mScope = kAudioObjectPropertyScopeGlobal;
+    propAddress.mElement = kAudioObjectPropertyElementMaster;
+
+    UInt32 frameSize = 0;
+    UInt32 size = sizeof(frameSize);
+    OSStatus ret = AudioObjectGetPropertyData(_outputDeviceID, &propAddress, 0, NULL, &size, &frameSize);
+    if (FAILED(ret) || frameSize == 0){
+        NSError *err = [NSError errorWithDomain:NSOSStatusErrorDomain code:ret userInfo:nil];
+        NSLog(@"Failed to read output BufferFrameSize = %d(%@)", ret, [err description]);
+        return;
+    }
+
+    _outputBufferFrameSize = frameSize;
+    NSLog(@"Output BufferFrameSize = %u", frameSize);
 }
 
 

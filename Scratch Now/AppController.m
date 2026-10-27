@@ -25,6 +25,7 @@
     NSLog(@"AudioEngine all OK");
 
     _turnTable = [[TurnTable alloc] initWithSampleRate:[_ae sampleRate]];
+    [_turnTable setMinimumOffsetFrames:[_ae outputBufferFrameSize]];
 
     _turnTableController = [[TurnTableController alloc] initWithNibName:@"TurnTableController" bundle:nil];
     NSView *turnTableView = [_turnTableController view];
@@ -94,6 +95,7 @@
 // The engine has stopped its audio callbacks before this notification.
 - (void)audioEngineDidRebuildPipeline:(AudioEngine *)engine{
     [_turnTable rebuildWithSampleRate:[engine sampleRate]];
+    [_turnTable setMinimumOffsetFrames:[engine outputBufferFrameSize]];
 }
 
 -(void)presentAudioInitializationFailure{
