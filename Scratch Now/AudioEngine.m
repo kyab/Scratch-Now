@@ -838,9 +838,14 @@ static OSStatus TapIOProc(AudioObjectID inDevice,
     }
     
     if (actualFrameSize != desiredFrameSize){
-        NSLog(@"Aggregate BufferFrameSize mismatch: desired=%u actual=%u",
+        if (actualFrameSize == 0){
+            NSLog(@"Aggregate BufferFrameSize mismatch: desired=%u actual=%u",
+                  desiredFrameSize, actualFrameSize);
+            return NO;
+        }
+        NSLog(@"Aggregate BufferFrameSize mismatch: desired=%u actual=%u; using actual",
               desiredFrameSize, actualFrameSize);
-        return NO;
+        return YES;
     }
     
     NSLog(@"Aggregate BufferFrameSize set to %u", actualFrameSize);
