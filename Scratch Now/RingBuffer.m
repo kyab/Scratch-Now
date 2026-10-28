@@ -419,6 +419,10 @@
     _minOffsetFrame = offset;
 }
 
+-(UInt32)minOffset{
+    return _minOffsetFrame;
+}
+
 -(UInt32)readWriteOffset{
     UInt32 w = _recordFrame;
     UInt32 r = _playFrame;

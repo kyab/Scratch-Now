@@ -54,6 +54,7 @@
 - (UInt32)readWriteOffset;
 
 - (void)setMinOffset:(UInt32)offset;
+- (UInt32)minOffset;
 
 - (void)reset;
 
