@@ -244,6 +244,13 @@ static void writeFloatWavHeader(FILE *f, double sampleRate, uint64_t frames){
     [self resetScratchState];
 }
 
+-(void)setMinimumOffsetFrames:(UInt32)frames{
+    if (frames == 0){
+        return;
+    }
+    [_ring setMinOffset:frames];
+}
+
 -(void)updateSpeedSmoothAlphaForSampleRate:(double)sampleRate{
     // Per-sample one-pole EMA coefficient for time constant tau: 1 - exp(-1 / (tau * fs)).
     _speedSmoothAlpha = 1.0 - exp(-1.0 / (SPEED_SMOOTH_TAU_SEC * sampleRate));

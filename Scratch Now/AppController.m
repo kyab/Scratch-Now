@@ -7,6 +7,10 @@
 
 #import "AppController.h"
 
+@interface AppController ()
+-(void)presentAudioInitializationFailure;
+@end
+
 @implementation AppController
 
 -(void)awakeFromNib{
@@ -14,11 +18,14 @@
     //which the ring buffer allocation depends on.
     _ae = [[AudioEngine alloc] init];
     [_ae setRenderDelegate:(id<AudioEngineDelegate>)self];
-    if([_ae initialize]){
-        NSLog(@"AudioEngine all OK");
+    if (![_ae initialize]){
+        [self presentAudioInitializationFailure];
+        return;
     }
+    NSLog(@"AudioEngine all OK");
 
     _turnTable = [[TurnTable alloc] initWithSampleRate:[_ae sampleRate]];
+    [_turnTable setMinimumOffsetFrames:[_ae outputBufferFrameSize]];
 
     _turnTableController = [[TurnTableController alloc] initWithNibName:@"TurnTableController" bundle:nil];
     NSView *turnTableView = [_turnTableController view];
@@ -88,6 +95,17 @@
 // The engine has stopped its audio callbacks before this notification.
 - (void)audioEngineDidRebuildPipeline:(AudioEngine *)engine{
     [_turnTable rebuildWithSampleRate:[engine sampleRate]];
+    [_turnTable setMinimumOffsetFrames:[engine outputBufferFrameSize]];
+}
+
+-(void)presentAudioInitializationFailure{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.alertStyle = NSAlertStyleCritical;
+        alert.messageText = @"Audio initialization failed";
+        alert.informativeText = @"Scratch Now could not start audio for the current output device. Check the output device, then quit and launch the app again.";
+        [alert runModal];
+    });
 }
 
 -(void)terminate{

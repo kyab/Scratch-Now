@@ -29,6 +29,7 @@
     AudioDeviceIOProcID _ioProcID;
     AudioStreamBasicDescription _tapASBD;
     double _engineSampleRate;
+    UInt32 _outputBufferFrameSize;
     
     // Valid only while the tap IOProc is invoking the delegate
     const AudioBufferList *_currentTapBufferList;
@@ -63,6 +64,9 @@
 
 // Sample rate the whole pipeline runs at (taken from the device-specific tap format)
 -(double)sampleRate;
+
+// Output device IO period after the pipeline is built. 0 if it could not be read.
+-(UInt32)outputBufferFrameSize;
 
 //called from delegate callback
 - (OSStatus) readFromInput:(AudioUnitRenderActionFlags *)ioActionFlags inTimeStamp:(const AudioTimeStamp *) inTimeStamp inBusNumber:(UInt32) inBusNumber inNumberFrames:(UInt32)inNumberFrames ioData:(AudioBufferList *)ioData;
